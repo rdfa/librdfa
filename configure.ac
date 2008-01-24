@@ -95,7 +95,9 @@ AC_SUBST(SIGNTOOL)
 
 # Generating files
 AC_OUTPUT(Makefile \
+          setup/Makefile.base \
           c/Makefile \
+          docs/Makefile \
           tests/Makefile)
 
 # Dump the build configuration for the developer

@@ -1,8 +1,7 @@
 # The top-level Makefile that is used to build 
 
 SUBDIRS := c \
-           tests \
-           docs
+           tests
 
 ifdef PRINT_DIRECTORIES
 MAKE_CMD = $(MAKE) -j -l 5.0 
@@ -26,7 +25,7 @@ endif
 
 .PHONY: all verbose clean test docs
 
-all:
+all: docs
 	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) build-objects build-libraries &&) true
 	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) build-executables &&) true
 
@@ -39,9 +38,7 @@ test: all
 	LD_LIBRARY_PATH=@RDFADIR@/libs/linux test/cpp/dist/linux/rdfap
 
 docs:
-	rm -rf docs/c-api
-	mkdir -p docs/c-api
-	doxygen setup/docs.doxygen
+	@$(MAKE_DIR) docs
 
 verbose:
 	PRINT_DIRECTORIES=true $(MAKE) all
