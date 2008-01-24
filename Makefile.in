@@ -1,0 +1,47 @@
+# The top-level Makefile that is used to build 
+
+SUBDIRS := c \
+           tests \
+           docs
+
+ifdef PRINT_DIRECTORIES
+MAKE_CMD = $(MAKE) -j -l 5.0 
+MAKE_DIR = $(MAKE_CMD) -C $(dir)
+else
+MAKE_CMD = $(MAKE) -j -l 5.0 --no-print-directory -s 
+MAKE_DIR = $(MAKE_CMD) -C $(dir)
+endif
+
+# Which platform we're building for
+BUILD_FOR_LINUX=@BUILD_FOR_LINUX@
+BUILD_FOR_WINDOWS=@BUILD_FOR_WINDOWS@
+
+ifeq ($(BUILD_FOR_LINUX),yes)
+LINUX_LIBS_DIR = @RDFADIR@/libs/linux
+endif
+
+ifeq ($(BUILD_FOR_WINDOWS),yes)
+WINDOWS_LIBS_DIR = @RDFADIR@/libs/windows
+endif
+
+.PHONY: all verbose clean test docs
+
+all:
+	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) build-objects build-libraries &&) true
+	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) build-executables &&) true
+
+clean:
+	@$(foreach dir,$(SUBDIRS),MAKE_CLEAN_ACTIVE=true $(MAKE_DIR) clean &&) true
+	@rm -rf libs/*
+	@echo "Removed all objects and libraries."
+
+test: all
+	LD_LIBRARY_PATH=@RDFADIR@/libs/linux test/cpp/dist/linux/rdfap
+
+docs:
+	rm -rf docs/c-api
+	mkdir -p docs/c-api
+	doxygen setup/docs.doxygen
+
+verbose:
+	PRINT_DIRECTORIES=true $(MAKE) all

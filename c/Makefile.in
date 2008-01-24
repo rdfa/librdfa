@@ -1,0 +1,9 @@
+# Makefile to compile the module in this directory
+
+SOURCES = $(wildcard bitmunk/rt/*.cpp)
+LIBRARIES = bmrt
+DYNAMIC_LINK_LIBRARIES = dblogging dbrt dbutil dbmodest dbevent dbio dbconfig dbnet bmcommon bmprotocol
+DYNAMIC_WINDOWS_LIBRARIES = libeay32 ssleay32
+
+# ----------- Standard Makefile
+include @BITMUNKDIR@/setup/Makefile.base

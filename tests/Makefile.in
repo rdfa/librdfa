@@ -1,0 +1,10 @@
+# Makefile to compile the binaries in this directory
+
+EXECUTABLES = rdfap
+
+DYNAMIC_LINK_LIBRARIES = rdfa1
+DYNAMIC_LINUX_LIBRARIES = expat
+DYNAMIC_WINDOWS_LIBRARIES = expat
+
+# ----------- Standard Makefile
+include @RDFADIR@/setup/Makefile.base
