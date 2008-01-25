@@ -24,8 +24,11 @@
 
 #define READ_BUFFER_SIZE 4096
 
-// All functions that rdfa.c makes use of.
-void rdfa_update_uri_mappings(rdfacontext* context, const char** attributes);
+// All functions that rdfa.c needs.
+char** rdfa_init_mapping(size_t elements);
+void rdfa_update_uri_mappings(
+   rdfacontext* context, const char* attribute, const char* value);
+void rdfa_update_language(rdfacontext* context, const char* xml_lang);
 
 /**
  * Handles the start_element call
@@ -34,19 +37,85 @@ static void XMLCALL
    start_element(void* user_data, const char* name, const char** attributes)
 {
    rdfacontext* current_context = user_data;
-   printf("<%s>", name);
+   printf("<%s>\n", name);
    
    //////////////////////////////////
    //First, some of the local values are initialised, as follows:
    // * the [recurse] flag is set to true;
-   int recurse = 0;
+   current_context->recurse = 0;
    
    // * [new subject] is set to null.
-   char* new_subject = NULL;
+   current_context->new_subject = NULL;
 
-   // Any changes to the [current evaluation context] are made next:
-   // update URI mappings
-   rdfa_update_uri_mappings(current_context, attributes);
+   // prepare all of the RDFa-specific attributes we are looking for.
+   const char** aptr = attributes;
+   const char* xml_lang = NULL;
+   const char* about = NULL;
+   const char* src = NULL;
+   const char* instanceof = NULL;
+   const char* rel = NULL;
+   const char* rev = NULL;
+   const char* property = NULL;
+   const char* resource = NULL;
+   const char* href = NULL;
+
+   // scan all of the attributes for the RDFa-specific attributes
+   if(aptr != NULL)
+   {
+      while(*aptr != NULL)
+      {
+         const char* attribute = *aptr;
+         aptr++;
+         const char* value = *aptr;
+         aptr++;
+
+         if(strcmp(attribute, "about") == 0)
+         {
+            about = value;
+         }
+         else if(strcmp(attribute, "src") == 0)
+         {
+            src = value;
+         }
+         else if(strcmp(attribute, "instanceof") == 0)
+         {
+            instanceof = value;
+         }
+         else if(strcmp(attribute, "rel") == 0)
+         {
+            rel = value;
+         }
+         else if(strcmp(attribute, "rev") == 0)
+         {
+            rev = value;
+         }
+         else if(strcmp(attribute, "property") == 0)
+         {
+            property = value;
+         }
+         else if(strcmp(attribute, "resource") == 0)
+         {
+            resource = value;
+         }
+         else if(strcmp(attribute, "href") == 0)
+         {
+            href = value;
+         }
+         else if(strcmp(attribute, "xml:lang") == 0)
+         {
+            xml_lang = value;
+         }
+         else if(strstr(attribute, "xmlns") != NULL)
+         {
+            // Any changes to the [current evaluation context] are made next:
+            // update URI mappings
+            rdfa_update_uri_mappings(current_context, attribute, value);
+         }
+      }
+   }
+
+   // set the current language, if it is specified
+   rdfa_update_language(current_context, xml_lang);
 }
 
 static void XMLCALL
@@ -98,7 +167,7 @@ void rdfa_init_context(rdfacontext* context)
    context->parent_bnode = NULL;
    
    // the [list of URI mappings] is cleared;
-   context->uri_mappings = rdfa_init_mapping(MAX_URI_MAPPINGS);
+   context->uri_mappings = (char**)rdfa_init_mapping(MAX_URI_MAPPINGS);
    
    // the [list of incomplete triples] is cleared;
    context->incomplete_triples = NULL;

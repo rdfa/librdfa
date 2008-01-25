@@ -68,6 +68,10 @@ typedef struct rdfacontext
 
    triple_handler_fp triple_callback;
    buffer_filler_fp buffer_filler_callback;
+
+   unsigned char recurse;
+   char* new_subject;
+   
 } rdfacontext;
 
 /**

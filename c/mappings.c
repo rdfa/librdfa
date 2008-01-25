@@ -1,6 +1,6 @@
 /**
  * This file implements mapping data structure memory management as
- * well as 
+ * well as updating URI mappings.
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -98,13 +98,13 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value)
 
 /**
  * Attempts to update the uri mappings in the given context using the
- * given attributes
+ * given attribute/value pair.
  *
- * @param context the current RDFa context.
- * @param attributes the current active attributes on the current
- *                   element.
+ * @param attribute the attribute, which must start with xmlns.
+ * @param value the value of the attribute
  */
-void rdfa_update_uri_mappings(rdfacontext* context, const char** attributes)
+void rdfa_update_uri_mappings(
+   rdfacontext* context, const char* attribute, const char* value)
 {
    // * the [current element] is parsed for [URI mappings] and these
    // are added to the [list of URI mappings]. Note that a [URI
@@ -118,33 +118,21 @@ void rdfa_update_uri_mappings(rdfacontext* context, const char** attributes)
    // resolved against the [current base]. Authors are advised to
    // follow best practice for using namespaces, which includes not
    // using relative paths.
-   const char** aptr = attributes;   
    
-   if(aptr != NULL)
+   printf("Attribute: %s = %s\n", attribute, value);
+   if(strcmp(attribute, "xmlns") == 0)
    {
-      while(*aptr != NULL)
+      rdfa_update_mapping(
+         context->uri_mappings, XMLNS_DEFAULT_MAPPING, value);
+   }
+   else if(strstr(attribute, "xmlns:") != NULL)
+   {
+      // check to make sure we're actually dealing with an
+      // xmlns: namespace attribute
+      if((attribute[5] == ':') && (attribute[6] != '\0'))
       {
-         const char* attribute = *aptr;
-         aptr++;
-         const char* value = *aptr;
-         aptr++;
-
-         printf("Attribute: %s = %s\n", attribute, value);
-         if(strcmp(attribute, "xmlns") == 0)
-         {
-            rdfa_update_mapping(
-               context->uri_mappings, XMLNS_DEFAULT_MAPPING, value);
-         }
-         else if(strstr(attribute, "xmlns:") != NULL)
-         {
-            // check to make sure we're actually dealing with an
-            // xmlns: namespace attribute
-            if((attribute[5] == ':') && (attribute[6] != '\0'))
-            {
-               rdfa_update_mapping(
-                  context->uri_mappings, &attribute[6], value);
-            }
-         }
+         rdfa_update_mapping(
+            context->uri_mappings, &attribute[6], value);
       }
    }
 }
