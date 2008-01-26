@@ -20,15 +20,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <expat.h>
+#include "rdfa_utils.h"
 #include "rdfa.h"
 
 #define READ_BUFFER_SIZE 4096
 
 // All functions that rdfa.c needs.
-char** rdfa_init_mapping(size_t elements);
 void rdfa_update_uri_mappings(
    rdfacontext* context, const char* attribute, const char* value);
-void rdfa_update_language(rdfacontext* context, const char* xml_lang);
+void rdfa_update_base(rdfacontext* context, const char* base);
+void rdfa_update_language(rdfacontext* context, const char* lang);
 
 /**
  * Handles the start_element call
@@ -39,8 +40,7 @@ static void XMLCALL
    rdfacontext* current_context = user_data;
    printf("<%s>\n", name);
    
-   //////////////////////////////////
-   //First, some of the local values are initialised, as follows:
+   // 1. First, some of the local values are initialised, as follows:
    // * the [recurse] flag is set to true;
    current_context->recurse = 0;
    
@@ -49,6 +49,7 @@ static void XMLCALL
 
    // prepare all of the RDFa-specific attributes we are looking for.
    const char** aptr = attributes;
+   const char** xml_base = NULL;
    const char* xml_lang = NULL;
    const char* about = NULL;
    const char* src = NULL;
@@ -105,17 +106,35 @@ static void XMLCALL
          {
             xml_lang = value;
          }
+         else if(strcmp(attribute, "xml:base") == 0)
+         {
+            xml_base = value;
+         }
          else if(strstr(attribute, "xmlns") != NULL)
          {
-            // Any changes to the [current evaluation context] are made next:
-            // update URI mappings
+            // 2. Next the [current element] is parsed for [URI
+            //    mapping]s and these are added to the [list of URI mappings].
             rdfa_update_uri_mappings(current_context, attribute, value);
          }
       }
    }
 
-   // set the current language, if it is specified
+   // 2.1 The [current element] is parsed for xml:base and [base] is set
+   // to this value if it exists. -- manu (not in the processing rules
+   // yet)
+   rdfa_update_base(current_context, xml_base);
+   
+   // 3. The [current element] is also parsed for any language
+   //    information, and [language] is set in the [current
+   //    evaluation context];
    rdfa_update_language(current_context, xml_lang);
+
+   // 4. Establish new subject if @rel/@rev don't exist on current
+   //    element
+   //if(!is_valid_uri(rel) && !is_valid_uri(rev))
+   //{
+      //rdfa_establish_new_subject();
+   //}   
 }
 
 static void XMLCALL
@@ -132,9 +151,8 @@ rdfacontext* rdfa_create_context(const char* base)
    if(base_length > 0)
    {
       rval = malloc(sizeof(rdfacontext));
-      char* base_copy = malloc(base_length);
-      strcpy(base_copy, base);
-      rval->base = base_copy;
+      rval->base = NULL;
+      rval->base = rdfa_replace_string(rval->base, base);
    }
    
    return rval;
@@ -151,13 +169,13 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
 }
 
 void rdfa_init_context(rdfacontext* context)
-{
+{   
    // the [current subject] is set to the [base] value;
-   size_t base_length = strlen(context->base);
-   if(base_length > 0)
+   context->current_subject = NULL;
+   if(context->base != NULL)
    {
-      context->current_subject = malloc(base_length);
-      strcpy(context->current_subject, context->base);
+      context->current_subject =
+         rdfa_replace_string(context->current_subject, context->base);
    }
 
    // the [parent object] is set to null;

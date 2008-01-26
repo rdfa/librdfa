@@ -14,8 +14,9 @@
  * rdfa_parse(context);
  * rdfa_destroy_context(context);
  */
-#ifndef _LIBRDFA_RDFA_H
-#define _LIBRDFA_RDFA_H
+#ifndef _LIBRDFA_RDFA_H_
+#define _LIBRDFA_RDFA_H_
+#include <stdlib.h>
 
 #define RDFA_PARSE_FAILED -1
 #define RDFA_PARSE_WARNING -2
