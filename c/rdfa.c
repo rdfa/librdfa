@@ -49,16 +49,24 @@ static void XMLCALL
 
    // prepare all of the RDFa-specific attributes we are looking for.
    const char** aptr = attributes;
-   const char** xml_base = NULL;
+   const char* xml_base = NULL;
    const char* xml_lang = NULL;
-   const char* about = NULL;
-   const char* src = NULL;
-   const char* instanceof = NULL;
-   const char* rel = NULL;
-   const char* rev = NULL;
-   const char* property = NULL;
-   const char* resource = NULL;
-   const char* href = NULL;
+   const char* about_curie = NULL;
+   char* about = NULL;
+   const char* src_curie = NULL;
+   char* src = NULL;
+   const char* instanceof_curie = NULL;
+   char* instanceof = NULL;
+   const char* rel_curie = NULL;
+   char* rel = NULL;
+   const char* rev_curie = NULL;
+   char* rev = NULL;
+   const char* property_curie = NULL;
+   char* property = NULL;
+   const char* resource_curie = NULL;
+   char* resource = NULL;
+   const char* href_curie = NULL;
+   char* href = NULL;
 
    // scan all of the attributes for the RDFa-specific attributes
    if(aptr != NULL)
@@ -72,35 +80,43 @@ static void XMLCALL
 
          if(strcmp(attribute, "about") == 0)
          {
-            about = value;
+            about_curie = value;
+            about = rdfa_resolve_curie(current_context, about_curie);
          }
          else if(strcmp(attribute, "src") == 0)
          {
-            src = value;
+            src_curie = value;
+            src = rdfa_resolve_curie(current_context, src_curie);
          }
          else if(strcmp(attribute, "instanceof") == 0)
          {
-            instanceof = value;
+            instanceof_curie = value;
+            instanceof = rdfa_resolve_curie(current_context, instanceof_curie);
          }
          else if(strcmp(attribute, "rel") == 0)
          {
-            rel = value;
+            rel_curie = value;
+            rel = rdfa_resolve_legacy_curie(current_context, rel_curie);
          }
          else if(strcmp(attribute, "rev") == 0)
          {
-            rev = value;
+            rev_curie = value;
+            rev = rdfa_resolve_legacy_curie(current_context, rev_curie);
          }
          else if(strcmp(attribute, "property") == 0)
          {
-            property = value;
+            property_curie = value;
+            property = rdfa_resolve_curie(current_context, property_curie);
          }
          else if(strcmp(attribute, "resource") == 0)
          {
-            resource = value;
+            resource_curie = value;
+            resource = rdfa_resolve_curie(current_context, resource_curie);
          }
          else if(strcmp(attribute, "href") == 0)
          {
-            href = value;
+            href_curie = value;
+            href = rdfa_resolve_curie(current_context, href_curie);
          }
          else if(strcmp(attribute, "xml:lang") == 0)
          {
@@ -118,7 +134,7 @@ static void XMLCALL
          }
       }
    }
-
+   
    // 2.1 The [current element] is parsed for xml:base and [base] is set
    // to this value if it exists. -- manu (not in the processing rules
    // yet)
@@ -135,6 +151,16 @@ static void XMLCALL
    //{
       //rdfa_establish_new_subject();
    //}   
+
+   // free the resolved CURIEs
+   free(about);
+   free(src);
+   free(instanceof);
+   free(rel);
+   free(rev);
+   free(property);
+   free(resource);
+   free(href);
 }
 
 static void XMLCALL

@@ -1,6 +1,6 @@
 # Makefile to compile the binaries in this directory
 
-EXECUTABLES = rdfap
+EXECUTABLES = rdfap curies
 
 DYNAMIC_LINK_LIBRARIES = rdfa
 DYNAMIC_LINUX_LIBRARIES = expat

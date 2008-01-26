@@ -3,6 +3,20 @@
  */
 #ifndef _RDFA_UTILS_H_
 #define _RDFA_UTILS_H_
+#include "rdfa.h"
+
+/**
+ * A CURIE type can be safe, unsafe, and Internationalized Resource
+ * Identifier, reference-only or invalid.
+ */
+typedef enum
+{
+   CURIE_TYPE_SAFE,
+   CURIE_TYPE_UNSAFE,
+   CURIE_TYPE_IRI,
+   CURIE_TYPE_REFERENCE,
+   CURIE_TYPE_INVALID
+}  curie_t;
 
 /**
  * Initializes a mapping given the number of elements the mapping is
@@ -36,5 +50,30 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value);
  * @return a pointer to the newly allocated string.
  */
 char* rdfa_replace_string(char* old_string, const char* new_string);
+
+/**
+ * Resolves a given uri depending on whether or not it is a fully
+ * qualified IRI, a CURIE, or a short-form XHTML reserved word.
+ *
+ * @param context the current processing context.
+ * @param uri the URI part to process.
+ *
+ * @return the fully qualified IRI. The memory returned from this
+ *         function MUST be freed.
+ */
+char* rdfa_resolve_curie(rdfacontext* context, const char* uri);
+
+/**
+ * Resolves a given uri depending on whether or not it is a fully
+ * qualified IRI, a CURIE, or a short-form XHTML reserved word.
+ *
+ * @param context the current processing context.
+ * @param uri the URI part to process.
+ *
+ * @return the fully qualified IRI, or NULL if the conversion failed
+ *         due to the given URI not being a short-form XHTML reserved
+ *         word. The memory returned from this function MUST be freed.
+ */
+char* rdfa_resolve_legacy_curie(rdfacontext* context, const char* uri);
 
 #endif
