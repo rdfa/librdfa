@@ -14,12 +14,14 @@ void rdfa_init_context(rdfacontext* context);
 void run_curie_tests()
 {
    rdfacontext* context =
-      rdfa_create_context("http://example.org/example.html");
+      rdfa_create_context("http://example.org/");
    rdfa_init_context(context);
    
    rdfa_update_mapping(
       context->uri_mappings, "dc", "http://purl.org/dc/elements/1.1/");
-      
+
+   printf("IRI http://www.example.org/iri: %s\n",
+      rdfa_resolve_curie(context, "http://www.example.org/iri"));
    printf("Safe CURIE [dc:title]: %s\n",
       rdfa_resolve_curie(context, "[dc:title]"));
    printf("Unsafe CURIE dc:title: %s\n",
@@ -32,6 +34,8 @@ void run_curie_tests()
       rdfa_resolve_curie(context, "[foobar]"));
    printf("XHTML, non-reserved [foobar]: %s\n",
       rdfa_resolve_legacy_curie(context, "[foobar]"));
+   printf("Empty safe CURIE []: %s\n",
+      rdfa_resolve_curie(context, "[]"));
 }
 
 int main(int argc, char** argv)

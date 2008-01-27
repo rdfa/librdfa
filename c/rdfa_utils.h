@@ -40,6 +40,17 @@ char** rdfa_init_mapping(size_t elements);
 void rdfa_update_mapping(char** mapping, const char* key, const char* value);
 
 /**
+ * Gets the value for a given mapping when presented with a key. If
+ * the key doesn't exist in the mapping, NULL is returned.
+ *
+ * @param mapping the mapping to search.
+ * @param key the key.
+ *
+ * @return value the value in the mapping for the given key.
+ */
+const char* rdfa_get_mapping(char** mapping, const char* key);
+
+/**
  * Replaces an old string with a new string, freeing the old memory
  * and allocating new memory for the new string.
  *

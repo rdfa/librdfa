@@ -23,16 +23,13 @@ char* rdfa_replace_string(char* old_string, const char* new_string)
 
 char** rdfa_init_mapping(size_t elements)
 {
-   char** mapping = malloc(sizeof(char*) * elements * 2);
-   int i;
-   char** mptr = mapping;
+   size_t mapping_size = sizeof(char*) * elements * 2;
+   char** mapping = malloc(mapping_size);
 
+   // only initialize the mapping if it is null.
    if(mapping != NULL)
    {
-      for(i = 0; i < MAX_URI_MAPPINGS * 2; i++)
-      {
-         *mptr++ = NULL;
-      }
+      memset(mapping, 0, mapping_size);
    }
    
    return mapping;
@@ -81,4 +78,9 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value)
 
       printf("%20s: %s\n", key, value);
    }
+}
+
+const char* rdfa_get_mapping(char** mapping, const char* key)
+{
+   return NULL;
 }
