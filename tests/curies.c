@@ -135,7 +135,7 @@ void run_list_test(rdfacontext* context, const char* name, const char* curies,
          char* icurie = (*iptr)->data;
          char* rcurie = (*rptr)->data;
          
-         printf("curie list: %s == %s\n", icurie, rcurie);
+         //printf("curie list: %s == %s\n", icurie, rcurie);
          if(strcmp(icurie, rcurie) != 0)
          {
             compare = -1;
@@ -229,14 +229,26 @@ void run_curie_tests()
       context, "XHTML multiple @instanceof", "[dctv:Image] [dctv:Sound]",
       rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_INSTANCEOF);
    rdfa_free_list(dctvlist);
-   
+
+   rdfalist* nllist = rdfa_create_list(2);
+   rdfa_add_item(
+      nllist, XHTML_VOCAB_URI "next", RDFALIST_FLAG_NONE);
+   rdfa_add_item(
+      nllist, XHTML_VOCAB_URI "license", RDFALIST_FLAG_NONE);
    run_list_test(
       context, "XHTML multiple @rel/@rev", "next license",
-      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_RELREV);
-
+      rdfa_resolve_curie_list, nllist, CURIE_PARSE_RELREV);
+   rdfa_free_list(nllist);
+   
+   rdfalist* dtlist = rdfa_create_list(2);
+   rdfa_add_item(
+      dtlist, XHTML_VOCAB_URI "description", RDFALIST_FLAG_NONE);
+   rdfa_add_item(
+      dtlist, XHTML_VOCAB_URI "title", RDFALIST_FLAG_NONE);   
    run_list_test(
       context, "XHTML multiple @property", "description title",
-      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_PROPERTY);
+      rdfa_resolve_curie_list, dtlist, CURIE_PARSE_PROPERTY);
+   rdfa_free_list(dtlist);
 
    run_test_set(context, "XHTML @rel/@rev reserved",
       my_g_relrev_reserved_words, XHTML_RELREV_RESERVED_WORDS_SIZE,
