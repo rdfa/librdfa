@@ -198,11 +198,18 @@ static void XMLCALL
 
    }
 
-   /* DEBUGGING PURPOSES ONLY */
    if(context->new_subject != NULL)
    {
       printf("DEBUG: new_subject = %s\n", context->new_subject);
+      // 6. If in any of the previous steps a [new subject] was set to a
+      //    non-null value, it is now used to:
+      
+      // complete any incomplete triples;
+      rdfa_complete_incomplete_triples(context);
+
+      // provide a subject for type values;
    }
+
    
    // free the resolved CURIEs
    free(about);

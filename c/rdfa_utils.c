@@ -34,6 +34,42 @@ char* rdfa_replace_string(char* old_string, const char* new_string)
    return old_string;
 }
 
+rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
+   const char* object, const char* datatype, const char* language)
+{
+   rdftriple* triple = malloc(sizeof(rdftriple));
+
+   // clear the memory
+   triple->subject = NULL;
+   triple->predicate = NULL;
+   triple->object = NULL;
+   triple->datatype = NULL;
+   triple->language = NULL;
+
+   // a triple needs a subject, predicate and object at minimum to be
+   // considered a triple.
+   if((subject != NULL) && (predicate != NULL) && (object != NULL))
+   {
+      triple->subject = rdfa_replace_string(triple->subject, subject);
+      triple->predicate = rdfa_replace_string(triple->predicate, predicate);
+      triple->object = rdfa_replace_string(triple->object, object);
+
+      // if the datatype is present, set it
+      if(datatype != NULL)
+      {
+         triple->datatype = rdfa_replace_string(triple->datatype, datatype);
+      }
+
+      // if the language was specified, set it
+      if(language != NULL)
+      {
+         triple->language = rdfa_replace_string(triple->language, language);
+      }
+   }
+
+   return triple;
+}
+
 char** rdfa_init_mapping(size_t elements)
 {
    size_t mapping_size = sizeof(char*) * elements * 2;

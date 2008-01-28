@@ -30,6 +30,23 @@ typedef enum
 char** rdfa_init_mapping(size_t elements);
 
 /**
+ * Creates a triple given the subject, predicate, object, datatype and
+ * language for the triple.
+ *
+ * @param subject the subject for the triple.
+ * @param predicate the predicate for the triple.
+ * @param object the object for the triple.
+ * @param datatype the datatype of the triple.
+ * @param language the language for the triple.
+ *
+ * @return a newly allocated triple with all of the given
+ *         information. This triple MUST be free()'d when you are done
+ *         with it.
+ */
+rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
+   const char* object, const char* datatype, const char* language);
+
+/**
  * Updates the given mapping when presented with a key and a value. If
  * the key doesn't exist in the mapping, it is created.
  *

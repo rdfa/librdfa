@@ -150,6 +150,8 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
       {
          rval = rdfa_join_string(expanded_prefix, reference_start);
       }
+
+      free(working_copy);
    }
    else
    {
