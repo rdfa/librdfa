@@ -1,15 +1,130 @@
 /*
  * Copyright (c) 2008 Digital Bazaar, Inc.  All rights reserved.
+ *
+ * This unit test exercises the CURIE processing functions in librdfa.
+ *
+ * @author Manu Sporny
  */
 #include <stdio.h>
+#include <string.h>
 #include <rdfa_utils.h>
 #include <rdfa.h>
 
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
+// These are all of the @property reserved words in XHTML 1.1 that
+// should generate triples.
+#define XHTML_PROPERTY_RESERVED_WORDS_SIZE 6
+static const char*
+   my_g_property_reserved_words[XHTML_PROPERTY_RESERVED_WORDS_SIZE] =
+{
+   "description", "generator", "keywords", "reference", "robots", "title"
+};
+
+// These are all of the @rel/@rev reserved words in XHTML 1.1 that
+// should generate triples.
+#define XHTML_RELREV_RESERVED_WORDS_SIZE 22
+static const char*
+   my_g_relrev_reserved_words[XHTML_RELREV_RESERVED_WORDS_SIZE] =
+{
+   "alternate", "appendix", "bookmark", "chapter", "cite", "contents",
+   "copyright", "glossary", "help", "icon", "index", "meta", "next", "p3pv1",
+   "prev", "role",  "section",  "subsection",  "start", "license", "up", "last"
+};
+
+// The base XHTML vocab URL is used to resolve URIs that are reserved
+// words. Any reserved listed above is appended to the URL below to
+// form a complete IRI.
+#define XHTML_VOCAB_URI "http://www.w3.org/1999/xhtml/vocab#"
+#define XHTML_VOCAB_URI_SIZE 35
 
 // we need this declaration to compile cleanly, we shouldn't be
 // calling it directly, but since this is a unit test, that's okay.
 void rdfa_init_context(rdfacontext* context);
+
+// typedef for CURIE processing function pointer
+typedef char* (*curie_func)(rdfacontext*, const char*);
+
+// the number of tests run
+int g_test_num = 0;
+
+// the number of tests that passed
+int g_test_passes = 0;
+
+// the number of tests that failed
+int g_test_fails = 0;
+
+/**
+ * Runs a single unit test given the RDFa context, name of the test,
+ * test CURIE, processing function and what the final IRI should be.
+ *
+ * @param context the RDFa context.
+ * @param name the name of the test.
+ * @param curie the CURIE to resolve.
+ * @param cb the function callback to the CURIE resolution function.
+ * @param iri the value of what the resulting IRI should be.
+ */
+void run_test(rdfacontext* context, const char* name, const char* curie,
+   curie_func cb, const char* iri)
+{
+   char* result = cb(context, curie);
+   int compare = -1;
+
+   // check to see if we should check for NULL or if the strings
+   // should match.
+   if(iri != NULL)
+   {
+      compare = strcmp(result, iri);
+   }
+   else if(iri == result)
+   {
+      compare = 0;
+   }
+
+   printf("UT#%02i/%s \"%s\" ...", ++g_test_num, name, curie);
+
+   // if the string compare shows identical values, pass the test,
+   // otherwise, fail the test.
+   if(compare == 0)
+   {
+      printf("PASS.\n");
+      g_test_passes++;
+   }
+   else
+   {
+      printf("FAIL. Got \"%s\", but should have been \"%s\".\n", result, iri);
+      g_test_fails++;
+   }
+
+   if(result != NULL)
+   {
+      free(result);
+   }
+}
+
+/**
+ * Runs a set of unit tests given the RDFa context, base name of the test,
+ * a set of CURIEs, a processing function, and a base IRI.
+ *
+ * @param context the RDFa context.
+ * @param name the base name of the test.
+ * @param curie the set of CURIEs to resolve.
+ * @param cb the function callback to the CURIE resolution function.
+ * @param iri the base value of what the resulting IRI should be, the
+ *            value of each set member will be appended to the IRI.
+ */
+void run_test_set(rdfacontext* context, const char* name, const char** curies,
+   size_t curies_size, curie_func cb, const char* iri)
+{
+   int i;
+   for(i = 0; i < curies_size; i++)
+   {
+      char* full_iri = rdfa_join_string(iri, curies[i]);
+      
+      run_test(context, name, curies[i], cb, full_iri);
+
+      free(full_iri);
+   }
+}
 
 void run_curie_tests()
 {
@@ -20,22 +135,33 @@ void run_curie_tests()
    rdfa_update_mapping(
       context->uri_mappings, "dc", "http://purl.org/dc/elements/1.1/");
 
-   printf("IRI http://www.example.org/iri: %s\n",
-      rdfa_resolve_curie(context, "http://www.example.org/iri"));
-   printf("Safe CURIE [dc:title]: %s\n",
-      rdfa_resolve_curie(context, "[dc:title]"));
-   printf("Unsafe CURIE dc:title: %s\n",
-      rdfa_resolve_curie(context, "dc:title"));
-   printf("Non-prefixed CURIE :unprefixed: %s\n",
-      rdfa_resolve_curie(context, ":unprefixed"));
-   printf("XHTML reserved word next: %s\n",
-      rdfa_resolve_legacy_curie(context, "next"));
-   printf("XHTML, non-reserved [foobar]: %s\n",
-      rdfa_resolve_curie(context, "[foobar]"));
-   printf("XHTML, non-reserved [foobar]: %s\n",
-      rdfa_resolve_legacy_curie(context, "[foobar]"));
-   printf("Empty safe CURIE []: %s\n",
-      rdfa_resolve_curie(context, "[]"));
+   printf("------------------------ CURIE tests ---------------------\n");
+   
+   run_test(context, "IRI", "http://www.example.org/iri",
+      rdfa_resolve_curie, "http://www.example.org/iri");
+   run_test(context, "Safe CURIE", "[dc:title]",
+      rdfa_resolve_curie, "http://purl.org/dc/elements/1.1/title");
+   run_test(context, "Unsafe CURIE", "dc:title",
+      rdfa_resolve_curie, "http://purl.org/dc/elements/1.1/title");
+   run_test(context, "Non-prefixed CURIE", ":nonprefixed",
+      rdfa_resolve_curie, "http://example.org/nonprefixed");
+   run_test(context, "Reference-only CURIE", "foobar",
+      rdfa_resolve_curie, NULL);
+   run_test(context, "Reference-only safe CURIE", "[foobar]",
+      rdfa_resolve_curie, NULL);
+   run_test(context, "Empty safe CURIE", "[]",
+      rdfa_resolve_curie, NULL);
+
+   run_test_set(context, "XHTML @rel/@rev reserved",
+      my_g_relrev_reserved_words, XHTML_RELREV_RESERVED_WORDS_SIZE,
+      rdfa_resolve_relrev_curie, XHTML_VOCAB_URI);
+   run_test_set(context, "XHTML @property reserved",
+      my_g_property_reserved_words, XHTML_PROPERTY_RESERVED_WORDS_SIZE,
+      rdfa_resolve_property_curie, XHTML_VOCAB_URI);
+
+   printf("---------------------- CURIE test results ---------------------\n"
+          "%i passed, %i failed\n",
+          g_test_passes, g_test_fails);   
 }
 
 int main(int argc, char** argv)

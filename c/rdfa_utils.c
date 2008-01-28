@@ -4,6 +4,19 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
+char* rdfa_join_string(const char* prefix, const char* suffix)
+{
+   char* rval = NULL;
+   size_t prefix_size = strlen(prefix);
+   size_t suffix_size = strlen(suffix);
+   rval = malloc(prefix_size + suffix_size + 1);
+   
+   memcpy(rval, prefix, prefix_size);
+   memcpy(rval+prefix_size, suffix, suffix_size);
+
+   return rval;
+}
+
 char* rdfa_replace_string(char* old_string, const char* new_string)
 {
    size_t new_string_length = strlen(new_string);
@@ -82,5 +95,23 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value)
 
 const char* rdfa_get_mapping(char** mapping, const char* key)
 {
-   return NULL;
+   const char* rval = NULL;
+   char** mptr = mapping;
+   
+   // search the current mapping to see if the key exists in the mapping.
+   while(*mptr != NULL)
+   {
+      if(strcmp(*mptr, key) == 0)
+      {
+         mptr++;
+         rval = *mptr;
+      }
+      else
+      {
+         mptr++;
+      }
+      mptr++;
+   }
+   
+   return rval;
 }

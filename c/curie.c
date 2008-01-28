@@ -1,3 +1,9 @@
+/**
+ * The CURIE module is used to resolve all forms of CURIEs that
+ * XHTML+RDFa accepts.
+ *
+ * @author Manu Sporny
+ */
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
@@ -6,44 +12,28 @@
 
 // These are all of the @property reserved words in XHTML 1.1 that
 // should generate triples.
-const char* g_property_reserved_words[6] =
+#define XHTML_PROPERTY_RESERVED_WORDS_SIZE 6
+static
+   const char* g_property_reserved_words[XHTML_PROPERTY_RESERVED_WORDS_SIZE] =
 {
-   "description",
-   "generator",
-   "keywords",
-   "reference",
-   "robots",
-   "title"
+   "description", "generator", "keywords", "reference", "robots", "title"
 };
-   
 
 // These are all of the @rel/@rev reserved words in XHTML 1.1 that
 // should generate triples.
-const char* g_relrev_reserved_words[22] =
+#define XHTML_RELREV_RESERVED_WORDS_SIZE 22
+static const char* g_relrev_reserved_words[XHTML_RELREV_RESERVED_WORDS_SIZE] =
 {
-   "alternate",
-   "appendix",
-   "bookmark",
-   "chapter",
-   "cite",
-   "contents",
-   "copyright",
-   "glossary",
-   "help",
-   "icon",
-   "index",
-   "meta",
-   "next",
-   "p3pv1",
-   "prev",
-   "role",
-   "section",
-   "subsection",
-   "start",
-   "license",
-   "up",
-   "last"
+   "alternate", "appendix", "bookmark", "chapter", "cite", "contents",
+   "copyright", "glossary", "help", "icon", "index", "meta", "next", "p3pv1",
+   "prev", "role",  "section",  "subsection",  "start", "license", "up", "last"
 };
+
+// The base XHTML vocab URL is used to resolve URIs that are reserved
+// words. Any reserved listed above is appended to the URL below to
+// form a complete IRI.
+#define XHTML_VOCAB_URI "http://www.w3.org/1999/xhtml/vocab#"
+#define XHTML_VOCAB_URI_SIZE 35
 
 /**
  * Gets the type of CURIE that is passed to it.
@@ -60,7 +50,7 @@ curie_t get_curie_type(const char* uri)
    {
       size_t uri_length = strlen(uri);
 
-      if((uri[0] == '[') && (uri[uri_length] == ']'))
+      if((uri[0] == '[') && (uri[uri_length - 1] == ']'))
       {
          // a safe curie starts with [ and ends with ]
          rval = CURIE_TYPE_SAFE;
@@ -87,19 +77,6 @@ curie_t get_curie_type(const char* uri)
    return rval;
 }
 
-/**
- * Expands the given prefix if it is defined in the given context's
- * URI mappings.
- *
- * @param context the context to use when resolving the prefix.
- * @param prefix the shortened prefix to attempt resolving.
- */
-char* rdfa_expand_prefix(rdfacontext* context, const char* prefix)
-{
-   // check to see if the prefix exists in a mapping
-   return NULL;
-}
-
 char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
@@ -114,21 +91,20 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
       // if the CURIE is a complete IRI, then return the IRI verbatim
       rval = rdfa_replace_string(rval, uri);
    }
-   else if((ctype == CURIE_TYPE_SAFE) || (ctype == CURIE_TYPE_UNSAFE) ||
-      (ctype == CURIE_TYPE_REFERENCE))
+   else if((ctype == CURIE_TYPE_SAFE) || (ctype == CURIE_TYPE_UNSAFE))
    {
       char* working_copy = NULL;
       working_copy = rdfa_replace_string(working_copy, uri);
       char* prefix_start = working_copy;
       char* reference_start = working_copy;
-      char* reference_end = prefix_start + strlen(working_copy);
+      char* reference_end = prefix_start + strlen(working_copy) - 1;
       char* colon = strchr(working_copy, ':');
 
       // if this is a safe CURIE, chop off the beginning and the end
       if(ctype == CURIE_TYPE_SAFE)
       {
-         *prefix_start = (int)NULL;
-         *reference_end = (int)NULL;
+         *prefix_start = '\0';
+         *reference_end = '\0';
          prefix_start++;
          reference_end--;
       }
@@ -138,7 +114,7 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
       if(colon != NULL)
       {
          *colon = (int)NULL;
-         reference_start = ++colon;
+         reference_start = colon + 1;
       }
       else
       {
@@ -148,42 +124,95 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
       // fully resolve the prefix and get it's length
       const char* expanded_prefix = NULL;
       size_t expanded_prefix_length = 0;
-      if(prefix_start != NULL);
+
+      // if a colon was found, but no prefix, use the context->base as
+      // the prefix IRI
+      if((colon != NULL) && (colon == prefix_start))
       {
+         expanded_prefix = context->base;
+      }
+      else if(prefix_start != NULL)
+      {
+         // if the prefix was defined, get it from the set of URI mappings.
          expanded_prefix =
             rdfa_get_mapping(context->uri_mappings, prefix_start);
-         if(expanded_prefix != NULL)
-         {
-            expanded_prefix_length = strlen(expanded_prefix);
-         }
       }
 
+      // get the length of the expanded prefix if it exists.
+      if(expanded_prefix != NULL)
+      {
+         expanded_prefix_length = strlen(expanded_prefix);
+      }
+      
       // if the expanded prefix and the reference exist, generate the
       // full IRI.
-      if((expanded_prefix != NULL) && (reference_start != NULL))
+      if((expanded_prefix != NULL) && (*reference_start != '\0'))
       {
-         size_t reference_size = strlen(reference_start);
-         size_t total_size = expanded_prefix_length + reference_size;
-         rval = malloc(total_size);
-         
-         strcpy(rval, expanded_prefix);
-         memcpy(
-            rval + expanded_prefix_length, reference_start, reference_size);
+         rval = rdfa_join_string(expanded_prefix, reference_start);
       }
-      else
-      {
-         // even though a reference-only CURIE is valid, it does not
-         // generate a triple in XHTML+RDFa.
-         rval = NULL;
-      }
+   }
+   else
+   {
+      // even though a reference-only CURIE is valid, it does not
+      // generate a triple in XHTML+RDFa.
+      rval = NULL;
    }
    
    return rval;
 }
 
-char* rdfa_resolve_legacy_curie(rdfacontext* context, const char* uri)
+char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
 {
+   char* rval = NULL;
+   int i = 0;
 
+   // search all of the XHTML @rel/@rev reserved words for a match
+   // against the given URI
+   for(i = 0; i < XHTML_RELREV_RESERVED_WORDS_SIZE; i++)
+   {
+      if(strcmp(g_relrev_reserved_words[i], uri) == 0)
+      {
+         // since the URI is a reserved word for @rel/@rev, generate
+         // the full IRI and stop the loop.
+         rval = rdfa_join_string(XHTML_VOCAB_URI, uri);         
+         i = XHTML_RELREV_RESERVED_WORDS_SIZE;
+      }
+   }
+
+   // if none of the XHTML @rel/@rev reserved words were found,
+   // attempt to resolve the value as a standard CURIE
+   if(rval == NULL)
+   {
+      rval = rdfa_resolve_curie(context, uri);
+   }
    
-   return NULL;
+   return rval;
+}
+
+char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
+{
+   char* rval = NULL;
+   int i = 0;
+
+   // search all of the XHTML @property reserved words for a match
+   // against the given URI
+   for(i = 0; i < XHTML_PROPERTY_RESERVED_WORDS_SIZE; i++)
+   {
+      if(strcmp(g_property_reserved_words[i], uri) == 0)
+      {
+         // since the URI is a reserved word, generate the full IRI
+         // and stop the loop.
+         rval = rdfa_join_string(XHTML_VOCAB_URI, uri);
+         i = XHTML_PROPERTY_RESERVED_WORDS_SIZE;
+      }
+   }
+
+   // if none of the XHTML @property reserved words were found,
+   // attempt to resolve the value as a standard CURIE
+   if(rval == NULL)
+   {
+      rval = rdfa_resolve_curie(context, uri);
+   }
+   
+   return rval;
 }

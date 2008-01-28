@@ -63,6 +63,18 @@ const char* rdfa_get_mapping(char** mapping, const char* key);
 char* rdfa_replace_string(char* old_string, const char* new_string);
 
 /**
+ * Joins two strings together and returns a newly allocated string
+ * with both strings joined.
+ *
+ * @param prefix the beginning part of the string.
+ * @param suffix the ending part of the string.
+ *
+ * @return a pointer to the newly allocated string that has both
+ *         prefix and suffix in it.
+ */
+char* rdfa_join_string(const char* prefix, const char* suffix);
+
+/**
  * Resolves a given uri depending on whether or not it is a fully
  * qualified IRI, a CURIE, or a short-form XHTML reserved word.
  *
@@ -76,7 +88,8 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri);
 
 /**
  * Resolves a given uri depending on whether or not it is a fully
- * qualified IRI, a CURIE, or a short-form XHTML reserved word.
+ * qualified IRI, a CURIE, or a short-form XHTML reserved word for
+ * @rel or @rev as defined in the XHTML+RDFa Syntax Document.
  *
  * @param context the current processing context.
  * @param uri the URI part to process.
@@ -85,6 +98,20 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri);
  *         due to the given URI not being a short-form XHTML reserved
  *         word. The memory returned from this function MUST be freed.
  */
-char* rdfa_resolve_legacy_curie(rdfacontext* context, const char* uri);
+char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri);
+
+/**
+ * Resolves a given uri depending on whether or not it is a fully
+ * qualified IRI, a CURIE, or a short-form XHTML reserved word for
+ * @property as defined in the XHTML+RDFa Syntax Document.
+ *
+ * @param context the current processing context.
+ * @param uri the URI part to process.
+ *
+ * @return the fully qualified IRI, or NULL if the conversion failed
+ *         due to the given URI not being a short-form XHTML reserved
+ *         word. The memory returned from this function MUST be freed.
+ */
+char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
 
 #endif

@@ -96,17 +96,18 @@ static void XMLCALL
          else if(strcmp(attribute, "rel") == 0)
          {
             rel_curie = value;
-            rel = rdfa_resolve_legacy_curie(current_context, rel_curie);
+            rel = rdfa_resolve_relrev_curie(current_context, rel_curie);
          }
          else if(strcmp(attribute, "rev") == 0)
          {
             rev_curie = value;
-            rev = rdfa_resolve_legacy_curie(current_context, rev_curie);
+            rev = rdfa_resolve_relrev_curie(current_context, rev_curie);
          }
          else if(strcmp(attribute, "property") == 0)
          {
             property_curie = value;
-            property = rdfa_resolve_curie(current_context, property_curie);
+            property =
+               rdfa_resolve_property_curie(current_context, property_curie);
          }
          else if(strcmp(attribute, "resource") == 0)
          {
@@ -122,7 +123,7 @@ static void XMLCALL
          {
             xml_lang = value;
          }
-         else if(strcmp(attribute, "xml:base") == 0)
+         else if(strcmp(name, "base") == 0)
          {
             xml_base = value;
          }
