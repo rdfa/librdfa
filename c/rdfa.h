@@ -70,9 +70,10 @@ typedef struct rdfacontext
    triple_handler_fp triple_callback;
    buffer_filler_fp buffer_filler_callback;
 
+   size_t bnode_count;
    unsigned char recurse;
    char* new_subject;
-   
+   char* current_object_resource;   
 } rdfacontext;
 
 /**

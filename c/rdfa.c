@@ -37,15 +37,15 @@ void rdfa_update_language(rdfacontext* context, const char* lang);
 static void XMLCALL
    start_element(void* user_data, const char* name, const char** attributes)
 {
-   rdfacontext* current_context = user_data;
+   rdfacontext* context = user_data;
    printf("<%s>\n", name);
    
    // 1. First, some of the local values are initialised, as follows:
    // * the [recurse] flag is set to true;
-   current_context->recurse = 0;
+   context->recurse = 0;
    
    // * [new subject] is set to null.
-   current_context->new_subject = NULL;
+   context->new_subject = NULL;
 
    // prepare all of the RDFa-specific attributes we are looking for.
    const char** aptr = attributes;
@@ -81,43 +81,43 @@ static void XMLCALL
          if(strcmp(attribute, "about") == 0)
          {
             about_curie = value;
-            about = rdfa_resolve_curie(current_context, about_curie);
+            about = rdfa_resolve_curie(context, about_curie);
          }
          else if(strcmp(attribute, "src") == 0)
          {
             src_curie = value;
-            src = rdfa_resolve_curie(current_context, src_curie);
+            src = rdfa_resolve_curie(context, src_curie);
          }
          else if(strcmp(attribute, "instanceof") == 0)
          {
             instanceof_curie = value;
-            instanceof = rdfa_resolve_curie(current_context, instanceof_curie);
+            instanceof = rdfa_resolve_curie(context, instanceof_curie);
          }
          else if(strcmp(attribute, "rel") == 0)
          {
             rel_curie = value;
-            rel = rdfa_resolve_relrev_curie(current_context, rel_curie);
+            rel = rdfa_resolve_relrev_curie(context, rel_curie);
          }
          else if(strcmp(attribute, "rev") == 0)
          {
             rev_curie = value;
-            rev = rdfa_resolve_relrev_curie(current_context, rev_curie);
+            rev = rdfa_resolve_relrev_curie(context, rev_curie);
          }
          else if(strcmp(attribute, "property") == 0)
          {
             property_curie = value;
             property =
-               rdfa_resolve_property_curie(current_context, property_curie);
+               rdfa_resolve_property_curie(context, property_curie);
          }
          else if(strcmp(attribute, "resource") == 0)
          {
             resource_curie = value;
-            resource = rdfa_resolve_curie(current_context, resource_curie);
+            resource = rdfa_resolve_curie(context, resource_curie);
          }
          else if(strcmp(attribute, "href") == 0)
          {
             href_curie = value;
-            href = rdfa_resolve_curie(current_context, href_curie);
+            href = rdfa_resolve_curie(context, href_curie);
          }
          else if(strcmp(attribute, "xml:lang") == 0)
          {
@@ -131,7 +131,7 @@ static void XMLCALL
          {
             // 2. Next the [current element] is parsed for [URI
             //    mapping]s and these are added to the [list of URI mappings].
-            rdfa_update_uri_mappings(current_context, attribute, value);
+            rdfa_update_uri_mappings(context, attribute, value);
          }
       }
    }
@@ -139,20 +139,71 @@ static void XMLCALL
    // 2.1 The [current element] is parsed for xml:base and [base] is set
    // to this value if it exists. -- manu (not in the processing rules
    // yet)
-   rdfa_update_base(current_context, xml_base);
+   rdfa_update_base(context, xml_base);
    
    // 3. The [current element] is also parsed for any language
    //    information, and [language] is set in the [current
    //    evaluation context];
-   rdfa_update_language(current_context, xml_lang);
+   rdfa_update_language(context, xml_lang);
 
-   // 4. Establish new subject if @rel/@rev don't exist on current
-   //    element
-   //if(!is_valid_uri(rel) && !is_valid_uri(rev))
-   //{
-      //rdfa_establish_new_subject();
-   //}   
+   /***************** FOR DEBUGGING PURPOSES ONLY *******************/
+   if(about != NULL)
+   {
+      printf("DEBUG: @about = %s\n", about);
+   }
+   if(src != NULL)
+   {
+      printf("DEBUG: @src = %s\n", src);
+   }
+   if(instanceof != NULL)
+   {
+      printf("DEBUG: @instanceof = %s\n", instanceof);
+   }
+   if(rel != NULL)
+   {
+      printf("DEBUG: @rel = %s\n", rel);
+   }
+   if(rev != NULL)
+   {
+      printf("DEBUG: @rev = %s\n", rev);
+   }
+   if(property != NULL)
+   {
+      printf("DEBUG: @property = %s\n", property);
+   }
+   if(resource != NULL)
+   {
+      printf("DEBUG: @resource = %s\n", resource);
+   }
+   if(href != NULL)
+   {
+      printf("DEBUG: @href = %s\n", href);
+   }
+   
+   if((rel == NULL) && (rev == NULL))
+   {
+      // 4. Establish new subject if @rel/@rev don't exist on current
+      //    element
+      rdfa_establish_new_subject(
+         context, about, src, resource, href, instanceof);
+   }
+   else
+   {
+      // 5. If the [current element] does contain a valid @rel or
+      //    @rev URI, obtained according to the section on CURIE and
+      //    URI Processing, then the next step is to establish both a
+      //    value for [new subject] and a value for [current object resource]:
+      rdfa_establish_new_subject_with_relrev(
+         context, about, src, resource, href, instanceof);
 
+   }
+
+   /* DEBUGGING PURPOSES ONLY */
+   if(context->new_subject != NULL)
+   {
+      printf("DEBUG: new_subject = %s\n", context->new_subject);
+   }
+   
    // free the resolved CURIEs
    free(about);
    free(src);
@@ -219,6 +270,12 @@ void rdfa_init_context(rdfacontext* context)
    
    // the [language] is set to null.
    context->language = NULL;
+
+   // set the bnode_count to 0.
+   context->bnode_count = 0;
+
+   // set the [current object resource] to null;
+   context->current_object_resource = NULL;
 }
 
 int rdfa_parse(rdfacontext* context)
