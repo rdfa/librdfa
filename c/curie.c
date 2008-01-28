@@ -163,6 +163,18 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
    return rval;
 }
 
+/**
+ * Resolves a given uri depending on whether or not it is a fully
+ * qualified IRI, a CURIE, or a short-form XHTML reserved word for
+ * @rel or @rev as defined in the XHTML+RDFa Syntax Document.
+ *
+ * @param context the current processing context.
+ * @param uri the URI part to process.
+ *
+ * @return the fully qualified IRI, or NULL if the conversion failed
+ *         due to the given URI not being a short-form XHTML reserved
+ *         word. The memory returned from this function MUST be freed.
+ */
 char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
@@ -191,6 +203,18 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
    return rval;
 }
 
+/**
+ * Resolves a given uri depending on whether or not it is a fully
+ * qualified IRI, a CURIE, or a short-form XHTML reserved word for
+ * @property as defined in the XHTML+RDFa Syntax Document.
+ *
+ * @param context the current processing context.
+ * @param uri the URI part to process.
+ *
+ * @return the fully qualified IRI, or NULL if the conversion failed
+ *         due to the given URI not being a short-form XHTML reserved
+ *         word. The memory returned from this function MUST be freed.
+ */
 char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
@@ -216,5 +240,48 @@ char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
       rval = rdfa_resolve_curie(context, uri);
    }
    
+   return rval;
+}
+
+rdfalist* rdfa_resolve_curie_list(
+   rdfacontext* rdfa_context, const char* uris, curieparse_t mode)
+{
+   rdfalist* rval = rdfa_create_list(3);
+   char* working_uris = NULL;
+   char* uptr = NULL;
+   char* ctoken = NULL;
+   working_uris = rdfa_replace_string(working_uris, uris);
+
+   // go through each item in the list of CURIEs and resolve each
+   ctoken = strtok_r(working_uris, " ", &uptr);
+   while(ctoken != NULL)
+   {
+      char* resolved_curie = NULL;
+
+      if(mode == CURIE_PARSE_INSTANCEOF)
+      {
+         resolved_curie = rdfa_resolve_curie(rdfa_context, ctoken);
+      }
+      else if(mode == CURIE_PARSE_RELREV)
+      {
+         resolved_curie = rdfa_resolve_relrev_curie(rdfa_context, ctoken);
+      }
+      else if(mode == CURIE_PARSE_PROPERTY)
+      {
+         resolved_curie = rdfa_resolve_property_curie(rdfa_context, ctoken);
+      }
+
+      // add the CURIE if it was a valid one
+      if(resolved_curie != NULL)
+      {
+         rdfa_add_item(rval, resolved_curie, RDFALIST_FLAG_NONE);
+         free(resolved_curie);
+      }
+      
+      ctoken = strtok_r(NULL, " ", &uptr);
+   }
+   
+   free(working_uris);
+
    return rval;
 }

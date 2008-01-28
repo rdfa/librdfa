@@ -19,10 +19,11 @@
  */
 void rdfa_complete_incomplete_triples(rdfacontext* context)
 {
-   
+   printf("TODO: Implement rdfa_complete_incomplete_triples()\n");
 }
 
-void rdfa_complete_type_triples(rdfacontext* context, const char* instanceof)
+void rdfa_complete_type_triples(
+   rdfacontext* context, const rdfalist* instanceof)
 {
    // 6.2 One or more 'types' for the [new subject] can be set by using
    //     @instanceof. If present, the attribute must contain one or more
@@ -35,21 +36,18 @@ void rdfa_complete_type_triples(rdfacontext* context, const char* instanceof)
    //        http://www.w3.org/1999/02/22-rdf-syntax-ns#type
    //     object
    //        full URI of 'type'
-   char* working_instanceof = NULL;
-   char* iptr = NULL;
-   char* ctoken = NULL;
-   working_instanceof = rdfa_replace_string(working_instanceof, instanceof);
+   int i;
 
-   ctoken = strtok_r(working_instanceof, " ", &iptr);
-   while(ctoken != NULL)
+   rdfalistitem** iptr = instanceof->items;
+   for(i = 0; i < instanceof->num_items; i++)
    {
-      rdftriple* triple = rfda_create_triple(context->new_subject,
-         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", ctoken, NULL,
-         NULL);
+      rdfalistitem* curie = *iptr;
+      
+      rdftriple* triple = rdfa_create_triple(context->new_subject,
+         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+         curie->data, NULL, NULL);
       
       context->triple_callback(triple);
-      ctoken = strtok_r(NULL, " ", &iptr);
+      iptr++;
    }
-   
-   free(working_instanceof);
 }

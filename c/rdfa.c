@@ -30,6 +30,13 @@ void rdfa_update_uri_mappings(
    rdfacontext* context, const char* attribute, const char* value);
 void rdfa_update_base(rdfacontext* context, const char* base);
 void rdfa_update_language(rdfacontext* context, const char* lang);
+void rdfa_establish_new_subject(
+   rdfacontext* context, const char* about, const char* src,
+   const char* resource, const char* href, rdfalist* instanceof);
+void rdfa_establish_new_subject_with_relrev(
+   rdfacontext* context, const char* about, const char* src,
+   const char* resource, const char* href, rdfalist* instanceof);
+void rdfa_complete_incomplete_triples(rdfacontext* context);
 
 /**
  * Handles the start_element call
@@ -56,13 +63,13 @@ static void XMLCALL
    const char* src_curie = NULL;
    char* src = NULL;
    const char* instanceof_curie = NULL;
-   char* instanceof = NULL;
+   rdfalist* instanceof = NULL;
    const char* rel_curie = NULL;
-   char* rel = NULL;
+   rdfalist* rel = NULL;
    const char* rev_curie = NULL;
-   char* rev = NULL;
+   rdfalist* rev = NULL;
    const char* property_curie = NULL;
-   char* property = NULL;
+   rdfalist* property = NULL;
    const char* resource_curie = NULL;
    char* resource = NULL;
    const char* href_curie = NULL;
@@ -91,23 +98,27 @@ static void XMLCALL
          else if(strcmp(attribute, "instanceof") == 0)
          {
             instanceof_curie = value;
-            instanceof = rdfa_resolve_curie(context, instanceof_curie);
+            instanceof = rdfa_resolve_curie_list(
+               context, instanceof_curie, CURIE_PARSE_INSTANCEOF);
          }
          else if(strcmp(attribute, "rel") == 0)
          {
             rel_curie = value;
-            rel = rdfa_resolve_relrev_curie(context, rel_curie);
+            rel = rdfa_resolve_curie_list(
+               context, rel_curie, CURIE_PARSE_RELREV);
          }
          else if(strcmp(attribute, "rev") == 0)
          {
             rev_curie = value;
-            rev = rdfa_resolve_relrev_curie(context, rev_curie);
+            rev = rdfa_resolve_curie_list(
+               context, rev_curie, CURIE_PARSE_RELREV);
          }
          else if(strcmp(attribute, "property") == 0)
          {
             property_curie = value;
             property =
-               rdfa_resolve_property_curie(context, property_curie);
+               rdfa_resolve_curie_list(
+                  context, property_curie, CURIE_PARSE_PROPERTY);
          }
          else if(strcmp(attribute, "resource") == 0)
          {
@@ -157,19 +168,19 @@ static void XMLCALL
    }
    if(instanceof != NULL)
    {
-      printf("DEBUG: @instanceof = %s\n", instanceof);
+      printf("DEBUG: @instanceof = [RDFALIST]\n");
    }
    if(rel != NULL)
    {
-      printf("DEBUG: @rel = %s\n", rel);
+      printf("DEBUG: @rel = [RDFALIST]\n");
    }
    if(rev != NULL)
    {
-      printf("DEBUG: @rev = %s\n", rev);
+      printf("DEBUG: @rev = [RDFALIST]\n");
    }
    if(property != NULL)
    {
-      printf("DEBUG: @property = %s\n", property);
+      printf("DEBUG: @property = [RDFALIST]\n");
    }
    if(resource != NULL)
    {
@@ -241,6 +252,56 @@ rdfacontext* rdfa_create_context(const char* base)
    }
    
    return rval;
+}
+
+void rdfa_free_context(rdfacontext* context)
+{
+   if(context->base)
+   {
+      free(context->base);
+   }
+   
+   if(context->current_subject != NULL)
+   {
+      free(context->current_subject);
+   }
+   
+   if(context->parent_object != NULL)
+   {
+      free(context->parent_object);
+   }
+
+   if(context->parent_bnode != NULL)
+   {
+      free(context->parent_bnode);
+   }
+
+   if(context->uri_mappings != NULL)
+   {
+      rdfa_free_mapping(context->uri_mappings);
+   }
+
+   if(context->incomplete_triples != NULL)
+   {
+      free(context->incomplete_triples);
+   }
+   
+   if(context->language != NULL)
+   {
+      free(context->language);
+   }
+
+   if(context->new_subject != NULL)
+   {
+      free(context->new_subject);
+   }
+
+   if(context->current_object_resource != NULL)
+   {
+      free(context->current_object_resource);
+   }
+      
+   free(context);
 }
 
 void rdfa_set_triple_handler(rdfacontext* context, triple_handler_fp th)

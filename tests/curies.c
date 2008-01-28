@@ -7,8 +7,8 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <rdfa_utils.h>
 #include <rdfa.h>
+#include <rdfa_utils.h>
 
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
 // These are all of the @property reserved words in XHTML 1.1 that
@@ -40,9 +40,15 @@ static const char*
 // we need this declaration to compile cleanly, we shouldn't be
 // calling it directly, but since this is a unit test, that's okay.
 void rdfa_init_context(rdfacontext* context);
+char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri);
+char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
+
 
 // typedef for CURIE processing function pointer
 typedef char* (*curie_func)(rdfacontext*, const char*);
+
+// typedef for CURIE list processing function pointer
+typedef rdfalist* (*curie_list_func)(rdfacontext*, const char*, curieparse_t);
 
 // the number of tests run
 int g_test_num = 0;
@@ -102,6 +108,66 @@ void run_test(rdfacontext* context, const char* name, const char* curie,
 }
 
 /**
+ * Runs a single unit test given the RDFa context, name of the test,
+ * a list of test CURIEs, processing function, and a list of output IRIs.
+ *
+ * @param context the RDFa context.
+ * @param name the name of the test.
+ * @param curie the CURIE to resolve.
+ * @param cb the function callback to the CURIE resolution function.
+ * @param iris a list of output IRIs.
+ */
+void run_list_test(rdfacontext* context, const char* name, const char* curies,
+   curie_list_func cb, rdfalist* iris, curieparse_t mode)
+{
+   rdfalist* result = cb(context, curies, mode);
+   int compare = -1;
+
+   if(result != NULL)
+   {
+      compare = -1;
+      int i;
+      rdfalistitem** iptr = iris->items;
+      rdfalistitem** rptr = result->items;
+      for(i = 0; i < result->num_items; i++)
+      {
+         compare = 0;
+         char* icurie = (*iptr)->data;
+         char* rcurie = (*rptr)->data;
+         
+         printf("curie list: %s == %s\n", icurie, rcurie);
+         if(strcmp(icurie, rcurie) != 0)
+         {
+            compare = -1;
+         }
+         iptr++;
+         rptr++;
+      }
+   }   
+
+   printf("UT#%02i/%s \"%s\" ...", ++g_test_num, name, curies);
+
+   // if the string compare shows identical values, pass the test,
+   // otherwise, fail the test.
+   if(compare == 0)
+   {
+      printf("PASS.\n");
+      g_test_passes++;
+   }
+   else
+   {
+      printf("FAIL.");
+      
+      g_test_fails++;
+   }
+
+   if(result != NULL)
+   {
+      rdfa_free_list(result);
+   }
+}
+
+/**
  * Runs a set of unit tests given the RDFa context, base name of the test,
  * a set of CURIEs, a processing function, and a base IRI.
  *
@@ -134,7 +200,9 @@ void run_curie_tests()
    
    rdfa_update_mapping(
       context->uri_mappings, "dc", "http://purl.org/dc/elements/1.1/");
-
+   rdfa_update_mapping(
+      context->uri_mappings, "dctv", "http://purl.org/dc/dcmitype/");
+   
    printf("------------------------ CURIE tests ---------------------\n");
    
    run_test(context, "IRI", "http://www.example.org/iri",
@@ -152,6 +220,24 @@ void run_curie_tests()
    run_test(context, "Empty safe CURIE", "[]",
       rdfa_resolve_curie, NULL);
 
+   rdfalist* dctvlist = rdfa_create_list(2);
+   rdfa_add_item(
+      dctvlist, "http://purl.org/dc/dcmitype/Image", RDFALIST_FLAG_NONE);
+   rdfa_add_item(
+      dctvlist, "http://purl.org/dc/dcmitype/Sound", RDFALIST_FLAG_NONE);
+   run_list_test(
+      context, "XHTML multiple @instanceof", "[dctv:Image] [dctv:Sound]",
+      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_INSTANCEOF);
+   rdfa_free_list(dctvlist);
+   
+   run_list_test(
+      context, "XHTML multiple @rel/@rev", "next license",
+      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_RELREV);
+
+   run_list_test(
+      context, "XHTML multiple @property", "description title",
+      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_PROPERTY);
+
    run_test_set(context, "XHTML @rel/@rev reserved",
       my_g_relrev_reserved_words, XHTML_RELREV_RESERVED_WORDS_SIZE,
       rdfa_resolve_relrev_curie, XHTML_VOCAB_URI);
@@ -161,7 +247,9 @@ void run_curie_tests()
 
    printf("---------------------- CURIE test results ---------------------\n"
           "%i passed, %i failed\n",
-          g_test_passes, g_test_fails);   
+          g_test_passes, g_test_fails);
+
+   rdfa_free_context(context);
 }
 
 int main(int argc, char** argv)

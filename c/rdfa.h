@@ -53,6 +53,29 @@ typedef void (*triple_handler_fp)(rdftriple*);
 typedef size_t (*buffer_filler_fp)(char*, size_t);
 
 /**
+ * An RDFA list item is used to hold each datum in an rdfa list. It
+ * contains a list of flags as well as the data for the list member.
+ */
+typedef struct rdfalistitem
+{
+   unsigned char flags;
+   char* data;
+} rdfalistitem;
+
+/**
+ * An RDFa list is used to store multiple text strings that have a set
+ * of attributes associated with them. These can be lists of CURIEs,
+ * or lists of incomplete triples. The structure grows with use, but
+ * cannot be shrunk.
+ */
+typedef struct rdfalist
+{   
+   rdfalistitem** items;
+   size_t num_items;
+   size_t max_items;
+} rdfalist;
+
+/**
  * The RDFa Parser structure is responsible for keeping track of the state of
  * the current RDFa parser. Things such as the default namespace, 
  * CURIE mappings, and other context-specific 
@@ -64,7 +87,7 @@ typedef struct rdfacontext
    char* parent_object;
    char* parent_bnode;
    char** uri_mappings;
-   rdftriple** incomplete_triples;
+   rdfalist* incomplete_triples;
    char* language;
 
    triple_handler_fp triple_callback;

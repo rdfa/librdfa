@@ -19,6 +19,29 @@ typedef enum
 }  curie_t;
 
 /**
+ * A CURIE parse type lets the CURIE processor know what type of CURIE
+ * is being parsed so that the proper namespace resolution may occur.
+ */
+typedef enum
+{
+   CURIE_PARSE_INSTANCEOF,
+   CURIE_PARSE_RELREV,
+   CURIE_PARSE_PROPERTY
+} curieparse_t;
+
+/**
+ * The list member flag type is used to attach attribute information
+ * to list member data.
+ */
+typedef enum
+{
+   RDFALIST_FLAG_NONE = 0,
+   RDFALIST_FLAG_FORWARD = (1 << 1),
+   RDFALIST_FLAG_REVERSE = (1 << 2),
+   RDFALIST_FLAG_LAST = (1 << 3)
+} liflag_t;
+
+/**
  * Initializes a mapping given the number of elements the mapping is
  * expected to hold.
  *
@@ -45,6 +68,20 @@ char** rdfa_init_mapping(size_t elements);
  */
 rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
    const char* object, const char* datatype, const char* language);
+
+/**
+ * Creates a list and initializes it to the given size.
+ */
+rdfalist* rdfa_create_list(size_t size);
+
+/**
+ * Creates a list and initializes it to the given size.
+ *
+ * @param list the list to add the item to.
+ * @param data the data to add to the list.
+ * @param flags the flags to attach to the item.
+ */
+void rdfa_add_item(rdfalist* list, char* data, liflag_t flags);
 
 /**
  * Updates the given mapping when presented with a key and a value. If
@@ -104,31 +141,17 @@ char* rdfa_join_string(const char* prefix, const char* suffix);
 char* rdfa_resolve_curie(rdfacontext* context, const char* uri);
 
 /**
- * Resolves a given uri depending on whether or not it is a fully
- * qualified IRI, a CURIE, or a short-form XHTML reserved word for
- * @rel or @rev as defined in the XHTML+RDFa Syntax Document.
+ * Resolves one or more CURIEs into fully qualified IRIs.
  *
- * @param context the current processing context.
- * @param uri the URI part to process.
+ * @param rdfa_context the current processing context.
+ * @param uris a list of URIs.
+ * @param mode the CURIE parsing mode to use, one of
+ *             CURIE_PARSE_INSTANCEOF, CURIE_PARSE_RELREV, or
+ *             CURIE_PARSE_PROPERTY.
  *
- * @return the fully qualified IRI, or NULL if the conversion failed
- *         due to the given URI not being a short-form XHTML reserved
- *         word. The memory returned from this function MUST be freed.
+ * @return an RDFa list if one or more IRIs were generated, NULL if not.
  */
-char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri);
-
-/**
- * Resolves a given uri depending on whether or not it is a fully
- * qualified IRI, a CURIE, or a short-form XHTML reserved word for
- * @property as defined in the XHTML+RDFa Syntax Document.
- *
- * @param context the current processing context.
- * @param uri the URI part to process.
- *
- * @return the fully qualified IRI, or NULL if the conversion failed
- *         due to the given URI not being a short-form XHTML reserved
- *         word. The memory returned from this function MUST be freed.
- */
-char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
+rdfalist* rdfa_resolve_curie_list(
+   rdfacontext* rdfa_context, const char* uris, curieparse_t mode);
 
 #endif

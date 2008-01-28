@@ -19,6 +19,7 @@ char* rdfa_join_string(const char* prefix, const char* suffix)
 
 char* rdfa_replace_string(char* old_string, const char* new_string)
 {
+   char* rval = NULL;
    size_t new_string_length = strlen(new_string);
 
    // free the memory associated with the old string if it exists.
@@ -28,46 +29,90 @@ char* rdfa_replace_string(char* old_string, const char* new_string)
    }
 
    // copy the new string
-   old_string = malloc(new_string_length);
-   strcpy(old_string, new_string);
+   rval = malloc(new_string_length + 1);
+   strcpy(rval, new_string);
 
-   return old_string;
+   return rval;
+}
+
+rdfalist* rdfa_create_list(size_t size)
+{
+   rdfalist* rval = malloc(sizeof(rdfalist));
+
+   rval->max_items = size;
+   rval->num_items = 0;
+   rval->items = NULL;
+   rval->items = realloc(rval->items, sizeof(rdfalistitem) * rval->max_items);
+
+   return rval;
+}
+
+void rdfa_free_list(rdfalist* list)
+{
+   int i;
+   for(i = 0; i < list->num_items; i++)
+   {
+      free(list->items[i]->data);
+      free(list->items[i]);
+   }
+
+   free(list->items);
+   free(list);   
+}
+
+void rdfa_add_item(rdfalist* list, char* data, liflag_t flags)
+{
+   rdfalistitem* item = malloc(sizeof(rdfalistitem));
+
+   item->data = NULL;
+   item->data = rdfa_replace_string(item->data, data);
+   item->flags = flags;
+
+   if(list->num_items == list->max_items)
+   {
+      list->max_items = 1 + (list->max_items * 2);
+      list->items =
+         realloc(list->items, sizeof(rdfalistitem) * list->max_items);
+   }
+
+   list->items[list->num_items] = item;
+   list->num_items++;
 }
 
 rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
    const char* object, const char* datatype, const char* language)
 {
-   rdftriple* triple = malloc(sizeof(rdftriple));
+   rdftriple* rval = malloc(sizeof(rdftriple));
 
    // clear the memory
-   triple->subject = NULL;
-   triple->predicate = NULL;
-   triple->object = NULL;
-   triple->datatype = NULL;
-   triple->language = NULL;
+   rval->subject = NULL;
+   rval->predicate = NULL;
+   rval->object = NULL;
+   rval->datatype = NULL;
+   rval->language = NULL;
 
    // a triple needs a subject, predicate and object at minimum to be
    // considered a triple.
    if((subject != NULL) && (predicate != NULL) && (object != NULL))
    {
-      triple->subject = rdfa_replace_string(triple->subject, subject);
-      triple->predicate = rdfa_replace_string(triple->predicate, predicate);
-      triple->object = rdfa_replace_string(triple->object, object);
+      rval->subject = rdfa_replace_string(rval->subject, subject);
+      rval->predicate = rdfa_replace_string(rval->predicate, predicate);
+      rval->object = rdfa_replace_string(rval->object, object);
 
       // if the datatype is present, set it
       if(datatype != NULL)
       {
-         triple->datatype = rdfa_replace_string(triple->datatype, datatype);
+         rval->datatype = rdfa_replace_string(rval->datatype, datatype);
       }
 
       // if the language was specified, set it
       if(language != NULL)
       {
-         triple->language = rdfa_replace_string(triple->language, language);
+         rval->language = rdfa_replace_string(rval->language, language);
       }
    }
 
-   return triple;
+   return rval;
 }
 
 char** rdfa_init_mapping(size_t elements)
@@ -150,4 +195,21 @@ const char* rdfa_get_mapping(char** mapping, const char* key)
    }
    
    return rval;
+}
+
+void rdfa_free_mapping(char** mapping)
+{
+   char** mptr = mapping;
+
+   if(mapping != NULL)
+   {
+      // free all of the memory in the mapping
+      while(*mptr != NULL)
+      {
+         free(*mptr);
+         mptr++;
+      }
+
+      free(mapping);
+   }
 }
