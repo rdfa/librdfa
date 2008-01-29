@@ -146,6 +146,7 @@ char* rdfa_join_string(const char* prefix, const char* suffix);
  * @param subject the subject for the triple.
  * @param predicate the predicate for the triple.
  * @param object the object for the triple.
+ * @param object_type the type of the object, which must be an rdfresource_t.
  * @param datatype the datatype of the triple.
  * @param language the language for the triple.
  *
@@ -154,11 +155,35 @@ char* rdfa_join_string(const char* prefix, const char* suffix);
  *         with it.
  */
 rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
-   const char* object, const char* datatype, const char* language);
+   const char* object, rdfresource_t object_type, const char* datatype,
+   const char* language);
+
+/**
+ * Prints a triple in a human-readable fashion.
+ *
+ * @triple the triple to display.
+ */
+void rdfa_print_triple(rdftriple* triple);
+
+/**
+ * Frees the memory associated with a triple.
+ */
+void rdfa_free_triple(rdftriple* triple);
+
+/**
+ * Resolves a given uri by appending it to the context's base parameter.
+ *
+ * @param context the current processing context.
+ * @param uri the URI part to process.
+ *
+ * @return the fully qualified IRI. The memory returned from this
+ *         function MUST be freed.
+ */
+char* rdfa_resolve_uri(rdfacontext* context, const char* uri);
 
 /**
  * Resolves a given uri depending on whether or not it is a fully
- * qualified IRI, a CURIE, or a short-form XHTML reserved word.
+ * qualified IRI or a CURIE.
  *
  * @param context the current processing context.
  * @param uri the URI part to process.

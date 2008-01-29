@@ -26,6 +26,18 @@
 #define MAX_INCOMPLETE_TRIPLES 1024
 
 /**
+ * An RDF resource type is used to denote the content of a triple's
+ * object value.
+ */
+typedef enum
+{
+   RDF_TYPE_IRI,
+   RDF_TYPE_TEXT,
+   RDF_TYPE_XML_LITERAL
+} rdfresource_t;
+
+
+/**
  * An RDF triple is the result of an RDFa statement that contains, at
  * the very least, a subject, a predicate and an object. It is the
  * smallest, complete statement one can make in RDF.
@@ -35,6 +47,7 @@ typedef struct rdftriple
    char* subject;
    char* predicate;
    char* object;
+   rdfresource_t object_type;
    char* datatype;
    char* language;
 } rdftriple;

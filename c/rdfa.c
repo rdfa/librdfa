@@ -8,11 +8,11 @@
  *
  * Usage:
  *
- * rdfacontext* context = rdfa_create_context(base_uri);
- * rdfa_set_triple_handler(context, func);
- * rdfa_set_buffer_filler(context, func);
- * rdfa_parse(context);
- * rdfa_destroy_parser(context);
+ *    rdfacontext* context = rdfa_create_context(BASE_URI);
+ *    rdfa_set_triple_handler(context, &process_triple);
+ *    rdfa_set_buffer_filler(context, &fill_buffer);
+ *    rdfa_parse(context);
+ *    rdfa_free_context(context);
  *
  * @author Manu Sporny
  */
@@ -37,6 +37,7 @@ void rdfa_establish_new_subject_with_relrev(
    rdfacontext* context, const char* about, const char* src,
    const char* resource, const char* href, rdfalist* instanceof);
 void rdfa_complete_incomplete_triples(rdfacontext* context);
+void rdfa_complete_type_triples(rdfacontext* context, rdfalist* instanceof);
 
 /**
  * Handles the start_element call
@@ -89,6 +90,10 @@ static void XMLCALL
          {
             about_curie = value;
             about = rdfa_resolve_curie(context, about_curie);
+            if((about == NULL) && (about_curie != NULL))
+            {
+               about = rdfa_resolve_uri(context, about_curie);
+            }
          }
          else if(strcmp(attribute, "src") == 0)
          {
@@ -124,6 +129,10 @@ static void XMLCALL
          {
             resource_curie = value;
             resource = rdfa_resolve_curie(context, resource_curie);
+            if((resource == NULL) && (resource_curie != NULL))
+            {
+               resource = rdfa_resolve_uri(context, resource_curie);
+            }
          }
          else if(strcmp(attribute, "href") == 0)
          {
@@ -210,7 +219,6 @@ static void XMLCALL
       //    value for [new subject] and a value for [current object resource]:
       rdfa_establish_new_subject_with_relrev(
          context, about, src, resource, href, instanceof);
-
    }
 
    if(context->new_subject != NULL)
@@ -223,8 +231,36 @@ static void XMLCALL
       rdfa_complete_incomplete_triples(context);
 
       // provide a subject for type values;
-   }
+      if(instanceof != NULL)
+      {
+         rdfa_complete_type_triples(context, instanceof);
+      }
 
+      // furnish a new value for [current subject].
+      // Once all 'incomplete triples' have been resolved,
+      // [current subject] is set to [new subject].
+      context->current_subject =
+         rdfa_replace_string(context->current_subject, context->new_subject);
+
+      // * The values [parent bnode] and [parent object] are both
+      // cleared so that they are not passed on to child statements
+      // when recursing.
+      if(context->parent_bnode != NULL)
+      {
+         free(context->parent_bnode);
+         context->parent_bnode = NULL;
+      }
+      if(context->parent_object != NULL)
+      {
+         free(context->parent_object);
+         context->parent_object = NULL;
+      }
+
+      // Note that none of this block is executed if there is no
+      // [new subject] value, i.e., [new subject] remains null, which
+      // means that [current subject] will not be modified, and will
+      // remain exactly as it was during the processing of the parent element.
+   }
    
    // free the resolved CURIEs
    free(about);
@@ -287,7 +323,7 @@ void rdfa_free_context(rdfacontext* context)
 
    if(context->incomplete_triples != NULL)
    {
-      free(context->incomplete_triples);
+      rdfa_free_list(context->incomplete_triples);
    }
    
    if(context->language != NULL)
@@ -338,7 +374,7 @@ void rdfa_init_context(rdfacontext* context)
    context->uri_mappings = (char**)rdfa_create_mapping(MAX_URI_MAPPINGS);
    
    // the [list of incomplete triples] is cleared;
-   context->incomplete_triples = NULL;
+   context->incomplete_triples = rdfa_create_list(3);
    
    // the [language] is set to null.
    context->language = NULL;

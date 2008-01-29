@@ -77,6 +77,11 @@ curie_t get_curie_type(const char* uri)
    return rval;
 }
 
+char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
+{
+   return rdfa_join_string(context->base, uri);
+}
+
 char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
@@ -250,7 +255,6 @@ rdfalist* rdfa_resolve_curie_list(
    while(ctoken != NULL)
    {
       char* resolved_curie = NULL;
-      printf("ctoken: %s\n", ctoken);
 
       if(mode == CURIE_PARSE_INSTANCEOF)
       {
@@ -268,7 +272,6 @@ rdfalist* rdfa_resolve_curie_list(
       // add the CURIE if it was a valid one
       if(resolved_curie != NULL)
       {
-         printf("RC: %s\n", resolved_curie);
          rdfa_add_item(rval, resolved_curie, RDFALIST_FLAG_NONE);
          free(resolved_curie);
       }

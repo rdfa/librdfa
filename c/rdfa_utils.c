@@ -105,42 +105,6 @@ void rdfa_add_item(rdfalist* list, char* data, liflag_t flags)
    list->num_items++;
 }
 
-rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
-   const char* object, const char* datatype, const char* language)
-{
-   rdftriple* rval = malloc(sizeof(rdftriple));
-
-   // clear the memory
-   rval->subject = NULL;
-   rval->predicate = NULL;
-   rval->object = NULL;
-   rval->datatype = NULL;
-   rval->language = NULL;
-
-   // a triple needs a subject, predicate and object at minimum to be
-   // considered a triple.
-   if((subject != NULL) && (predicate != NULL) && (object != NULL))
-   {
-      rval->subject = rdfa_replace_string(rval->subject, subject);
-      rval->predicate = rdfa_replace_string(rval->predicate, predicate);
-      rval->object = rdfa_replace_string(rval->object, object);
-
-      // if the datatype is present, set it
-      if(datatype != NULL)
-      {
-         rval->datatype = rdfa_replace_string(rval->datatype, datatype);
-      }
-
-      // if the language was specified, set it
-      if(language != NULL)
-      {
-         rval->language = rdfa_replace_string(rval->language, language);
-      }
-   }
-
-   return rval;
-}
-
 char** rdfa_create_mapping(size_t elements)
 {
    size_t mapping_size = sizeof(char*) * elements * 2;
