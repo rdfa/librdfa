@@ -168,19 +168,23 @@ static void XMLCALL
    }
    if(instanceof != NULL)
    {
-      printf("DEBUG: @instanceof = [RDFALIST]\n");
+      printf("DEBUG: @instanceof = ");
+      rdfa_print_list(instanceof);
    }
    if(rel != NULL)
    {
-      printf("DEBUG: @rel = [RDFALIST]\n");
+      printf("DEBUG: @rel = ");
+      rdfa_print_list(rel);
    }
    if(rev != NULL)
    {
-      printf("DEBUG: @rev = [RDFALIST]\n");
+      printf("DEBUG: @rev = ");
+      rdfa_print_list(rev);
    }
    if(property != NULL)
    {
-      printf("DEBUG: @property = [RDFALIST]\n");
+      printf("DEBUG: @property = ");
+      rdfa_print_list(property);
    }
    if(resource != NULL)
    {
@@ -225,10 +229,10 @@ static void XMLCALL
    // free the resolved CURIEs
    free(about);
    free(src);
-   free(instanceof);
-   free(rel);
-   free(rev);
-   free(property);
+   rdfa_free_list(instanceof);
+   rdfa_free_list(rel);
+   rdfa_free_list(rev);
+   rdfa_free_list(property);
    free(resource);
    free(href);
 }
@@ -331,7 +335,7 @@ void rdfa_init_context(rdfacontext* context)
    context->parent_bnode = NULL;
    
    // the [list of URI mappings] is cleared;
-   context->uri_mappings = (char**)rdfa_init_mapping(MAX_URI_MAPPINGS);
+   context->uri_mappings = (char**)rdfa_create_mapping(MAX_URI_MAPPINGS);
    
    // the [list of incomplete triples] is cleared;
    context->incomplete_triples = NULL;
@@ -344,6 +348,11 @@ void rdfa_init_context(rdfacontext* context)
 
    // set the [current object resource] to null;
    context->current_object_resource = NULL;
+
+   // the next two are initialized to make the C compiler and valgrind
+   // happy - they are not a part of the RDFa spec.
+   context->recurse = 0;
+   context->new_subject = NULL;
 }
 
 int rdfa_parse(rdfacontext* context)
@@ -375,14 +384,4 @@ int rdfa_parse(rdfacontext* context)
    XML_ParserFree(parser);
    
    return RDFA_PARSE_FAILED;
-}
-
-void rdfa_destroy_context(rdfacontext* context)
-{
-   if(context->base != NULL)
-   {
-      free(context->base);
-   }
-   
-   free(context);
 }

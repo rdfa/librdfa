@@ -94,31 +94,22 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
    else if((ctype == CURIE_TYPE_SAFE) || (ctype == CURIE_TYPE_UNSAFE))
    {
       char* working_copy = NULL;
-      working_copy = rdfa_replace_string(working_copy, uri);
-      char* prefix_start = working_copy;
-      char* reference_start = working_copy;
-      char* reference_end = prefix_start + strlen(working_copy) - 1;
-      char* colon = strchr(working_copy, ':');
+      working_copy = malloc(strlen(uri) + 1);
+      strcpy(working_copy, uri);//rdfa_replace_string(working_copy, uri);
+      char* wcptr = NULL;
+      char* prefix = NULL;
+      char* reference = NULL;
 
       // if this is a safe CURIE, chop off the beginning and the end
       if(ctype == CURIE_TYPE_SAFE)
       {
-         *prefix_start = '\0';
-         *reference_end = '\0';
-         prefix_start++;
-         reference_end--;
+         prefix = strtok_r(working_copy, "[:]", &wcptr);
+         reference = strtok_r(NULL, "[:]", &wcptr);
       }
-
-      // delimit the colon as null because we'll be using the prefix
-      // and the reference in-line (both must be null-terminated)
-      if(colon != NULL)
+      else if(ctype == CURIE_TYPE_UNSAFE)
       {
-         *colon = (int)NULL;
-         reference_start = colon + 1;
-      }
-      else
-      {
-         reference_start = prefix_start;
+         prefix = strtok_r(working_copy, ":", &wcptr);
+         reference = strtok_r(NULL, ":", &wcptr);
       }
 
       // fully resolve the prefix and get it's length
@@ -127,15 +118,17 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
 
       // if a colon was found, but no prefix, use the context->base as
       // the prefix IRI
-      if((colon != NULL) && (colon == prefix_start))
+      if(uri[0] == ':' || ((strlen(uri) > 2) && uri[1] == ':'))
       {
          expanded_prefix = context->base;
+         reference = prefix;
+         prefix = NULL;
       }
-      else if(prefix_start != NULL)
+      else if(prefix != NULL)
       {
          // if the prefix was defined, get it from the set of URI mappings.
          expanded_prefix =
-            rdfa_get_mapping(context->uri_mappings, prefix_start);
+            rdfa_get_mapping(context->uri_mappings, prefix);
       }
 
       // get the length of the expanded prefix if it exists.
@@ -146,9 +139,9 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
       
       // if the expanded prefix and the reference exist, generate the
       // full IRI.
-      if((expanded_prefix != NULL) && (*reference_start != '\0'))
+      if((expanded_prefix != NULL) && (reference != NULL))
       {
-         rval = rdfa_join_string(expanded_prefix, reference_start);
+         rval = rdfa_join_string(expanded_prefix, reference);
       }
 
       free(working_copy);
@@ -257,6 +250,7 @@ rdfalist* rdfa_resolve_curie_list(
    while(ctoken != NULL)
    {
       char* resolved_curie = NULL;
+      printf("ctoken: %s\n", ctoken);
 
       if(mode == CURIE_PARSE_INSTANCEOF)
       {
@@ -274,6 +268,7 @@ rdfalist* rdfa_resolve_curie_list(
       // add the CURIE if it was a valid one
       if(resolved_curie != NULL)
       {
+         printf("RC: %s\n", resolved_curie);
          rdfa_add_item(rval, resolved_curie, RDFALIST_FLAG_NONE);
          free(resolved_curie);
       }

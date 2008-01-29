@@ -50,38 +50,7 @@ typedef enum
  *
  * @return an initialized char**, with all of the elements set to NULL.
  */
-char** rdfa_init_mapping(size_t elements);
-
-/**
- * Creates a triple given the subject, predicate, object, datatype and
- * language for the triple.
- *
- * @param subject the subject for the triple.
- * @param predicate the predicate for the triple.
- * @param object the object for the triple.
- * @param datatype the datatype of the triple.
- * @param language the language for the triple.
- *
- * @return a newly allocated triple with all of the given
- *         information. This triple MUST be free()'d when you are done
- *         with it.
- */
-rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
-   const char* object, const char* datatype, const char* language);
-
-/**
- * Creates a list and initializes it to the given size.
- */
-rdfalist* rdfa_create_list(size_t size);
-
-/**
- * Creates a list and initializes it to the given size.
- *
- * @param list the list to add the item to.
- * @param data the data to add to the list.
- * @param flags the flags to attach to the item.
- */
-void rdfa_add_item(rdfalist* list, char* data, liflag_t flags);
+char** rdfa_create_mapping(size_t elements);
 
 /**
  * Updates the given mapping when presented with a key and a value. If
@@ -103,6 +72,48 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value);
  * @return value the value in the mapping for the given key.
  */
 const char* rdfa_get_mapping(char** mapping, const char* key);
+
+/**
+ * Prints the mapping to the screen in a human-readable way.
+ *
+ * @param mapping the mapping to print to the screen.
+ */
+void rdfa_print_mapping(char** mapping);
+
+/**
+ * Frees all memory associated with a mapping.
+ *
+ * @param mapping the mapping to free.
+ */
+void rdfa_free_mapping(char** mapping);
+
+/**
+ * Creates a list and initializes it to the given size.
+ */
+rdfalist* rdfa_create_list(size_t size);
+
+/**
+ * Creates a list and initializes it to the given size.
+ *
+ * @param list the list to add the item to.
+ * @param data the data to add to the list.
+ * @param flags the flags to attach to the item.
+ */
+void rdfa_add_item(rdfalist* list, char* data, liflag_t flags);
+
+/**
+ * Prints the list to the screen in a human-readable way.
+ *
+ * @param list the list to print to the screen.
+ */
+void rdfa_print_list(rdfalist* list);
+
+/**
+ * Frees all memory associated with the given list.
+ *
+ * @param list the list to free.
+ */
+void rdfa_free_list(rdfalist* list);
 
 /**
  * Replaces an old string with a new string, freeing the old memory
@@ -127,6 +138,23 @@ char* rdfa_replace_string(char* old_string, const char* new_string);
  *         prefix and suffix in it.
  */
 char* rdfa_join_string(const char* prefix, const char* suffix);
+
+/**
+ * Creates a triple given the subject, predicate, object, datatype and
+ * language for the triple.
+ *
+ * @param subject the subject for the triple.
+ * @param predicate the predicate for the triple.
+ * @param object the object for the triple.
+ * @param datatype the datatype of the triple.
+ * @param language the language for the triple.
+ *
+ * @return a newly allocated triple with all of the given
+ *         information. This triple MUST be free()'d when you are done
+ *         with it.
+ */
+rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
+   const char* object, const char* datatype, const char* language);
 
 /**
  * Resolves a given uri depending on whether or not it is a fully

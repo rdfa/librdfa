@@ -142,6 +142,6 @@ int rdfa_parse(rdfacontext* context);
  *
  * @param context the rdfa context.
  */
-void rdfa_destroy_context(rdfacontext* context);
+void rdfa_free_context(rdfacontext* context);
 
 #endif

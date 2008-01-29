@@ -12,7 +12,8 @@ char* rdfa_join_string(const char* prefix, const char* suffix)
    rval = malloc(prefix_size + suffix_size + 1);
    
    memcpy(rval, prefix, prefix_size);
-   memcpy(rval+prefix_size, suffix, suffix_size);
+   memcpy(rval+prefix_size, suffix, suffix_size + 1);
+   
 
    return rval;
 }
@@ -20,18 +21,22 @@ char* rdfa_join_string(const char* prefix, const char* suffix)
 char* rdfa_replace_string(char* old_string, const char* new_string)
 {
    char* rval = NULL;
-   size_t new_string_length = strlen(new_string);
-
-   // free the memory associated with the old string if it exists.
-   if(old_string != NULL)
+   
+   if(new_string != NULL)
    {
-      free(old_string);
+      size_t new_string_length = strlen(new_string);
+
+      // free the memory associated with the old string if it exists.
+      if(old_string != NULL)
+      {
+         free(old_string);
+      }
+
+      // copy the new string
+      rval = malloc(new_string_length + 1);
+      strcpy(rval, new_string);
    }
-
-   // copy the new string
-   rval = malloc(new_string_length + 1);
-   strcpy(rval, new_string);
-
+   
    return rval;
 }
 
@@ -47,17 +52,38 @@ rdfalist* rdfa_create_list(size_t size)
    return rval;
 }
 
-void rdfa_free_list(rdfalist* list)
+void rdfa_print_list(rdfalist* list)
 {
+   printf("[ ");
+
    int i;
    for(i = 0; i < list->num_items; i++)
    {
-      free(list->items[i]->data);
-      free(list->items[i]);
+      if(i != 0)
+      {
+         printf(", ");
+      }
+      
+      printf(list->items[i]->data);
    }
 
-   free(list->items);
-   free(list);   
+   printf(" ]\n");
+}
+
+void rdfa_free_list(rdfalist* list)
+{
+   if(list != NULL)
+   {
+      int i;
+      for(i = 0; i < list->num_items; i++)
+      {
+         free(list->items[i]->data);
+         free(list->items[i]);
+      }
+
+      free(list->items);
+      free(list);
+   }
 }
 
 void rdfa_add_item(rdfalist* list, char* data, liflag_t flags)
@@ -115,7 +141,7 @@ rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
    return rval;
 }
 
-char** rdfa_init_mapping(size_t elements)
+char** rdfa_create_mapping(size_t elements)
 {
    size_t mapping_size = sizeof(char*) * elements * 2;
    char** mapping = malloc(mapping_size);
@@ -160,18 +186,7 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value)
       *mptr = rdfa_replace_string(*mptr, value);
    }
 
-   /* This is only in here for debugging purposes */
-   mptr = mapping;
-   printf("uri mappings:\n");
-   while(*mptr != NULL)
-   {
-      char* key = *mptr;
-      mptr++;
-      char* value = *mptr;
-      mptr++;
-
-      printf("%20s: %s\n", key, value);
-   }
+   rdfa_print_mapping(mapping);
 }
 
 const char* rdfa_get_mapping(char** mapping, const char* key)
@@ -195,6 +210,30 @@ const char* rdfa_get_mapping(char** mapping, const char* key)
    }
    
    return rval;
+}
+
+void rdfa_print_mapping(char** mapping)
+{
+   char** mptr = mapping;
+   printf("{\n");
+   while(*mptr != NULL)
+   {
+      char* key = *mptr;
+      mptr++;
+      char* value = *mptr;
+      mptr++;
+
+      printf("   %s : %s", key, value);
+      if(*mptr != NULL)
+      {
+         printf(",\n");
+      }
+      else
+      {
+         printf("\n");
+      }
+   }
+   printf("}\n");
 }
 
 void rdfa_free_mapping(char** mapping)

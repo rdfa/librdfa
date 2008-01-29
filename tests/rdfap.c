@@ -40,7 +40,7 @@ int main(int argc, char** argv)
          rdfa_set_triple_handler(context, &process_triple);
          rdfa_set_buffer_filler(context, &fill_buffer);
          rdfa_parse(context);
-         rdfa_destroy_context(context);
+         rdfa_free_context(context);
 
          fclose(g_xhtml_file);
       }
