@@ -40,6 +40,8 @@ void rdfa_complete_incomplete_triples(rdfacontext* context);
 void rdfa_complete_type_triples(rdfacontext* context, rdfalist* instanceof);
 void rdfa_complete_relrev_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
+void rdfa_save_incomplete_triples(
+   rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 
 /**
  * Handles the start_element call
@@ -77,6 +79,8 @@ static void XMLCALL
    char* resource = NULL;
    const char* href_curie = NULL;
    char* href = NULL;
+   const char* content = NULL;
+   const char* datatype = NULL;
 
    // scan all of the attributes for the RDFa-specific attributes
    if(aptr != NULL)
@@ -140,6 +144,14 @@ static void XMLCALL
          {
             href_curie = value;
             href = rdfa_resolve_curie(context, href_curie);
+         }
+         else if(strcmp(attribute, "content") == 0)
+         {
+            content = value;
+         }
+         else if(strcmp(attribute, "datatype") == 0)
+         {
+            datatype = value;
          }
          else if(strcmp(attribute, "xml:lang") == 0)
          {
@@ -205,6 +217,14 @@ static void XMLCALL
    {
       printf("DEBUG: @href = %s\n", href);
    }
+   if(content != NULL)
+   {
+      printf("DEBUG: @content = %s\n", content);
+   }
+   if(datatype != NULL)
+   {
+      printf("DEBUG: @datatype = %s\n", datatype);
+   }
    
    if((rel == NULL) && (rev == NULL))
    {
@@ -269,6 +289,16 @@ static void XMLCALL
       // 7. Process the [current object resource] if it is not null
       rdfa_complete_relrev_triples(context, rel, rev);
    }
+   else
+   {
+      // 8. Save all incomplete triples if no [current object
+      //     resource] was found.
+      rdfa_save_incomplete_triples(context, rel, rev);
+   }
+
+   // 9. The final step of the iteration is to establish any
+   //    [current object literal];
+   printf("TODO: Implement steps #9 and #10");
    
    // free the resolved CURIEs
    free(about);
@@ -284,6 +314,7 @@ static void XMLCALL
 static void XMLCALL
    end_element(void *user_data, const char *name)
 {
+   printf("</%s>", name);
 }
 
 rdfacontext* rdfa_create_context(const char* base)

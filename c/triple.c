@@ -74,21 +74,24 @@ void rdfa_print_triple(rdftriple* triple)
       {
          printf("      <%s>", triple->object);
       }
-      else if(triple->object_type == RDF_TYPE_TEXT)
+      else if(triple->object_type == RDF_TYPE_PLAIN_LITERAL)
       {
          printf("      \"%s\"", triple->object);
          if(triple->language != NULL)
          {
             printf("@%s", triple->language);
          }
+      }
+      else if(triple->object_type == RDF_TYPE_XML_LITERAL)
+      {
+         printf("^^^rdf:XMLLiteral");
+      }
+      else if(triple->object_type == RDF_TYPE_TYPED_LITERAL)
+      {
          if(triple->datatype != NULL)
          {
             printf("^^^%s", triple->datatype);
          }
-      }
-      else if(triple->object_type == RDF_TYPE_XML_LITERAL)
-      {
-         printf("^^^XMLLiteral");
       }
       else
       {
@@ -265,4 +268,58 @@ void rdfa_complete_relrev_triples(
          revptr++;
       }
    }
+}
+
+void rdfa_save_incomplete_triples(
+   rdfacontext* context, const rdfalist* rel, const rdfalist* rev)
+{
+   int i;
+
+   // 8. If however [current object resource] was set to null, but there
+   // are predicates present, then they must be stored as 'incomplete triples'
+   // pending the discovery of a subject that can be used as the
+   // object;
+   //
+   // Predicates for 'incomplete triples' can be set by using one or
+   // both of the @rel and @rev attributes.
+
+   // If present, @rel must contain one or more URIs, obtained
+   // according to the section on CURIE and URI Processing each of
+   // which is added to the [list of incomplete triples] as follows:
+   //
+   // predicate
+   //    full URI
+   // direction
+   //    forward
+   if(rel != NULL)
+   {
+      rdfalistitem** relptr = rel->items;
+      for(i = 0; i < rel->num_items; i++)
+      {
+         rdfalistitem* curie = *relptr;
+
+         rdfa_add_item(
+            context->incomplete_triples, curie->data, RDFALIST_FLAG_FORWARD);
+      }
+   }
+   
+   // If present, @rev must contain one or more URIs, obtained
+   // according to the section on CURIE and URI Processing, each of
+   // which is added to the [list of incomplete triples] as follows:
+   //
+   // predicate
+   //    full URI
+   // direction
+   //    reverse
+   if(rev != NULL)
+   {
+      rdfalistitem** revptr = rev->items;
+      for(i = 0; i < rev->num_items; i++)
+      {
+         rdfalistitem* curie = *revptr;
+
+         rdfa_add_item(
+            context->incomplete_triples, curie->data, RDFALIST_FLAG_REVERSE);
+      }
+   }   
 }

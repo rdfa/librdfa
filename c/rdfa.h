@@ -32,8 +32,9 @@
 typedef enum
 {
    RDF_TYPE_IRI,
-   RDF_TYPE_TEXT,
-   RDF_TYPE_XML_LITERAL
+   RDF_TYPE_PLAIN_LITERAL,
+   RDF_TYPE_XML_LITERAL,
+   RDF_TYPE_TYPED_LITERAL
 } rdfresource_t;
 
 
