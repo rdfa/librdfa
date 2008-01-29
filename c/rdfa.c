@@ -38,6 +38,8 @@ void rdfa_establish_new_subject_with_relrev(
    const char* resource, const char* href, rdfalist* instanceof);
 void rdfa_complete_incomplete_triples(rdfacontext* context);
 void rdfa_complete_type_triples(rdfacontext* context, rdfalist* instanceof);
+void rdfa_complete_relrev_triples(
+   rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 
 /**
  * Handles the start_element call
@@ -260,6 +262,12 @@ static void XMLCALL
       // [new subject] value, i.e., [new subject] remains null, which
       // means that [current subject] will not be modified, and will
       // remain exactly as it was during the processing of the parent element.
+   }
+
+   if(context->current_object_resource != NULL)
+   {
+      // 7. Process the [current object resource] if it is not null
+      rdfa_complete_relrev_triples(context, rel, rev);
    }
    
    // free the resolved CURIEs

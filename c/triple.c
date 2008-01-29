@@ -203,3 +203,66 @@ void rdfa_complete_type_triples(
       iptr++;
    }
 }
+
+void rdfa_complete_relrev_triples(
+   rdfacontext* context, const rdfalist* rel, const rdfalist* rev)
+{
+   // 7. If in any of the previous steps a [current object resource]
+   //    was set to a non-null value, it is now used to generate triples:
+   int i;
+
+   // Predicates for the [current object resource] can be set by using
+   // one or both of the @rel and @rev attributes.
+
+   // If present, @rel will contain one or more URIs, obtained
+   // according to the section on CURIE and URI Processing each of
+   // which is used to generate a triple as follows:
+   //
+   // subject
+   //    [current subject]
+   // predicate
+   //    full URI
+   // object
+   //    [current object resource]
+   if(rel != NULL)
+   {
+      rdfalistitem** relptr = rel->items;
+      for(i = 0; i < rel->num_items; i++)
+      {
+         rdfalistitem* curie = *relptr;
+      
+         rdftriple* triple = rdfa_create_triple(context->current_subject,
+                                                curie->data, context->current_object_resource, RDF_TYPE_IRI,
+                                                NULL, NULL);
+      
+         context->triple_callback(triple);
+         relptr++;
+      }
+   }
+
+   // If present, @rev will contain one or more URIs, obtained
+   // according to the section on CURIE and URI Processing each of which
+   // is used to generate a triple as follows:
+   //
+   // subject
+   //    [current object resource]
+   // predicate
+   //    full URI
+   // object
+   //    [current subject] 
+   if(rev != NULL)
+   {
+      rdfalistitem** revptr = rev->items;
+      for(i = 0; i < rev->num_items; i++)
+      {
+         rdfalistitem* curie = *revptr;
+      
+         rdftriple* triple = rdfa_create_triple(context->current_subject,
+            curie->data, context->current_object_resource, RDF_TYPE_IRI,
+            NULL, NULL);
+      
+         context->triple_callback(triple);
+         revptr++;
+      }
+   }
+}
