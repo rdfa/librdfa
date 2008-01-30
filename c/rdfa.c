@@ -180,7 +180,7 @@ static void XMLCALL
    //    evaluation context];
    rdfa_update_language(context, xml_lang);
 
-   /***************** FOR DEBUGGING PURPOSES ONLY *******************/
+   /***************** FOR DEBUGGING PURPOSES ONLY ******************/
    if(about != NULL)
    {
       printf("DEBUG: @about = %s\n", about);
