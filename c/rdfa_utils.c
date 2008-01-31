@@ -211,6 +211,7 @@ char** rdfa_copy_mapping(char** mapping)
    while(*mptr != NULL)
    {
       *rptr = rdfa_replace_string(*rptr, *mptr);
+      rptr++;
       mptr++;
    }
    
