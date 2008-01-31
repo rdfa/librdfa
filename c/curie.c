@@ -79,7 +79,51 @@ curie_t get_curie_type(const char* uri)
 
 char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
 {
-   return rdfa_join_string(context->base, uri);
+   char* rval = NULL;
+   size_t base_length = strlen(context->base);
+   
+   if(strlen(uri) < 1)
+   {
+      // if a blank URI is given, use the base context
+      rval = rdfa_replace_string(rval, context->base);
+   }
+   else if(strstr(uri, ":") != NULL)
+   {
+      // if a IRI is given, don't concatenate
+      rval = rdfa_replace_string(rval, uri);
+   }
+   else if(uri[0] == '#')
+   {
+      // if a fragment ID is given, concatenate it with the base URI
+      rval = rdfa_join_string(context->base, uri);
+   }
+   else
+   {
+      if((char)context->base[base_length - 1] == '/')
+      {
+         // if the base URI already ends in /, concatenate
+         rval = rdfa_join_string(context->base, uri);
+      }
+      else
+      {
+         // if we have a relative URI, chop off the name of the file
+         // and replace it with the relative pathname
+         char* end_index = rindex(context->base, '/');
+
+         if(end_index != NULL)
+         {
+            char* tmpstr = NULL;
+            tmpstr = rdfa_replace_string(tmpstr, context->base);
+            char* end_index = rindex(tmpstr, '/');
+            end_index++;
+            *end_index = '\0';
+
+            rval = rdfa_join_string(tmpstr, uri);
+         }
+      }
+   }
+
+   return rval;
 }
 
 char* rdfa_resolve_curie(rdfacontext* context, const char* uri)

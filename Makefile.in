@@ -36,6 +36,7 @@ clean:
 
 tests: all
 	LD_LIBRARY_PATH=@RDFADIR@/libs/linux tests/dist/linux/curies
+	LD_LIBRARY_PATH=@RDFADIR@/libs/linux tests/dist/linux/rdfa2n3 tests/testsuite/0001.xhtml
 
 docs:
 	@$(MAKE_DIR) docs
