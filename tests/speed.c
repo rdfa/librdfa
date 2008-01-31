@@ -7,9 +7,10 @@
 #include <rdfa.h>
 #include <rdfa_utils.h>
 
-#define MAX_ITERATIONS 1000000
+#define MAX_ITERATIONS 10
 int g_iteration = 0;
 rdfacontext* g_context = NULL;
+unsigned long long g_bytes_processed = 0;
 
 void process_triple(rdftriple* triple)
 {
@@ -48,6 +49,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
    }
    
    g_iteration++;
+   g_bytes_processed += data_length;
    //buffer[buffer_length - 1] = 0;
 
    //printf("%s", buffer);
@@ -70,8 +72,8 @@ int main(int argc, char** argv)
    clock_t etime = clock();
 
    float delta = etime - stime;
-   printf("Processed %1.2f triples per second.\n",
-      MAX_ITERATIONS / (delta / CLOCKS_PER_SEC));
+   printf("Processed %1.2f triples per second from %lli bytes of data.\n",
+          (MAX_ITERATIONS / (delta / CLOCKS_PER_SEC)), g_bytes_processed);
    
    return 0;
 }
