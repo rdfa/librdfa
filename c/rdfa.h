@@ -73,7 +73,7 @@ typedef size_t (*buffer_filler_fp)(char*, size_t);
 typedef struct rdfalistitem
 {
    unsigned char flags;
-   char* data;
+   void* data;
 } rdfalistitem;
 
 /**
@@ -110,7 +110,13 @@ typedef struct rdfacontext
    size_t bnode_count;
    unsigned char recurse;
    char* new_subject;
-   char* current_object_resource;   
+   char* current_object_resource;
+
+   char* content;
+   char* datatype;
+   rdfalist* property;
+   char* plain_literal;
+   char* xml_literal;
 } rdfacontext;
 
 /**

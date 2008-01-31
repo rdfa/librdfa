@@ -272,7 +272,7 @@ rdfalist* rdfa_resolve_curie_list(
       // add the CURIE if it was a valid one
       if(resolved_curie != NULL)
       {
-         rdfa_add_item(rval, resolved_curie, RDFALIST_FLAG_NONE);
+         rdfa_add_item(rval, resolved_curie, RDFALIST_FLAG_TEXT);
          free(resolved_curie);
       }
       

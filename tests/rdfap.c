@@ -43,6 +43,7 @@ int main(int argc, char** argv)
       {
          char* base_uri = rdfa_join_string(BASE_URI, filename);
          rdfacontext* context = rdfa_create_context(base_uri);
+         
          rdfa_set_triple_handler(context, &process_triple);
          rdfa_set_buffer_filler(context, &fill_buffer);
          rdfa_parse(context);

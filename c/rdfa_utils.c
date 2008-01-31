@@ -18,6 +18,18 @@ char* rdfa_join_string(const char* prefix, const char* suffix)
    return rval;
 }
 
+char* rdfa_append_string(char* old_string, const char* suffix)
+{
+   char* rval = NULL;
+   size_t old_string_size = strlen(old_string);
+   size_t suffix_size = strlen(suffix);
+   rval = realloc(old_string, old_string_size + suffix_size + 1);
+   
+   memcpy(rval + old_string_size, suffix, suffix_size + 1);
+
+   return rval;
+}
+
 char* rdfa_replace_string(char* old_string, const char* new_string)
 {
    char* rval = NULL;
@@ -48,6 +60,42 @@ rdfalist* rdfa_create_list(size_t size)
    rval->num_items = 0;
    rval->items = NULL;
    rval->items = realloc(rval->items, sizeof(rdfalistitem) * rval->max_items);
+
+   return rval;
+}
+
+rdfalist* rdfa_copy_list(rdfalist* list)
+{
+   rdfalist* rval = malloc(sizeof(rdfalist));
+
+   // copy the base list variables over
+   rval->max_items = list->max_items;
+   rval->num_items = list->num_items;
+   rval->items = NULL;
+   rval->items = realloc(rval->items, sizeof(rdfalistitem) * rval->max_items);
+
+   // copy the data of every list member along with all of the flags
+   // for each list member.
+   //
+   // TODO: Implement the copy for context, if it is needed.
+   int i;
+   for(i = 0; i < list->max_items; i++)
+   {
+      if(i < rval->num_items)
+      {
+         if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
+         {
+            rval->items[i]->data = NULL;
+            rval->items[i]->data = 
+               rdfa_replace_string(rval->items[i]->data, list->items[i]->data);
+            rval->items[i]->flags = list->items[i]->flags;
+         }
+      }
+      else
+      {
+         rval->items[i] = NULL;
+      }
+   }
 
    return rval;
 }
@@ -86,12 +134,42 @@ void rdfa_free_list(rdfalist* list)
    }
 }
 
-void rdfa_add_item(rdfalist* list, char* data, liflag_t flags)
+
+void rdfa_push_item(rdfalist* stack, void* data, liflag_t flags)
+{
+   rdfa_add_item(stack, data, flags);
+}
+
+void* rdfa_pop_item(rdfalist* stack)
+{
+   void* rval = NULL;
+
+   if(stack->num_items > 0)
+   {
+      rval = stack->items[stack->num_items - 1]->data;
+      free(stack->items[stack->num_items - 1]);
+      stack->items[stack->num_items - 1] = NULL;
+      stack->num_items--;
+   }
+
+   return rval;
+}
+
+void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
 {
    rdfalistitem* item = malloc(sizeof(rdfalistitem));
 
    item->data = NULL;
-   item->data = rdfa_replace_string(item->data, data);
+
+   if(flags & RDFALIST_FLAG_CONTEXT)
+   {
+      item->data = data;
+   }
+   else
+   {
+      item->data = rdfa_replace_string(item->data, data);
+   }   
+   
    item->flags = flags;
 
    if(list->num_items == list->max_items)
@@ -107,7 +185,7 @@ void rdfa_add_item(rdfalist* list, char* data, liflag_t flags)
 
 char** rdfa_create_mapping(size_t elements)
 {
-   size_t mapping_size = sizeof(char*) * elements * 2;
+   size_t mapping_size = sizeof(char*) * MAX_URI_MAPPINGS * 2;
    char** mapping = malloc(mapping_size);
 
    // only initialize the mapping if it is null.
@@ -117,6 +195,26 @@ char** rdfa_create_mapping(size_t elements)
    }
    
    return mapping;
+}
+
+char** rdfa_copy_mapping(char** mapping)
+{
+   size_t mapping_size = sizeof(char*) * MAX_URI_MAPPINGS * 2;
+   char** rval = malloc(mapping_size);
+   char** mptr = mapping;
+   char** rptr = rval;
+
+   // initialize the mapping
+   memset(rval, 0, mapping_size);
+   
+   // copy each element of the old mapping to the new mapping.
+   while(*mptr != NULL)
+   {
+      *rptr = rdfa_replace_string(*rptr, *mptr);
+      mptr++;
+   }
+   
+   return rval;
 }
 
 void rdfa_update_mapping(char** mapping, const char* key, const char* value)

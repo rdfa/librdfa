@@ -7,7 +7,7 @@
 #include <rdfa.h>
 #include <rdfa_utils.h>
 
-#define MAX_ITERATIONS 10
+#define MAX_ITERATIONS 10000
 int g_iteration = 0;
 rdfacontext* g_context = NULL;
 unsigned long long g_bytes_processed = 0;

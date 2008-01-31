@@ -38,7 +38,9 @@ typedef enum
    RDFALIST_FLAG_NONE = 0,
    RDFALIST_FLAG_FORWARD = (1 << 1),
    RDFALIST_FLAG_REVERSE = (1 << 2),
-   RDFALIST_FLAG_LAST = (1 << 3)
+   RDFALIST_FLAG_TEXT = (1 << 3),
+   RDFALIST_FLAG_CONTEXT = (1 << 4),
+   RDFALIST_FLAG_LAST = (1 << 5)
 } liflag_t;
 
 /**
@@ -51,6 +53,18 @@ typedef enum
  * @return an initialized char**, with all of the elements set to NULL.
  */
 char** rdfa_create_mapping(size_t elements);
+
+/**
+ * Copies the entire contents of a mapping verbatim and returns a
+ * pointer to the copied mapping.
+ *
+ * @param mapping the mapping to copy
+ *
+ * @return the copied mapping, with all of the memory newly
+ *         allocated. You MUST free the returned mapping when you are
+ *         done with it.
+ */
+char** rdfa_copy_mapping(char** mapping);
 
 /**
  * Updates the given mapping when presented with a key and a value. If
@@ -89,17 +103,51 @@ void rdfa_free_mapping(char** mapping);
 
 /**
  * Creates a list and initializes it to the given size.
+ *
+ * @param size the starting size of the list.
  */
 rdfalist* rdfa_create_list(size_t size);
 
 /**
- * Creates a list and initializes it to the given size.
+ * Copies the given list.
+ *
+ * @param list the list to copy.
+ *
+ * @return the copied list. You MUST free the memory associated with
+ *         the returned list once you are done with it.
+ */
+rdfalist* rdfa_copy_list(rdfalist* list);
+
+/**
+ * Adds an item to the end of the list.
  *
  * @param list the list to add the item to.
  * @param data the data to add to the list.
  * @param flags the flags to attach to the item.
  */
-void rdfa_add_item(rdfalist* list, char* data, liflag_t flags);
+void rdfa_add_item(rdfalist* list, void* data, liflag_t flags);
+
+/**
+ * Pushes an item onto the top of a stack. This function uses a list
+ * for the underlying implementation.
+ *
+ * @param stack the stack to add the item to.
+ * @param data the data to add to the stack.
+ * @param flags the flags to attach to the item.
+ */
+void rdfa_push_item(rdfalist* stack, void* data, liflag_t flags);
+
+/**
+ * Pops an item off of the top of a stack. This function uses a list
+ * for the underlying implementation 
+ *
+ * @param stack the stack to pop the item off of.
+ *
+ * @return the item that was just popped off of the top of the
+ *         stack. You MUST free the memory associated with the return
+ *         value.
+ */
+void* rdfa_pop_item(rdfalist* stack);
 
 /**
  * Prints the list to the screen in a human-readable way.
@@ -126,6 +174,17 @@ void rdfa_free_list(rdfalist* list);
  * @return a pointer to the newly allocated string.
  */
 char* rdfa_replace_string(char* old_string, const char* new_string);
+
+/**
+ * Appends a new string to the old string, expanding the old string's
+ * memory area if needed.
+ *
+ * @param old_string the old string to reallocate if needed.
+ * @param suffix the string to append to the old_string.
+ *
+ * @return a pointer to the newly re-allocated string.
+ */
+char* rdfa_append_string(char* old_string, const char* suffix);
 
 /**
  * Joins two strings together and returns a newly allocated string

@@ -140,7 +140,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
       rdfalist* incomplete_triples = context->incomplete_triples;
       rdfalistitem* incomplete_triple = incomplete_triples->items[i];
       
-      if(incomplete_triple->flags == RDFALIST_FLAG_FORWARD)
+      if(incomplete_triple->flags & RDFALIST_FLAG_FORWARD)
       {
          // If [direction] is 'forward' then the following triple is generated:
          //
@@ -299,7 +299,8 @@ void rdfa_save_incomplete_triples(
          rdfalistitem* curie = *relptr;
 
          rdfa_add_item(
-            context->incomplete_triples, curie->data, RDFALIST_FLAG_FORWARD);
+            context->incomplete_triples, curie->data,
+               RDFALIST_FLAG_FORWARD | RDFALIST_FLAG_TEXT);
       }
    }
    
@@ -319,7 +320,8 @@ void rdfa_save_incomplete_triples(
          rdfalistitem* curie = *revptr;
 
          rdfa_add_item(
-            context->incomplete_triples, curie->data, RDFALIST_FLAG_REVERSE);
+            context->incomplete_triples, curie->data,
+               RDFALIST_FLAG_REVERSE | RDFALIST_FLAG_TEXT);
       }
    }   
 }
