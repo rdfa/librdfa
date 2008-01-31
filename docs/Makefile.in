@@ -1,0 +1,17 @@
+ifeq (@HAVE_DOXYGEN@,yes)
+all: build.stamp
+
+build.stamp:
+	cd .. && doxygen setup/docs.doxygen
+	touch build.stamp
+else
+all: 
+endif
+
+clean:
+	$(RM) -rf c-api
+
+build-directories:
+build-objects:
+build-libraries:
+build-executables:
