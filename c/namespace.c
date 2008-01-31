@@ -33,7 +33,6 @@ void rdfa_update_uri_mappings(
    // follow best practice for using namespaces, which includes not
    // using relative paths.
    
-   printf("Attribute: %s = %s\n", attribute, value);
    if(strcmp(attribute, "xmlns") == 0)
    {
       rdfa_update_mapping(

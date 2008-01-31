@@ -325,3 +325,118 @@ void rdfa_save_incomplete_triples(
       }
    }   
 }
+
+void rdfa_complete_object_literal_triples(rdfacontext* context)
+{
+   // 9. The final step of the iteration is to establish any
+   //    [current object literal];
+   //
+   // Predicates for the [current object literal] can be set by using
+   // @property. If present, a URI is obtained according to the
+   // section on CURIE and URI Processing, and then the actual literal
+   // value is obtained as follows:
+   char* current_object_literal = NULL;
+   rdfresource_t type = RDF_TYPE_PLAIN_LITERAL;   
+   
+   // * as a [plain literal] if:
+   //   o @content is present;
+   //   o or all children of the [current element] are text nodes;
+   //   o or there are no child nodes; TODO: Is this needed?
+   //   o or the body of the [current element] does have non-text
+   //     child nodes but @datatype is present, with an empty value.
+   //
+   // * Additionally, if there is a value for [current language] then
+   // the value of the [plain literal] should include this language
+   // information, as described in [RDF-CONCEPTS]. The actual literal
+   // is either the value of @content (if present) or a string created
+   // by concatenating the text content of each of the child elements
+   // of the [current element] in document order, and then normalising
+   // white-space according to [WHITESPACERULES].
+   if((context->content != NULL) && (context->datatype == NULL))
+   {
+      current_object_literal = context->content;
+   }
+   // TODO: Implement check to see if XML Literal was found
+   //else if(index(context->xml_literal, '<') == NULL)
+   else if((context->plain_literal != NULL))
+   {
+      // TODO: need to normalize according to [WHITESPACERULES].
+      current_object_literal = context->plain_literal;
+   }
+   else if((context->datatype != NULL) && (strlen(context->datatype) == 0))
+   {
+      // TODO: need to normalize according to [WHITESPACERULES].
+      current_object_literal = context->plain_literal;
+   }
+   else
+   {
+      // * as an [XML literal] if:
+      //    o the [current element] has any child nodes that are not
+      //      simply text nodes, and @datatype is not present, or is
+      //      present, but is set to rdf:XMLLiteral.
+      //
+      // The value of the [XML literal] is a string created from the
+      // inner content of the [current element], i.e., not including
+      // the element itself, with the datatype of rdf:XMLLiteral.
+      if(context->datatype == NULL)
+      {
+         current_object_literal = context->xml_literal;
+         type = RDF_TYPE_XML_LITERAL;
+      }
+      else if((context->datatype != NULL) && (strlen(context->datatype) > 0))
+      {
+         // * as a [typed literal] if:
+         //    o @datatype is present, and does not have an empty
+         //      value.
+         //
+         // The actual literal is either the value of @content (if
+         // present) or a string created by concatenating the inner
+         // content of each of the child elements in turn, of the
+         // [current element]. The final string includes the datatype
+         // URI, as described in [RDF-CONCEPTS], which will have been
+         // obtained according to the section on CURIE and URI
+         // Processing.
+
+         if(context->content != NULL)
+         {
+            current_object_literal = context->content;
+         }
+         else
+         {
+            current_object_literal = context->plain_literal;
+         }
+      }
+   }   
+
+   // TODO: shouldn't this be used with EACH predicate?
+   // The [current object literal] is then used with the predicate to
+   // generate a triple as follows:
+   //
+   // subject
+   //    [current subject]
+   // predicate
+   //    full URI
+   // object
+   //    [current object literal]
+   int i;
+   rdfalistitem** pptr = context->property->items;
+   for(i = 0; i < context->property->num_items; i++)
+   {
+      
+      rdfalistitem* curie = *pptr;
+      
+      rdftriple* triple = rdfa_create_triple(context->current_subject,
+         curie->data, current_object_literal, type, context->datatype,
+         context->language);
+      
+      context->triple_callback(triple);
+      pptr++;
+   }
+
+   // TODO: Implement recurse flag being set to false
+   //
+   // Once the triple has been created, if the [datatype] of the
+   // [current object literal] is rdf:XMLLiteral, then the [recurse]
+   // flag is set to false
+
+}

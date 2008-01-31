@@ -42,6 +42,7 @@ void rdfa_complete_relrev_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 void rdfa_save_incomplete_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
+void rdfa_complete_object_literal_triples(rdfacontext* context);
 
 void rdfa_init_context(rdfacontext* context)
 {   
@@ -323,49 +324,52 @@ static void XMLCALL
    rdfa_update_language(context, xml_lang);
 
    /***************** FOR DEBUGGING PURPOSES ONLY ******************/
-   if(about != NULL)
+   if(DEBUG)
    {
-      printf("DEBUG: @about = %s\n", about);
-   }
-   if(src != NULL)
-   {
-      printf("DEBUG: @src = %s\n", src);
-   }
-   if(instanceof != NULL)
-   {
-      printf("DEBUG: @instanceof = ");
-      rdfa_print_list(instanceof);
-   }
-   if(rel != NULL)
-   {
-      printf("DEBUG: @rel = ");
-      rdfa_print_list(rel);
-   }
-   if(rev != NULL)
-   {
-      printf("DEBUG: @rev = ");
-      rdfa_print_list(rev);
-   }
-   if(property != NULL)
-   {
-      printf("DEBUG: @property = ");
-      rdfa_print_list(property);
-   }
-   if(resource != NULL)
-   {
-      printf("DEBUG: @resource = %s\n", resource);
-   }
-   if(href != NULL)
-   {
-      printf("DEBUG: @href = %s\n", href);
-   }
-   if(content != NULL)
-   {
-      printf("DEBUG: @content = %s\n", content);
-   }
-   if(datatype != NULL)
-   {
-      printf("DEBUG: @datatype = %s\n", datatype);
+      if(about != NULL)
+      {
+         printf("DEBUG: @about = %s\n", about);
+      }
+      if(src != NULL)
+      {
+         printf("DEBUG: @src = %s\n", src);
+      }
+      if(instanceof != NULL)
+      {
+         printf("DEBUG: @instanceof = ");
+         rdfa_print_list(instanceof);
+      }
+      if(rel != NULL)
+      {
+         printf("DEBUG: @rel = ");
+         rdfa_print_list(rel);
+      }
+      if(rev != NULL)
+      {
+         printf("DEBUG: @rev = ");
+         rdfa_print_list(rev);
+      }
+      if(property != NULL)
+      {
+         printf("DEBUG: @property = ");
+         rdfa_print_list(property);
+      }
+      if(resource != NULL)
+      {
+         printf("DEBUG: @resource = %s\n", resource);
+      }
+      if(href != NULL)
+      {
+         printf("DEBUG: @href = %s\n", href);
+      }
+      if(content != NULL)
+      {
+         printf("DEBUG: @content = %s\n", content);
+      }
+      if(datatype != NULL)
+      {
+         printf("DEBUG: @datatype = %s\n", datatype);
+      }
    }
    
    if((rel == NULL) && (rev == NULL))
@@ -387,7 +391,11 @@ static void XMLCALL
 
    if(context->new_subject != NULL)
    {
-      printf("DEBUG: new_subject = %s\n", context->new_subject);
+      if(DEBUG)
+      {
+         printf("DEBUG: new_subject = %s\n", context->new_subject);
+      }
+      
       // 6. If in any of the previous steps a [new subject] was set to a
       //    non-null value, it is now used to:
       
@@ -516,8 +524,12 @@ static void XMLCALL
    
    // 9. The final step of the iteration is to establish any
    //    [current object literal];
-   printf("TODO: Implement steps #9 and #10\n");
+   if(context->property != NULL)
+   {
+      rdfa_complete_object_literal_triples(context);
+   }
 
+   //printf(context->plain_literal);
 
    // free the context
    rdfa_free_context(context);

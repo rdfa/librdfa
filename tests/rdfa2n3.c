@@ -19,8 +19,6 @@ void process_triple(rdftriple* triple)
 
 size_t fill_buffer(char* buffer, size_t buffer_length)
 {
-   printf("fill_buffer\n");
-
    return fread(buffer, sizeof(char), buffer_length, g_xhtml_file);
 }
 
@@ -33,8 +31,6 @@ int main(int argc, char** argv)
    }
    else
    {
-      printf("Processing %s...\n", argv[1]);
-
       g_xhtml_file = fopen(argv[1], "r");
       char* filename = rindex(argv[1], '/');
       filename++;

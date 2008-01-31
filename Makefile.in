@@ -34,8 +34,8 @@ clean:
 	@rm -rf libs/*
 	@echo "Removed all objects and libraries."
 
-test: all
-	LD_LIBRARY_PATH=@RDFADIR@/libs/linux test/cpp/dist/linux/rdfap
+tests: all
+	LD_LIBRARY_PATH=@RDFADIR@/libs/linux tests/dist/linux/curies
 
 docs:
 	@$(MAKE_DIR) docs

@@ -248,8 +248,6 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value)
       mptr++;
       *mptr = rdfa_replace_string(*mptr, value);
    }
-
-   rdfa_print_mapping(mapping);
 }
 
 const char* rdfa_get_mapping(char** mapping, const char* key)
