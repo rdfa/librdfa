@@ -7,7 +7,7 @@
 #include <rdfa.h>
 #include <rdfa_utils.h>
 
-#define MAX_ITERATIONS 10000
+#define MAX_ITERATIONS 1000
 int g_iteration = 0;
 rdfacontext* g_context = NULL;
 unsigned long long g_bytes_processed = 0;
@@ -36,9 +36,86 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
    }
    else if(g_iteration < MAX_ITERATIONS)
    {
-      data = "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />";
+      data = "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />"
+         "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />";
       memset(buffer, ' ', buffer_length);
-      memcpy(buffer, data, 52);
+      memcpy(buffer, data, strlen(data));
    }
    else
    {
