@@ -20,6 +20,13 @@ class TripleProcessor:
         print "Fill buffer"
         return ""
 
+def ht():
+    print "Triple found!"
+
+
+def fb():
+    print "Fill buffer"
+
 ##
 # The main entry point for the script.
 #
@@ -27,8 +34,11 @@ class TripleProcessor:
 # @param stdout the standard output stream assigned to the program.
 # @param environ the execution environment for the program.
 def main(argv, stdout, environ):
+    tp = TripleProcessor("testsuite/0001.xhtml")
     parser = rdfa.RdfaParser("http://example.com/foo.xhtml")
     print "FOO!"
+    parser.setTripleHandler(ht)
+    parser.setBufferHandler(fb)
     parser.parse()
 
 ##

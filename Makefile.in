@@ -1,6 +1,7 @@
 # The top-level Makefile that is used to build 
 
 SUBDIRS := c \
+           python \
            tests
 
 ifdef PRINT_DIRECTORIES

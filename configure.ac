@@ -97,6 +97,7 @@ AC_SUBST(SIGNTOOL)
 AC_OUTPUT(Makefile \
           setup/Makefile.base \
           c/Makefile \
+          python/Makefile \
           docs/Makefile \
           tests/Makefile)
 

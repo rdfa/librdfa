@@ -56,8 +56,23 @@ static double PythonCallBack(double a, void *clientdata)
 
    size_t fill_buffer(char* buffer, size_t buffer_length)
    {
-      printf("rdfa.i - fill_buffer...");
-      return 0;
+
+      char* data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML+RDFa 1.0//EN\" "
+      "\"http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd\">\n"
+      "<html xmlns=\"http://www.w3.org/1999/xhtml\"\n"
+      "      xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n"
+      "<head><title>Speed Test</title></head>\n"
+      "<body><p>\n"
+      "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />\n"
+      "</p></body></html>";
+
+      size_t data_length = strlen(data);
+
+      memset(buffer, 0, buffer_length);
+      memcpy(buffer, data, strlen(data));
+
+      return data_length;
    }
 %}
 

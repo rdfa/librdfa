@@ -18,6 +18,8 @@
 #define _LIBRDFA_RDFA_H_
 #include <stdlib.h>
 
+extern "C"
+{
 #define DEBUG 0
 
 #define RDFA_PARSE_FAILED -1
@@ -165,5 +167,6 @@ int rdfa_parse(rdfacontext* context);
  * @param context the rdfa context.
  */
 void rdfa_free_context(rdfacontext* context);
+}
 
 #endif
