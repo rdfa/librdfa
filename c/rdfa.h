@@ -18,8 +18,11 @@
 #define _LIBRDFA_RDFA_H_
 #include <stdlib.h>
 
+#ifdef __cplusplus
 extern "C"
 {
+#endif
+
 #define DEBUG 0
 
 #define RDFA_PARSE_FAILED -1
@@ -35,12 +38,12 @@ extern "C"
  */
 typedef enum
 {
+   RDF_TYPE_NAMESPACE_PREFIX,
    RDF_TYPE_IRI,
    RDF_TYPE_PLAIN_LITERAL,
    RDF_TYPE_XML_LITERAL,
    RDF_TYPE_TYPED_LITERAL
 } rdfresource_t;
-
 
 /**
  * An RDF triple is the result of an RDFa statement that contains, at
@@ -167,6 +170,9 @@ int rdfa_parse(rdfacontext* context);
  * @param context the rdfa context.
  */
 void rdfa_free_context(rdfacontext* context);
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

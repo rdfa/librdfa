@@ -11,6 +11,12 @@ size_t fill_buffer(char* buffer, size_t buffer_length);
 
 %}
 
+%constant int RDF_TYPE_NAMESPACE_PREFIX = RDF_TYPE_NAMESPACE_PREFIX;
+%constant int RDF_TYPE_IRI = RDF_TYPE_IRI;
+%constant int RDF_TYPE_PLAIN_LITERAL = RDF_TYPE_PLAIN_LITERAL;
+%constant int RDF_TYPE_XML_LITERAL = RDF_TYPE_XML_LITERAL;
+%constant int RDF_TYPE_TYPED_LITERAL = RDF_TYPE_TYPED_LITERAL;
+
 // Grab a Python function object as a Python object.
 #ifdef SWIGPYTHON
 %typemap(in) PyObject *pyfunc {
@@ -20,15 +26,30 @@ size_t fill_buffer(char* buffer, size_t buffer_length);
   }
   $1 = $input;
 }
-#endif
 
 %include RdfaParser.h
 
 %{
 void process_triple(rdftriple* triple)
 {
-   rdfa_print_triple(triple);
+   PyGILState_STATE state = PyGILState_Ensure();
+   PyObject* func;
+   PyObject* data = (PyObject*)gRdfaParser->mTripleHandlerData;
+   PyObject* arglist;
+   PyObject* pyresult;
+
+   // call the Python function to get the data for the buffer
+   func = (PyObject*)gRdfaParser->mTripleHandlerCallback;
+   arglist = Py_BuildValue("(Osssiss)", data, triple->subject, 
+      triple->predicate, triple->object, triple->object_type, 
+      triple->datatype, triple->language);
+
+   PyEval_CallObject(func, arglist);
+   Py_DECREF(arglist);
+
    rdfa_free_triple(triple);
+
+   PyGILState_Release(state);
 }
 
 size_t fill_buffer(char* buffer, size_t buffer_length)
@@ -45,9 +66,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
    func = (PyObject*)gRdfaParser->mBufferFillerCallback;
    arglist = Py_BuildValue("(Oi)", dataFile, buffer_length);
 
-   SWIG_PYTHON_THREAD_BEGIN_BLOCK;
    pyresult = PyEval_CallObject(func, arglist);
-   SWIG_PYTHON_THREAD_END_BLOCK;
    Py_DECREF(arglist);
 
    // if we got a result, make sure that it is properly formatted and of the 
@@ -60,8 +79,6 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
          char* sdata = PyString_AsString(pyresult);
          rval = PyString_Size(pyresult);
          strcpy(buffer, sdata);
-
-         printf("BUFFER: %s\n", buffer);
       }
       else
       {
@@ -92,13 +109,15 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
     * by librdfa and need to be passed up to the application for
     * processing.
     */
-   void setTripleHandler(PyObject *pyfunc) 
+   void setTripleHandler(PyObject *pyfunc, PyObject* data) 
    {
       PyGILState_STATE state = PyGILState_Ensure();
       gRdfaParser = self;
       gRdfaParser->mTripleHandlerCallback = pyfunc;
+      gRdfaParser->mTripleHandlerData = data;
       rdfa_set_triple_handler(gRdfaParser->mBaseContext, process_triple);
       Py_INCREF(pyfunc);
+      Py_INCREF(data);
       PyGILState_Release(state);
    }
 
@@ -115,6 +134,8 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
       gRdfaParser->mBufferFillerData = data;
       rdfa_set_buffer_filler(gRdfaParser->mBaseContext, &fill_buffer);
       Py_INCREF(pyfunc);
+      Py_INCREF(data);
       PyGILState_Release(state);
    }
 }
+#endif

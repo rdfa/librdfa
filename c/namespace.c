@@ -10,6 +10,10 @@
 
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
 
+// pre-define functions that we will need in this module
+void rdfa_generate_namespace_triple(
+   rdfacontext* context, char* prefix, char* iri);
+   
 /**
  * Attempts to update the uri mappings in the given context using the
  * given attribute/value pair.
@@ -44,6 +48,7 @@ void rdfa_update_uri_mappings(
       // xmlns: namespace attribute
       if((attribute[5] == ':') && (attribute[6] != '\0'))
       {
+         rdfa_generate_namespace_triple(context, &attribute[6], value);
          rdfa_update_mapping(
             context->uri_mappings, &attribute[6], value);
       }
@@ -61,6 +66,7 @@ void rdfa_update_base(rdfacontext* context, const char* base)
 {
    if(base != NULL)
    {
+      rdfa_generate_namespace_triple(context, "base", base);
       rdfa_replace_string(context->base, base);
    }
 }

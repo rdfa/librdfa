@@ -5,9 +5,11 @@
 #define _RDFA_UTILS_H_
 #include "rdfa.h"
 
+#ifdef __cplusplus
 extern "C"
 {
-   
+#endif
+
 /**
  * A CURIE type can be safe, unsafe, and Internationalized Resource
  * Identifier, reference-only or invalid.
@@ -268,6 +270,9 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri);
  */
 rdfalist* rdfa_resolve_curie_list(
    rdfacontext* rdfa_context, const char* uris, curieparse_t mode);
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

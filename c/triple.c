@@ -50,59 +50,67 @@ rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
 
 void rdfa_print_triple(rdftriple* triple)
 {
-   if(triple->subject != NULL)
+   if(triple->object_type == RDF_TYPE_NAMESPACE_PREFIX)
    {
-      printf("<%s>\n", triple->subject);
+      printf("%s %s: <%s> .\n",
+         triple->subject, triple->predicate, triple->object);      
    }
    else
-   {
-      printf("INCOMPLETE\n");   
-   }
-
-   if(triple->predicate != NULL)
-   {
-      printf("   <%s>\n", triple->predicate);
-   }
-   else
-   {
-      printf("   INCOMPLETE\n");   
-   }
-   
-   if(triple->object != NULL)
-   {
-      if(triple->object_type == RDF_TYPE_IRI)
+   {   
+      if(triple->subject != NULL)
       {
-         printf("      <%s>", triple->object);
-      }
-      else if(triple->object_type == RDF_TYPE_PLAIN_LITERAL)
-      {
-         printf("      \"%s\"", triple->object);
-         if(triple->language != NULL)
-         {
-            printf("@%s", triple->language);
-         }
-      }
-      else if(triple->object_type == RDF_TYPE_XML_LITERAL)
-      {
-         printf("^^^rdf:XMLLiteral");
-      }
-      else if(triple->object_type == RDF_TYPE_TYPED_LITERAL)
-      {
-         if(triple->datatype != NULL)
-         {
-            printf("^^^%s", triple->datatype);
-         }
+         printf("<%s>\n", triple->subject);
       }
       else
       {
-         printf("      <%s> <---- UNKNOWN OBJECT TYPE", triple->object);
+         printf("INCOMPLETE\n");   
       }
 
-      printf(" .\n");
-   }
-   else
-   {
-      printf("      INCOMPLETE .");
+      if(triple->predicate != NULL)
+      {
+         printf("   <%s>\n", triple->predicate);
+      }
+      else
+      {
+         printf("   INCOMPLETE\n");   
+      }
+   
+      if(triple->object != NULL)
+      {
+         if(triple->object_type == RDF_TYPE_IRI)
+         {
+            printf("      <%s>", triple->object);
+         }
+         else if(triple->object_type == RDF_TYPE_PLAIN_LITERAL)
+         {
+            printf("      \"%s\"", triple->object);
+            if(triple->language != NULL)
+            {
+               printf("@%s", triple->language);
+            }
+         }
+         else if(triple->object_type == RDF_TYPE_XML_LITERAL)
+         {
+            printf("^^^rdf:XMLLiteral");
+         }
+         else if(triple->object_type == RDF_TYPE_TYPED_LITERAL)
+         {
+            if(triple->datatype != NULL)
+            {
+               printf("^^^%s", triple->datatype);
+            }
+         }
+         else
+         {
+            printf("      <%s> <---- UNKNOWN OBJECT TYPE", triple->object);
+         }
+
+         printf(" .\n");
+      }
+      else
+      {
+         printf("      INCOMPLETE .");
+      }
    }
 }
 
@@ -113,6 +121,23 @@ void rdfa_free_triple(rdftriple* triple)
    free(triple->object);
    free(triple->datatype);
    free(triple->language);
+}
+
+/**
+ * Generates a namespace prefix triple for any application that is
+ * interested in processing namespace changes.
+ *
+ * @param context the RDFa context.
+ * @param prefix the name of the prefix
+ * @param IRI the fully qualified IRI that the prefix maps to.
+ */
+void rdfa_generate_namespace_triple(
+   rdfacontext* context, char* prefix, char* iri)
+{
+   rdftriple* triple =
+      rdfa_create_triple(
+         "@prefix", prefix, iri, RDF_TYPE_NAMESPACE_PREFIX, NULL, NULL);
+   context->triple_callback(triple);
 }
 
 /**

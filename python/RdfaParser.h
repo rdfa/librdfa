@@ -43,6 +43,11 @@ public:
    void* mTripleHandlerCallback;
 
    /**
+    * The language-specific callback data needed to handle the triple.
+    */
+   void* mTripleHandlerData;
+   
+   /**
     * Standard constructor for the RDFa parser.
     *
     * @param baseUri the base URI to use when resolving relative

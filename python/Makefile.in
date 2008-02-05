@@ -8,7 +8,7 @@ DYNAMIC_WINDOWS_LIBRARIES =
 # ----------- Standard Makefile
 #include @RDFADIR@/setup/Makefile.base
 
-all: $(SOURCES)
+build-objects: $(SOURCES)
 	mkdir -p build/linux
 	mkdir -p dist/linux
 	swig -c++ -I. -python -o build/linux/SwigRdfaParser.cpp rdfa.i
@@ -16,7 +16,11 @@ all: $(SOURCES)
 	-cd build/linux && ln -s ../../RdfaParser.cpp RdfaParser.cpp
 	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/RdfaParser.cpp -o build/linux/RdfaParser.o
 	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/SwigRdfaParser.cpp -o build/linux/SwigRdfaParser.o
+
+build-libraries:
 	g++ -shared -L ../libs/linux -o dist/linux/_rdfa.so build/linux/RdfaParser.o build/linux/SwigRdfaParser.o -lrdfa
+
+build-executables:
 
 clean:
 	rm -rf build/*
