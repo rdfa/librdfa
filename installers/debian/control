@@ -1,8 +1,9 @@
 Source: librdfa
 Section: dev
+XS-Python-Version: 2.5
 Priority: optional
 Maintainer: Manu Sporny <msporny@digitalbazaar.com>
-Build-Depends: python2.4-dev, python2.5-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 5.0.37.1)
+Build-Depends: python2.4-dev, python2.5-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 5.0.37.1), cdbs (>= 0.4.41)
 Standards-Version: 3.7.2
 
 Package: librdfa1
@@ -34,6 +35,7 @@ Package: python2.4-rdfa
 Architecture: any
 Depends: librdfa1
 Provides: python-rdfa
+XB-Python-Version: ${python:Versions}
 Description: RDFa parsing Python library - development kit for Python 2.4
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
  It uses expat for the underlying XML parser, is very small in size (19KB),
@@ -46,6 +48,7 @@ Package: python2.5-rdfa
 Architecture: any
 Depends: librdfa1
 Provides: python-rdfa
+XB-Python-Version: ${python:Versions}
 Description: RDFa parsing Python library - development kit for Python 2.5
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
  It uses expat for the underlying XML parser, is very small in size (19KB),
