@@ -3,11 +3,12 @@
 #
 # Author: Manu Sporny
 
-AC_INIT(librdfa, 1.0, support@digitalbazaar.com)
+AC_INIT(librdfa, 0.9.1, support@digitalbazaar.com)
 AC_CONFIG_AUX_DIR(setup)
 
 # Setup standard build environment variables
 RDFADIR=`pwd`
+RELEASE=`date +%Y%m%d`
 
 # Check for particular build options
 AC_ARG_ENABLE([linux],
@@ -91,6 +92,10 @@ AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library))
 AC_SUBST(RDFADIR)
 
 # Make all the proper substitutions
+VERSION="$PACKAGE_VERSION"
+AC_SUBST(VERSION)
+AC_SUBST(RELEASE)
+
 AC_SUBST(BUILD_FOR_LINUX)
 AC_SUBST(BUILD_FOR_WINDOWS)
 AC_SUBST(BUILD_FOR_PYTHON)
@@ -113,11 +118,12 @@ AC_OUTPUT(Makefile \
           c/Makefile \
           python/Makefile \
           docs/Makefile \
-          tests/Makefile)
+          tests/Makefile \
+          installers/debian/changelog)
 
 # Dump the build configuration for the developer
 echo -e "\n--------- Bitmunk Build Environment -----------"
-echo "Product           : $PACKAGE_STRING"
+echo "Product           : $PACKAGE_STRING-$RELEASE"
 echo "Build system      : $build_cpu-$build_vendor-$build_os"
 if test "$BUILD_FOR_LINUX" = "yes"; then
    echo "Linux C++ compiler: $LINUX_CC"

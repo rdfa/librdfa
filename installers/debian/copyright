@@ -1,0 +1,33 @@
+This package was debianized by Manu Sporny <msporny@digitalbazaar.com>
+on Fri, 23 Feb 2007 09:34:19 -0400
+
+It was downloaded from http://wiki.digitalbazaar.com/
+
+Upstream Author: Manu Sporny <msporny@digitalbazaar.com>
+
+Copyright:
+
+   This program is copyright 2006-2007 by Digital Bazaar, Inc.
+   All Rights Reserved.
+
+License:
+
+The complete Starfish Filesystem License can be found at the following
+URL:
+
+http://wiki.digitalbazaar.com/index.php/Starfish_License
+
+In general, the license allows you to:
+
+ - Access and modify the source code distributed with the binary for
+   internal use.
+ - Use the filesystem, either commercially or non-commercially, for 
+   free for up to 1 TB worth of total storage.
+
+You must pay for the software if:
+
+ - You exceed usage of 1 TB worth of total storage via Starfish. You
+   can contact support@digitalbazaar.com if you are interested in
+   licensing the Starfish filesystem for unlimited use. The cost is
+   around 1/10th of the cost of all current solutions on the market.
+

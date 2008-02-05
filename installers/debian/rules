@@ -1,0 +1,34 @@
+#!/usr/bin/make -f
+export DH_PYCENTRAL=nomove
+DEB_PYTHON_SYSTEM=pycentral
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+
+LIBRDFA_DIR          := $(CURDIR)/debian/librdfa1
+LIBRDFA_DEV_DIR      := $(CURDIR)/debian/librdfa1-dev
+PY24_LIBRDFA_DIR     := $(CURDIR)/debian/python2.4-rdfa
+PY25_LIBRDFA_DIR     := $(CURDIR)/debian/python2.5-rdfa
+DEB_COMPRESS_EXCLUDE := .py
+
+install/librdfa1::
+	mkdir -pm755 $(LIBRDFA_DIR)
+	make install-librdfa PREFIX=$(LIBRDFA_DIR)
+
+install/librdfa1-dev::
+	mkdir -pm755 $(LIBRDFA_DEV_DIR)
+	make install-librdfa-dev PREFIX=$(LIBRDFA_DEV_DIR)
+
+install/python2.4-rdfa::
+	mkdir -pm755 $(PY24_LIBRDFA_DIR)
+	make install-python PREFIX=$(PY24_LIBRDFA_DIR) PYVER=2.4
+	dh_pycentral
+
+install/python2.5-rdfa::
+	mkdir -pm755 $(PY25_LIBRDFA_DIR)
+	make install-python PREFIX=$(PY25_LIBRDFA_DIR) PYVER=2.5
+	dh_pycentral
+
+clean:: 
+	rm -rf $(BASE_DIR)
+	rm -rf $(STORAGE_DIR)
+	rm -rf $(CLIENT_DIR)

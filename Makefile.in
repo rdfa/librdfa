@@ -5,6 +5,8 @@ BUILD_FOR_LINUX=@BUILD_FOR_LINUX@
 BUILD_FOR_WINDOWS=@BUILD_FOR_WINDOWS@
 BUILD_FOR_PYTHON=@BUILD_FOR_PYTHON@
 
+VERSION = @VERSION@
+
 SUBDIRS := c
 ifeq ($(BUILD_FOR_PYTHON),yes)
 SUBDIRS += python
@@ -44,6 +46,31 @@ tests: all
 
 docs:
 	@$(MAKE_DIR) docs
+
+install-librdfa:
+	install -d $(PREFIX)/usr/lib/
+	install -m 644 $(LINUX_LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
+	ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
+
+install-librdfa-dev:
+	install -d $(PREFIX)/usr/lib/
+	install -d $(PREFIX)/usr/include/
+	install -m 644 $(LINUX_LIBS_DIR)/librdfa.a $(PREFIX)/usr/lib/librdfa.a
+	install -m 644 $(LINUX_LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
+	ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
+	install -m 644 c/rdfa.h $(PREFIX)/usr/include/
+	install -m 644 c/rdfa_utils.h $(PREFIX)/usr/include/
+
+ifeq ($(BUILD_FOR_PYTHON),yes)
+install-python:
+	install -d $(PREFIX)/usr/lib/python$(PYVER)/site-packages
+	install -m 644 python/dist/linux/rdfa.py $(PREFIX)/usr/lib/python$(PYVER)/site-packages
+	install -m 644 python/dist/linux/python$(PYVER)-rdfa.so $(PREFIX)/usr/lib/python$(PYVER)/site-packages/_rdfa.so
+else
+install-python:
+endif
+
+install: install-librdfa install-librdfa-dev install-python
 
 verbose:
 	PRINT_DIRECTORIES=true $(MAKE) all
