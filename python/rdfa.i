@@ -40,9 +40,9 @@ void process_triple(rdftriple* triple)
 
    // call the Python function to get the data for the buffer
    func = (PyObject*)gRdfaParser->mTripleHandlerCallback;
-   arglist = Py_BuildValue("(Osssiss)", data, triple->subject, 
+   arglist = Py_BuildValue((char*)"(Osssiss)", data, triple->subject, 
       triple->predicate, triple->object, triple->object_type, 
-      triple->datatype, triple->language);
+      (char*)triple->datatype, triple->language);
 
    PyEval_CallObject(func, arglist);
    Py_DECREF(arglist);
@@ -64,7 +64,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length)
 
    // call the Python function to get the data for the buffer
    func = (PyObject*)gRdfaParser->mBufferFillerCallback;
-   arglist = Py_BuildValue("(Oi)", dataFile, buffer_length);
+   arglist = Py_BuildValue((char*)"(Oi)", dataFile, buffer_length);
 
    pyresult = PyEval_CallObject(func, arglist);
    Py_DECREF(arglist);

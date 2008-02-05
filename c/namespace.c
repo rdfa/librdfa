@@ -12,7 +12,7 @@
 
 // pre-define functions that we will need in this module
 void rdfa_generate_namespace_triple(
-   rdfacontext* context, char* prefix, char* iri);
+   rdfacontext* context, const char* prefix, const char* iri);
    
 /**
  * Attempts to update the uri mappings in the given context using the

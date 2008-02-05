@@ -1,24 +1,50 @@
 # Makefile to compile the module in this directory
 
-SOURCES = $(wildcard *.i) $(wildcard *.cpp)
+SOURCES = $(wildcard *.cpp)
 LIBRARIES = _rdfamodule
 DYNAMIC_LINK_LIBRARIES = expat 
 DYNAMIC_WINDOWS_LIBRARIES = 
 
 # ----------- Standard Makefile
 #include @RDFADIR@/setup/Makefile.base
+.PHONY: build-objects build-libraries clean all
 
-build-objects: $(SOURCES)
+all: build-objects build-libraries
+
+directories:
 	mkdir -p build/linux
 	mkdir -p dist/linux
+
+dist/linux/python2.4-rdfa.so: build/linux/RdfaParser.o build/linux/SwigRdfaParser-python2.4.o
+	echo "Building $@..."
+	g++ -shared -L ../libs/linux -o dist/linux/python2.4-rdfa.so build/linux/RdfaParser.o build/linux/SwigRdfaParser-python2.4.o -lrdfa
+	ln -sf python2.4-rdfa.so dist/linux/_rdfa.so
+
+dist/linux/python2.5-rdfa.so: build/linux/RdfaParser.o build/linux/SwigRdfaParser-python2.5.o
+	echo "Building $@..."
+	g++ -shared -L ../libs/linux -o dist/linux/python2.5-rdfa.so build/linux/RdfaParser.o build/linux/SwigRdfaParser-python2.5.o -lrdfa
+
+build/linux/SwigRdfaParser.cpp: rdfa.i
+	echo "Generating $@ (from rdfa.i)..."
 	swig -c++ -I. -python -o build/linux/SwigRdfaParser.cpp rdfa.i
 	cp build/linux/rdfa.py dist/linux
-	-cd build/linux && ln -s ../../RdfaParser.cpp RdfaParser.cpp
-	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/RdfaParser.cpp -o build/linux/RdfaParser.o
-	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/SwigRdfaParser.cpp -o build/linux/SwigRdfaParser.o
 
-build-libraries:
-	g++ -shared -L ../libs/linux -o dist/linux/_rdfa.so build/linux/RdfaParser.o build/linux/SwigRdfaParser.o -lrdfa
+build/linux/SwigRdfaParser-python2.4.o: build/linux/SwigRdfaParser.cpp
+	echo "Building $@..."
+	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/SwigRdfaParser.cpp -o build/linux/SwigRdfaParser-python2.4.o
+
+build/linux/SwigRdfaParser-python2.5.o: build/linux/SwigRdfaParser.cpp
+	echo "Building $@..."
+	g++ -g -c -I../c -I. -I/usr/include/python2.5 build/linux/SwigRdfaParser.cpp -o build/linux/SwigRdfaParser-python2.5.o
+
+build/linux/RdfaParser.o:
+	echo "Building $@..."
+	cd build/linux && ln -sf ../../RdfaParser.cpp RdfaParser.cpp
+	g++ -g -c -I../c -I. build/linux/RdfaParser.cpp -o build/linux/RdfaParser.o
+
+build-objects: directories build/linux/SwigRdfaParser-python2.4.o build/linux/SwigRdfaParser-python2.5.o build/linux/RdfaParser.o
+
+build-libraries: directories dist/linux/python2.4-rdfa.so dist/linux/python2.5-rdfa.so
 
 build-executables:
 

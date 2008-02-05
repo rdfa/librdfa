@@ -88,26 +88,34 @@ def print_rdf(rdf):
 # @param stdout the standard output stream assigned to the program.
 # @param environ the execution environment for the program.
 def main(argv, stdout, environ):
-    print "creating parser"
-    parser = rdfa.RdfaParser("http://www.w3.org/2006/07/SWD/RDFa/testsuite/xhtml1-testcases/0001.xhtml")
+    if(not os.path.exists(argv[1])):
+        print "File %s, does not exist" % (argv[1])
+        sys.exit(1)
+    if(not os.access(argv[1], os.R_OK)):
+        print "Cannot read file named %s" % (argv[1])
+        sys.exit(1)
 
-    print "opening", argv[1]
-    dataFile = open(argv[1], "r")
+    # Open the data file and setup the parser
+    dataFile = open(argv[1], "r")    
+    parser = rdfa.RdfaParser("file://" + os.path.abspath(argv[1]))
+
+    # Create the RDF dictionary that will be used by the triple handler
+    # callback
     rdf = {}
     rdf['namespaces'] = {}
     rdf['triples'] = []
-    
-    print "created parser"
-    parser.setTripleHandler(handle_triple, rdf)
-    print "set triple handler"
-    parser.setBufferHandler(handle_buffer, dataFile)
-    print "set buffer handler"
 
-    print "parsing..."
+    # Setup the parser
+    parser.setTripleHandler(handle_triple, rdf)
+    parser.setBufferHandler(handle_buffer, dataFile)
+
+    # Parse the document
     parser.parse()
-    print "completed parsing"
+
+    # Close the datafile
     dataFile.close()
 
+    # Print the RDF to stdout
     print_rdf(rdf)
     
 ##

@@ -132,7 +132,7 @@ void rdfa_free_triple(rdftriple* triple)
  * @param IRI the fully qualified IRI that the prefix maps to.
  */
 void rdfa_generate_namespace_triple(
-   rdfacontext* context, char* prefix, char* iri)
+   rdfacontext* context, const char* prefix, const char* iri)
 {
    rdftriple* triple =
       rdfa_create_triple(

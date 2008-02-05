@@ -20,6 +20,11 @@ AC_ARG_ENABLE([windows],
                               [compile for windows (default is NO)]),
               [ac_enable_windows_build=yes], [ac_enable_windows_build=no])
 
+AC_ARG_ENABLE([python],
+               AC_HELP_STRING([--enable-python],
+                              [compile extensions for Python (default is NO)]),
+              [ac_enable_python_build=yes], [ac_enable_python_build=no])
+
 AC_ARG_ENABLE([docs],
                AC_HELP_STRING([--enable-docs],
                               [build documentation (default is NO)]),
@@ -61,6 +66,14 @@ if test "$ac_enable_windows_build" = "yes" ; then
    BUILD_FOR_WINDOWS="yes"
 fi
 
+# Check to see if we need to build the Python modules
+if test "$ac_enable_python_build" = "yes" ; then
+   AC_CHECK_FILE(/usr/include/python2.4/Python.h, [], AC_MSG_ERROR("no"))
+   AC_CHECK_FILE(/usr/include/python2.5/Python.h, [], AC_MSG_ERROR("no"))
+
+   BUILD_FOR_PYTHON="yes"
+fi
+
 # Check doc build tools
 if test "$ac_enable_docs_build" = "yes"; then
    AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
@@ -80,6 +93,7 @@ AC_SUBST(RDFADIR)
 # Make all the proper substitutions
 AC_SUBST(BUILD_FOR_LINUX)
 AC_SUBST(BUILD_FOR_WINDOWS)
+AC_SUBST(BUILD_FOR_PYTHON)
 
 AC_SUBST(LINUX_CC)
 AC_SUBST(WINDOWS_CC)
@@ -114,6 +128,11 @@ if test "$BUILD_FOR_WINDOWS" = "yes"; then
    echo "Win32 C++ archiver: $WINDOWS_AR"
    echo "Win32 assembler   : $WINDOWS_AS"
    echo "Win32 DLL wrapper : $WINDOWS_DLLWRAP"
+fi
+if test "$BUILD_FOR_PYTHON" = "yes"; then
+   echo "Python modules    : enabled"
+else
+   echo "Python modules    : disabled"
 fi
 if test "$ac_enable_docs_build" = "yes"; then
    echo "Documentation     : enabled"

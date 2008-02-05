@@ -1,8 +1,15 @@
 # The top-level Makefile that is used to build 
 
-SUBDIRS := c \
-           python \
-           tests
+# State the platforms for which we are building
+BUILD_FOR_LINUX=@BUILD_FOR_LINUX@
+BUILD_FOR_WINDOWS=@BUILD_FOR_WINDOWS@
+BUILD_FOR_PYTHON=@BUILD_FOR_PYTHON@
+
+SUBDIRS := c
+ifeq ($(BUILD_FOR_PYTHON),yes)
+SUBDIRS += python
+endif
+SUBDIRS += tests
 
 ifdef PRINT_DIRECTORIES
 MAKE_CMD = $(MAKE) -j -l 5.0 
@@ -11,10 +18,6 @@ else
 MAKE_CMD = $(MAKE) -j -l 5.0 --no-print-directory -s 
 MAKE_DIR = $(MAKE_CMD) -C $(dir)
 endif
-
-# Which platform we're building for
-BUILD_FOR_LINUX=@BUILD_FOR_LINUX@
-BUILD_FOR_WINDOWS=@BUILD_FOR_WINDOWS@
 
 ifeq ($(BUILD_FOR_LINUX),yes)
 LINUX_LIBS_DIR = @RDFADIR@/libs/linux
