@@ -29,6 +29,7 @@ install/python2.5-rdfa::
 	dh_pycentral
 
 clean:: 
-	rm -rf $(BASE_DIR)
-	rm -rf $(STORAGE_DIR)
-	rm -rf $(CLIENT_DIR)
+	rm -rf $(LIBRDFA_DIR)
+	rm -rf $(LIBRDFA_DEV_DIR)
+	rm -rf $(PY24_LIBRDFA_DIR)
+	rm -rf $(PY25_LIBRDFA_DIR)
