@@ -14,8 +14,8 @@ all: $(SOURCES)
 	swig -c++ -I. -python -o build/linux/SwigRdfaParser.cpp rdfa.i
 	cp build/linux/rdfa.py dist/linux
 	-cd build/linux && ln -s ../../RdfaParser.cpp RdfaParser.cpp
-	g++ -c -I../c -I. -I/usr/include/python2.4 build/linux/RdfaParser.cpp -o build/linux/RdfaParser.o
-	g++ -c -I../c -I. -I/usr/include/python2.4 build/linux/SwigRdfaParser.cpp -o build/linux/SwigRdfaParser.o
+	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/RdfaParser.cpp -o build/linux/RdfaParser.o
+	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/linux/SwigRdfaParser.cpp -o build/linux/SwigRdfaParser.o
 	g++ -shared -L ../libs/linux -o dist/linux/_rdfa.so build/linux/RdfaParser.o build/linux/SwigRdfaParser.o -lrdfa
 
 clean:

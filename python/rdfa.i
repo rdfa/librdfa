@@ -25,55 +25,61 @@ size_t fill_buffer(char* buffer, size_t buffer_length);
 %include RdfaParser.h
 
 %{
-/* This function matches the prototype of the normal C callback
-   function for our widget. However, we use the clientdata pointer
-   for holding a reference to a Python callable object. */
-
-static double PythonCallBack(double a, void *clientdata)
+void process_triple(rdftriple* triple)
 {
-   PyObject *func, *arglist;
-   PyObject *result;
-   double    dres = 0;
-   
-   func = (PyObject *) clientdata;               // Get Python function
-   arglist = Py_BuildValue("(d)",a);             // Build argument list
-   result = PyEval_CallObject(func,arglist);     // Call Python
-   Py_DECREF(arglist);                           // Trash arglist
-   if (result) {                                 // If no errors, return double
-     dres = PyFloat_AsDouble(result);
-   }
-   Py_XDECREF(result);
-   return dres;
+   rdfa_print_triple(triple);
+   rdfa_free_triple(triple);
 }
 
-   void process_triple(rdftriple* triple)
-   {  
-      printf("rdfa.i - process_triple...");
+size_t fill_buffer(char* buffer, size_t buffer_length)
+{
+   PyGILState_STATE state = PyGILState_Ensure();
 
-      rdfa_print_triple(triple);
-      rdfa_free_triple(triple);
-   }
+   size_t rval = 0;
+   PyObject* func;
+   PyObject* dataFile = (PyObject*)gRdfaParser->mBufferFillerData;
+   PyObject* arglist;
+   PyObject* pyresult;
 
-   size_t fill_buffer(char* buffer, size_t buffer_length)
+   // call the Python function to get the data for the buffer
+   func = (PyObject*)gRdfaParser->mBufferFillerCallback;
+   arglist = Py_BuildValue("(Oi)", dataFile, buffer_length);
+
+   SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+   pyresult = PyEval_CallObject(func, arglist);
+   SWIG_PYTHON_THREAD_END_BLOCK;
+   Py_DECREF(arglist);
+
+   // if we got a result, make sure that it is properly formatted and of the 
+   // correct type.
+   if(pyresult != NULL)
    {
+      if(PyString_Check(pyresult))
+      {
+         // set the buffer if everything checks out
+         char* sdata = PyString_AsString(pyresult);
+         rval = PyString_Size(pyresult);
+         strcpy(buffer, sdata);
 
-      char* data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-      "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML+RDFa 1.0//EN\" "
-      "\"http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd\">\n"
-      "<html xmlns=\"http://www.w3.org/1999/xhtml\"\n"
-      "      xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n"
-      "<head><title>Speed Test</title></head>\n"
-      "<body><p>\n"
-      "<span about=\"#foo\" rel=\"dc:title\" resource=\"#you\" />\n"
-      "</p></body></html>";
-
-      size_t data_length = strlen(data);
-
-      memset(buffer, 0, buffer_length);
-      memcpy(buffer, data, strlen(data));
-
-      return data_length;
+         printf("BUFFER: %s\n", buffer);
+      }
+      else
+      {
+         PyErr_SetString(PyExc_TypeError, 
+            "Buffer filler callback return type must be a string!");
+      }
    }
+   else
+   {
+      PyErr_SetString(PyExc_TypeError, 
+            "Call to buffer filler failed from librdfa!");
+   }
+   Py_XDECREF(pyresult);
+
+   PyGILState_Release(state);
+
+   return rval;
+}
 %}
 
 // Attach a new method to our plot widget for adding Python functions
@@ -86,11 +92,14 @@ static double PythonCallBack(double a, void *clientdata)
     * by librdfa and need to be passed up to the application for
     * processing.
     */
-   void setTripleHandler(PyObject *pyfunc) {
-     //self->set_method(PythonCallBack, (void *)pyfunc);
-     gRdfaParser = self;
-     rdfa_set_triple_handler(gRdfaParser->mBaseContext, process_triple);
-     Py_INCREF(pyfunc);
+   void setTripleHandler(PyObject *pyfunc) 
+   {
+      PyGILState_STATE state = PyGILState_Ensure();
+      gRdfaParser = self;
+      gRdfaParser->mTripleHandlerCallback = pyfunc;
+      rdfa_set_triple_handler(gRdfaParser->mBaseContext, process_triple);
+      Py_INCREF(pyfunc);
+      PyGILState_Release(state);
    }
 
    /**
@@ -98,10 +107,14 @@ static double PythonCallBack(double a, void *clientdata)
     * the XML parser when generating triples. Since librdfa is
     * stream-based, these reads usually happen in 4KB chunks.
     */
-   void setBufferHandler(PyObject *pyfunc) {
-     //self->set_method(PythonCallBack, (void *)pyfunc);
-     gRdfaParser = self;
-     rdfa_set_buffer_filler(gRdfaParser->mBaseContext, &fill_buffer);
-     Py_INCREF(pyfunc);
+   void setBufferHandler(PyObject *pyfunc, PyObject* data) 
+   {
+      PyGILState_STATE state = PyGILState_Ensure();
+      gRdfaParser = self;
+      gRdfaParser->mBufferFillerCallback = pyfunc;
+      gRdfaParser->mBufferFillerData = data;
+      rdfa_set_buffer_filler(gRdfaParser->mBaseContext, &fill_buffer);
+      Py_INCREF(pyfunc);
+      PyGILState_Release(state);
    }
 }

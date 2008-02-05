@@ -26,7 +26,22 @@ public:
     * buffer filler callback, and executing the parser call.
     */
    rdfacontext* mBaseContext;
-   
+
+   /**
+    * The language-specific callback for filling the buffer.
+    */
+   void* mBufferFillerCallback;
+
+   /**
+    * The language-specific callback data needed to fill the buffer.
+    */
+   void* mBufferFillerData;
+
+   /**
+    * The language-specific callback for handling newly created triples.
+    */
+   void* mTripleHandlerCallback;
+
    /**
     * Standard constructor for the RDFa parser.
     *
