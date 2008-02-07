@@ -213,6 +213,7 @@ static void XMLCALL
    const char* href_curie = NULL;
    char* href = NULL;
    const char* content = NULL;
+   const char* datatype_curie = NULL;
    const char* datatype = NULL;
 
    // scan all of the attributes for the RDFa-specific attributes
@@ -291,7 +292,8 @@ static void XMLCALL
          }
          else if(strcmp(attribute, "datatype") == 0)
          {
-            datatype = value;
+            datatype_curie = value;
+            datatype = rdfa_resolve_curie(context, datatype_curie);
          }
          else if(strcmp(attribute, "xml:lang") == 0)
          {
@@ -524,12 +526,85 @@ static void XMLCALL
    
    // 9. The final step of the iteration is to establish any
    //    [current object literal];
+
+   // generate the complete object literate triples
    if(context->property != NULL)
    {
+      // ensure to mark only the inner-content of the XML node for
+      // processing the object literal.
+      buffer = NULL;
+      char* saved_xml_literal = context->xml_literal;
+      char* working_xml_literal = NULL;
+      if(context->xml_literal != NULL)
+      {
+         char* content_start = NULL;
+         char* content_end = NULL;
+      
+         saved_xml_literal = context->xml_literal;
+         context->xml_literal = NULL;
+
+         // mark the beginning and end of the enclosing XML element
+         context->xml_literal =
+            rdfa_replace_string(context->xml_literal, saved_xml_literal);
+         content_start = index(context->xml_literal, '>');
+         content_end = rindex(context->xml_literal, '<');
+
+         if((content_start != NULL) && (content_end != NULL))
+         {
+            working_xml_literal = context->xml_literal;
+            context->xml_literal = ++content_start;
+            *content_end = '\0';
+         }
+      }
+
       rdfa_complete_object_literal_triples(context);
+
+      if(saved_xml_literal != NULL)
+      {
+         free(working_xml_literal);
+         context->xml_literal = saved_xml_literal;
+      }
    }
 
    //printf(context->plain_literal);
+
+   // append the XML literal and plain text literals to the parent
+   // literals
+   if(context->xml_literal != NULL)
+   {
+      rdfacontext* parent_context = (rdfacontext*)
+         context_stack->items[context_stack->num_items - 1]->data;
+
+      if(parent_context->xml_literal == NULL)
+      {
+         parent_context->xml_literal =
+            rdfa_replace_string(
+               parent_context->xml_literal, context->xml_literal);
+      }
+      else
+      {
+         parent_context->xml_literal =
+            rdfa_append_string(
+               parent_context->xml_literal, context->xml_literal);
+      }      
+
+      // if there is an XML literal, there is probably a plain literal
+      if(context->plain_literal != NULL)
+      {
+         if(parent_context->plain_literal == NULL)
+         {
+            parent_context->plain_literal =
+               rdfa_replace_string(
+                  parent_context->plain_literal, context->plain_literal);
+         }
+         else
+         {
+            parent_context->plain_literal =
+               rdfa_append_string(
+                  parent_context->plain_literal, context->plain_literal);
+         }
+      }
+   }
 
    // free the context
    rdfa_free_context(context);

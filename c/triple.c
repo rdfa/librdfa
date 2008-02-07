@@ -91,13 +91,18 @@ void rdfa_print_triple(rdftriple* triple)
          }
          else if(triple->object_type == RDF_TYPE_XML_LITERAL)
          {
-            printf("^^^rdf:XMLLiteral");
+            printf("      \"%s\"^^rdf:XMLLiteral", triple->object);
          }
          else if(triple->object_type == RDF_TYPE_TYPED_LITERAL)
          {
-            if(triple->datatype != NULL)
+            if((triple->datatype != NULL) && (triple->language != NULL))
             {
-               printf("^^^%s", triple->datatype);
+               printf("      \"%s\"@%s^^%s",
+                  triple->object, triple->language, triple->datatype);
+            }
+            else if(triple->datatype != NULL)
+            {
+               printf("      \"%s\"^^%s", triple->object, triple->datatype);
             }
          }
          else
@@ -260,8 +265,8 @@ void rdfa_complete_relrev_triples(
          rdfalistitem* curie = *relptr;
       
          rdftriple* triple = rdfa_create_triple(context->current_subject,
-                                                curie->data, context->current_object_resource, RDF_TYPE_IRI,
-                                                NULL, NULL);
+            curie->data, context->current_object_resource, RDF_TYPE_IRI,
+            NULL, NULL);
       
          context->triple_callback(triple);
          relptr++;
@@ -285,9 +290,9 @@ void rdfa_complete_relrev_triples(
       {
          rdfalistitem* curie = *revptr;
       
-         rdftriple* triple = rdfa_create_triple(context->current_subject,
-            curie->data, context->current_object_resource, RDF_TYPE_IRI,
-            NULL, NULL);
+         rdftriple* triple = rdfa_create_triple(
+            context->current_object_resource, curie->data,
+            context->current_subject, RDF_TYPE_IRI, NULL, NULL);
       
          context->triple_callback(triple);
          revptr++;
@@ -361,7 +366,7 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    // section on CURIE and URI Processing, and then the actual literal
    // value is obtained as follows:
    char* current_object_literal = NULL;
-   rdfresource_t type = RDF_TYPE_PLAIN_LITERAL;   
+   rdfresource_t type = RDF_TYPE_UNKNOWN;   
    
    // * as a [plain literal] if:
    //   o @content is present;
@@ -377,61 +382,72 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    // by concatenating the text content of each of the child elements
    // of the [current element] in document order, and then normalising
    // white-space according to [WHITESPACERULES].
-   if((context->content != NULL) && (context->datatype == NULL))
+   //
+   // TODO: Whitespace normalization
+   if((context->content != NULL))
    {
       current_object_literal = context->content;
+      type = RDF_TYPE_PLAIN_LITERAL;
    }
-   // TODO: Implement check to see if XML Literal was found
-   //else if(index(context->xml_literal, '<') == NULL)
-   else if((context->plain_literal != NULL))
+   else if(index(context->xml_literal, '<') == NULL)
    {
-      // TODO: need to normalize according to [WHITESPACERULES].
       current_object_literal = context->plain_literal;
+      type = RDF_TYPE_PLAIN_LITERAL;
    }
-   else if((context->datatype != NULL) && (strlen(context->datatype) == 0))
+   else if(strlen(context->plain_literal) == 0)
    {
-      // TODO: need to normalize according to [WHITESPACERULES].
-      current_object_literal = context->plain_literal;
+      current_object_literal = "";
+      type = RDF_TYPE_PLAIN_LITERAL;
    }
-   else
+   else if((context->xml_literal != NULL) &&
+           (context->datatype != NULL) &&
+           (strlen(context->xml_literal) > 0) &&
+           (strcmp(context->datatype, "") == 0))
    {
-      // * as an [XML literal] if:
-      //    o the [current element] has any child nodes that are not
-      //      simply text nodes, and @datatype is not present, or is
-      //      present, but is set to rdf:XMLLiteral.
-      //
-      // The value of the [XML literal] is a string created from the
-      // inner content of the [current element], i.e., not including
-      // the element itself, with the datatype of rdf:XMLLiteral.
-      if(context->datatype == NULL)
-      {
-         current_object_literal = context->xml_literal;
-         type = RDF_TYPE_XML_LITERAL;
-      }
-      else if((context->datatype != NULL) && (strlen(context->datatype) > 0))
-      {
-         // * as a [typed literal] if:
-         //    o @datatype is present, and does not have an empty
-         //      value.
-         //
-         // The actual literal is either the value of @content (if
-         // present) or a string created by concatenating the inner
-         // content of each of the child elements in turn, of the
-         // [current element]. The final string includes the datatype
-         // URI, as described in [RDF-CONCEPTS], which will have been
-         // obtained according to the section on CURIE and URI
-         // Processing.
+      current_object_literal = context->xml_literal;
+      type = RDF_TYPE_PLAIN_LITERAL;
+   }
 
-         if(context->content != NULL)
-         {
-            current_object_literal = context->content;
-         }
-         else
-         {
-            current_object_literal = context->plain_literal;
-         }
-      }
-   }   
+   
+   // * as an [XML literal] if:
+   //    o the [current element] has any child nodes that are not
+   //      simply text nodes, and @datatype is not present, or is
+   //      present, but is set to rdf:XMLLiteral.
+   //
+   // The value of the [XML literal] is a string created from the
+   // inner content of the [current element], i.e., not including
+   // the element itself, with the datatype of rdf:XMLLiteral.
+   if((current_object_literal == NULL) &&
+      (index(context->xml_literal, '<') != NULL) &&
+      ((context->datatype == NULL) ||
+       (strcmp(context->datatype, "rdf:XMLLiteral") == 0)))
+   {
+      current_object_literal = context->xml_literal;
+      type = RDF_TYPE_XML_LITERAL;
+      printf("COL: %s\n", current_object_literal);
+   }
+   
+   // * as a [typed literal] if:
+   //    o @datatype is present, and does not have an empty
+   //      value.
+   //
+   // The actual literal is either the value of @content (if
+   // present) or a string created by concatenating the inner
+   // content of each of the child elements in turn, of the
+   // [current element]. The final string includes the datatype
+   // URI, as described in [RDF-CONCEPTS], which will have been
+   // obtained according to the section on CURIE and URI
+   // Processing.      
+   if((context->content != NULL) && (context->datatype != NULL) &&
+      (strlen(context->datatype) > 0))
+   {
+      current_object_literal = context->content;
+      type = RDF_TYPE_TYPED_LITERAL;
+   }
+   else if(type != RDF_TYPE_XML_LITERAL)
+   {
+      current_object_literal = context->plain_literal;
+   }
 
    // TODO: shouldn't this be used with EACH predicate?
    // The [current object literal] is then used with the predicate to
