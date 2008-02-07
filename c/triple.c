@@ -424,7 +424,6 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    {
       current_object_literal = context->xml_literal;
       type = RDF_TYPE_XML_LITERAL;
-      printf("COL: %s\n", current_object_literal);
    }
    
    // * as a [typed literal] if:
@@ -443,10 +442,6 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    {
       current_object_literal = context->content;
       type = RDF_TYPE_TYPED_LITERAL;
-   }
-   else if(type != RDF_TYPE_XML_LITERAL)
-   {
-      current_object_literal = context->plain_literal;
    }
 
    // TODO: shouldn't this be used with EACH predicate?
