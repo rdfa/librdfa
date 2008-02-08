@@ -63,9 +63,9 @@ curie_t get_curie_type(const char* uri)
       }
       else
       {
-         // if none of the above match, then the CURIE is a reference
-         // of some sort.
-         rval = CURIE_TYPE_LINK_TYPE;
+         // if none of the above match, then the CURIE is probably a
+         // relative IRI
+         rval = CURIE_TYPE_IRI_OR_UNSAFE;
       }
    }
 
