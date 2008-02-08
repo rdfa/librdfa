@@ -55,23 +55,18 @@ curie_t get_curie_type(const char* uri)
          // a safe curie starts with [ and ends with ]
          rval = CURIE_TYPE_SAFE;
       }
-      else if(strstr(uri, ":/") != NULL)
+      else if(strstr(uri, ":") != NULL)
       {
-         // an IRI contains at least a "://", such as "file://" or "http://"
-         rval = CURIE_TYPE_IRI;
-      }
-      else if(strchr(uri, ':') != NULL)
-      {
-         // an unsafe curie isn't surrounded by brackets, but contains
-         // a ':'
-         rval = CURIE_TYPE_UNSAFE;
+         // at this point, it is unknown whether or not the CURIE is
+         // an IRI or an unsafe CURIE
+         rval = CURIE_TYPE_IRI_OR_UNSAFE;
       }
       else
       {
          // if none of the above match, then the CURIE is a reference
          // of some sort.
-         rval = CURIE_TYPE_REFERENCE;
-      }      
+         rval = CURIE_TYPE_LINK_TYPE;
+      }
    }
 
    return rval;
@@ -126,7 +121,8 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
    return rval;
 }
 
-char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
+char* rdfa_resolve_curie(
+   rdfacontext* context, const char* uri, curieparse_t mode)
 {
    char* rval = NULL;
    curie_t ctype = get_curie_type(uri);
@@ -135,12 +131,25 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
    {
       rval = NULL;
    }
-   else if(ctype == CURIE_TYPE_IRI)
+   else if((ctype == CURIE_TYPE_IRI_OR_UNSAFE) &&
+           ((mode == CURIE_PARSE_HREF_SRC) ||
+            (mode ==CURIE_PARSE_ABOUT_RESOURCE)))
    {
-      // if the CURIE is a complete IRI, then return the IRI verbatim
-      rval = rdfa_replace_string(rval, uri);
+      // If we are parsing something that can take either a CURIE or a
+      // URI, and the type is either IRI or UNSAFE, assume that it is
+      // an IRI
+      rval = rdfa_resolve_uri(context, uri);
    }
-   else if((ctype == CURIE_TYPE_SAFE) || (ctype == CURIE_TYPE_UNSAFE))
+
+   // if we are processing a safe CURIE OR
+   // if we are parsing an unsafe CURIE that is an @instanceof,
+   // @datatype, @property, @rel, or @rev attribute, treat the curie
+   // as not an IRI, but an unsafe CURIE
+   if((ctype == CURIE_TYPE_SAFE) ||
+         ((ctype == CURIE_TYPE_IRI_OR_UNSAFE) &&
+          ((mode == CURIE_PARSE_INSTANCEOF_DATATYPE) ||
+           (mode == CURIE_PARSE_PROPERTY) ||
+           (mode == CURIE_PARSE_RELREV))))
    {
       char* working_copy = NULL;
       working_copy = malloc(strlen(uri) + 1);
@@ -155,7 +164,7 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
          prefix = strtok_r(working_copy, "[:]", &wcptr);
          reference = strtok_r(NULL, "[:]", &wcptr);
       }
-      else if(ctype == CURIE_TYPE_UNSAFE)
+      else if(ctype == CURIE_TYPE_IRI_OR_UNSAFE)
       {
          prefix = strtok_r(working_copy, ":", &wcptr);
          reference = strtok_r(NULL, ":", &wcptr);
@@ -195,12 +204,10 @@ char* rdfa_resolve_curie(rdfacontext* context, const char* uri)
 
       free(working_copy);
    }
-   else
-   {
-      // even though a reference-only CURIE is valid, it does not
-      // generate a triple in XHTML+RDFa.
-      rval = NULL;
-   }
+
+   // even though a reference-only CURIE is valid, it does not
+   // generate a triple in XHTML+RDFa. If we're NULL at this point,
+   // the given value wasn't valid in XHTML+RDFa.
    
    return rval;
 }
@@ -239,7 +246,7 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
    // attempt to resolve the value as a standard CURIE
    if(rval == NULL)
    {
-      rval = rdfa_resolve_curie(context, uri);
+      rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_RELREV);
    }
    
    return rval;
@@ -262,6 +269,8 @@ char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
    char* rval = NULL;
    int i = 0;
 
+   // TODO: Is it clear that property has predefined values in the
+   //       Syntax doc?
    // search all of the XHTML @property reserved words for a match
    // against the given URI
    for(i = 0; i < XHTML_PROPERTY_RESERVED_WORDS_SIZE; i++)
@@ -279,7 +288,7 @@ char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
    // attempt to resolve the value as a standard CURIE
    if(rval == NULL)
    {
-      rval = rdfa_resolve_curie(context, uri);
+      rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_PROPERTY);
    }
    
    return rval;
@@ -300,17 +309,21 @@ rdfalist* rdfa_resolve_curie_list(
    {
       char* resolved_curie = NULL;
 
-      if(mode == CURIE_PARSE_INSTANCEOF)
+      if((mode == CURIE_PARSE_INSTANCEOF_DATATYPE) ||
+         (mode == CURIE_PARSE_ABOUT_RESOURCE))
       {
-         resolved_curie = rdfa_resolve_curie(rdfa_context, ctoken);
+         resolved_curie =
+            rdfa_resolve_curie(rdfa_context, ctoken, mode);
       }
       else if(mode == CURIE_PARSE_RELREV)
       {
-         resolved_curie = rdfa_resolve_relrev_curie(rdfa_context, ctoken);
+         resolved_curie =
+            rdfa_resolve_relrev_curie(rdfa_context, ctoken);
       }
       else if(mode == CURIE_PARSE_PROPERTY)
       {
-         resolved_curie = rdfa_resolve_property_curie(rdfa_context, ctoken);
+         resolved_curie =
+            rdfa_resolve_property_curie(rdfa_context, ctoken);
       }
 
       // add the CURIE if it was a valid one

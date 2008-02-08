@@ -17,9 +17,8 @@ extern "C"
 typedef enum
 {
    CURIE_TYPE_SAFE,
-   CURIE_TYPE_UNSAFE,
-   CURIE_TYPE_IRI,
-   CURIE_TYPE_REFERENCE,
+   CURIE_TYPE_IRI_OR_UNSAFE,
+   CURIE_TYPE_LINK_TYPE,
    CURIE_TYPE_INVALID
 }  curie_t;
 
@@ -29,9 +28,12 @@ typedef enum
  */
 typedef enum
 {
-   CURIE_PARSE_INSTANCEOF,
+   CURIE_PARSE_ABOUT_RESOURCE,
+   CURIE_PARSE_PROPERTY,
+   CURIE_PARSE_INSTANCEOF_DATATYPE,
+   CURIE_PARSE_HREF_SRC,
    CURIE_PARSE_RELREV,
-   CURIE_PARSE_PROPERTY
+   
 } curieparse_t;
 
 /**
@@ -251,11 +253,13 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri);
  *
  * @param context the current processing context.
  * @param uri the URI part to process.
+ * @param mode the CURIE processing mode to use when parsing the CURIE.
  *
  * @return the fully qualified IRI. The memory returned from this
  *         function MUST be freed.
  */
-char* rdfa_resolve_curie(rdfacontext* context, const char* uri);
+char* rdfa_resolve_curie(
+   rdfacontext* context, const char* uri, curieparse_t mode);
 
 /**
  * Resolves one or more CURIEs into fully qualified IRIs.

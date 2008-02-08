@@ -45,7 +45,7 @@ char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
 
 
 // typedef for CURIE processing function pointer
-typedef char* (*curie_func)(rdfacontext*, const char*);
+typedef char* (*curie_func)(rdfacontext*, const char*, curieparse_t);
 
 // typedef for CURIE list processing function pointer
 typedef rdfalist* (*curie_list_func)(rdfacontext*, const char*, curieparse_t);
@@ -70,9 +70,9 @@ int g_test_fails = 0;
  * @param iri the value of what the resulting IRI should be.
  */
 void run_test(rdfacontext* context, const char* name, const char* curie,
-   curie_func cb, const char* iri)
+   curie_func cb, const char* iri, curieparse_t mode)
 {
-   char* result = cb(context, curie);
+   char* result = cb(context, curie, mode);
    int compare = -1;
 
    // check to see if we should check for NULL or if the strings
@@ -179,14 +179,14 @@ void run_list_test(rdfacontext* context, const char* name, const char* curies,
  *            value of each set member will be appended to the IRI.
  */
 void run_test_set(rdfacontext* context, const char* name, const char** curies,
-   size_t curies_size, curie_func cb, const char* iri)
+   size_t curies_size, curie_func cb, const char* iri, curieparse_t mode)
 {
    int i;
    for(i = 0; i < curies_size; i++)
    {
       char* full_iri = rdfa_join_string(iri, curies[i]);
       
-      run_test(context, name, curies[i], cb, full_iri);
+      run_test(context, name, curies[i], cb, full_iri, mode);
 
       free(full_iri);
    }
@@ -206,19 +206,23 @@ void run_curie_tests()
    printf("------------------------ CURIE tests ---------------------\n");
    
    run_test(context, "IRI", "http://www.example.org/iri",
-      rdfa_resolve_curie, "http://www.example.org/iri");
+            rdfa_resolve_curie, "http://www.example.org/iri",
+            CURIE_PARSE_HREF_SRC);
    run_test(context, "Safe CURIE", "[dc:title]",
-      rdfa_resolve_curie, "http://purl.org/dc/elements/1.1/title");
+            rdfa_resolve_curie, "http://purl.org/dc/elements/1.1/title",
+            CURIE_PARSE_PROPERTY);
    run_test(context, "Unsafe CURIE", "dc:title",
-      rdfa_resolve_curie, "http://purl.org/dc/elements/1.1/title");
+            rdfa_resolve_curie, "http://purl.org/dc/elements/1.1/title",
+            CURIE_PARSE_PROPERTY);
    run_test(context, "Non-prefixed CURIE", ":nonprefixed",
-      rdfa_resolve_curie, "http://example.org/nonprefixed");
+            rdfa_resolve_curie, "http://example.org/nonprefixed",
+            CURIE_PARSE_PROPERTY);
    run_test(context, "Reference-only CURIE", "foobar",
-      rdfa_resolve_curie, NULL);
+            rdfa_resolve_curie, NULL, CURIE_PARSE_PROPERTY);
    run_test(context, "Reference-only safe CURIE", "[foobar]",
-      rdfa_resolve_curie, NULL);
+            rdfa_resolve_curie, NULL, CURIE_PARSE_PROPERTY);
    run_test(context, "Empty safe CURIE", "[]",
-      rdfa_resolve_curie, NULL);
+            rdfa_resolve_curie, NULL, CURIE_PARSE_PROPERTY);
 
    rdfalist* dctvlist = rdfa_create_list(2);
    rdfa_add_item(
@@ -227,7 +231,7 @@ void run_curie_tests()
       dctvlist, "http://purl.org/dc/dcmitype/Sound", RDFALIST_FLAG_NONE);
    run_list_test(
       context, "XHTML multiple @instanceof", "[dctv:Image] [dctv:Sound]",
-      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_INSTANCEOF);
+      rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_INSTANCEOF_DATATYPE);
    rdfa_free_list(dctvlist);
 
    rdfalist* nllist = rdfa_create_list(2);
@@ -252,10 +256,10 @@ void run_curie_tests()
 
    run_test_set(context, "XHTML @rel/@rev reserved",
       my_g_relrev_reserved_words, XHTML_RELREV_RESERVED_WORDS_SIZE,
-      rdfa_resolve_relrev_curie, XHTML_VOCAB_URI);
+      rdfa_resolve_relrev_curie, XHTML_VOCAB_URI, CURIE_PARSE_RELREV);
    run_test_set(context, "XHTML @property reserved",
       my_g_property_reserved_words, XHTML_PROPERTY_RESERVED_WORDS_SIZE,
-      rdfa_resolve_property_curie, XHTML_VOCAB_URI);
+      rdfa_resolve_property_curie, XHTML_VOCAB_URI, CURIE_PARSE_PROPERTY);
 
    printf("---------------------- CURIE test results ---------------------\n"
           "%i passed, %i failed\n",

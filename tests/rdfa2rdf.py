@@ -76,19 +76,22 @@ def print_rdf(rdf):
         datatype = triple[4]
         language = triple[5]
         desc = "<rdf:Description rdf:about=\"%s\">\n" % (subject)
+        lang = ""
+        if(language):
+            lang = " xml:lang=\"%s\"" % (language,)
 
         if(obj_type == rdfa.RDF_TYPE_PLAIN_LITERAL):
-            desc += " <%s>%s</%s>\n" % (predicate, obj, predicate)
+            desc += " <%s%s>%s</%s>\n" % (predicate, lang, obj, predicate)
         elif(obj_type == rdfa.RDF_TYPE_IRI):
-            desc += " <%s rdf:resource=\"%s\"/>\n" % (predicate, obj)
+            desc += " <%s rdf:resource=\"%s\"%s/>\n" % (predicate, obj, lang)
         elif(obj_type == rdfa.RDF_TYPE_TYPED_LITERAL):
-            desc += " <%s rdf:datatype=\"%s\">%s</%s>\n" % \
-                (predicate, datatype, obj, prediciate)
+            desc += " <%s rdf:datatype=\"%s\"%s>%s</%s>\n" % \
+                (predicate, datatype, lang, obj, predicate)
         elif(obj_type == rdfa.RDF_TYPE_XML_LITERAL):
-            desc += " <%s rdf:datatype=\"%s\"><![CDATA[%s]]></%s>\n" % \
+            desc += " <%s rdf:datatype=\"%s\"%s><![CDATA[%s]]></%s>\n" % \
                 (predicate,
                  "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral",
-                 obj, predicate)
+                 lang, obj, predicate)
         else:
             desc += " <%s>%s</%s>\n" %(predicate, "UNKNOWN LITERAL", predicate)
         desc += '</rdf:Description>'

@@ -236,22 +236,20 @@ static void XMLCALL
          if(strcmp(attribute, "about") == 0)
          {
             about_curie = value;
-            about = rdfa_resolve_curie(context, about_curie);
-            if((about == NULL) && (about_curie != NULL))
-            {
-               about = rdfa_resolve_uri(context, about_curie);
-            }
+            about = rdfa_resolve_curie(
+               context, about_curie, CURIE_PARSE_ABOUT_RESOURCE);
          }
          else if(strcmp(attribute, "src") == 0)
          {
             src_curie = value;
-            src = rdfa_resolve_curie(context, src_curie);
+            src = rdfa_resolve_curie(context, src_curie, CURIE_PARSE_HREF_SRC);
          }
          else if(strcmp(attribute, "instanceof") == 0)
          {
             instanceof_curie = value;
             instanceof = rdfa_resolve_curie_list(
-               context, instanceof_curie, CURIE_PARSE_INSTANCEOF);
+               context, instanceof_curie,
+               CURIE_PARSE_INSTANCEOF_DATATYPE);
          }
          else if(strcmp(attribute, "rel") == 0)
          {
@@ -270,21 +268,20 @@ static void XMLCALL
             property_curie = value;
             property =
                rdfa_resolve_curie_list(
-                  context, property_curie, CURIE_PARSE_PROPERTY);
+                  context, property_curie, CURIE_PARSE_INSTANCEOF_DATATYPE);
          }
          else if(strcmp(attribute, "resource") == 0)
          {
             resource_curie = value;
-            resource = rdfa_resolve_curie(context, resource_curie);
-            if((resource == NULL) && (resource_curie != NULL))
-            {
-               resource = rdfa_resolve_uri(context, resource_curie);
-            }
+            resource = rdfa_resolve_curie(
+               context, resource_curie, CURIE_PARSE_ABOUT_RESOURCE);
+            resource = rdfa_resolve_uri(context, resource_curie);
          }
          else if(strcmp(attribute, "href") == 0)
          {
             href_curie = value;
-            href = rdfa_resolve_curie(context, href_curie);
+            href =
+               rdfa_resolve_curie(context, href_curie, CURIE_PARSE_HREF_SRC);
          }
          else if(strcmp(attribute, "content") == 0)
          {
@@ -293,7 +290,8 @@ static void XMLCALL
          else if(strcmp(attribute, "datatype") == 0)
          {
             datatype_curie = value;
-            datatype = rdfa_resolve_curie(context, datatype_curie);
+            datatype = rdfa_resolve_curie(context, datatype_curie,
+               CURIE_PARSE_INSTANCEOF_DATATYPE);
          }
          else if(strcmp(attribute, "xml:lang") == 0)
          {
