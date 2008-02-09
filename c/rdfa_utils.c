@@ -72,7 +72,7 @@ rdfalist* rdfa_copy_list(rdfalist* list)
    rval->max_items = list->max_items;
    rval->num_items = list->num_items;
    rval->items = NULL;
-   rval->items = realloc(rval->items, sizeof(rdfalistitem) * rval->max_items);
+   rval->items = realloc(rval->items, sizeof(void*) * rval->max_items);
 
    // copy the data of every list member along with all of the flags
    // for each list member.
@@ -85,6 +85,7 @@ rdfalist* rdfa_copy_list(rdfalist* list)
       {
          if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
          {
+            rval->items[i] = malloc(sizeof(rdfalistitem));
             rval->items[i]->data = NULL;
             rval->items[i]->data = 
                rdfa_replace_string(rval->items[i]->data, list->items[i]->data);
