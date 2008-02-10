@@ -87,6 +87,92 @@ void rdfa_init_context(rdfacontext* context)
 }
 
 /**
+ * Read the head of the XHTML document and determines the base IRI for
+ * the document.
+ *
+ * @param context the current working context.
+ * @param working_buffer the current working buffer.
+ * @param wb_allocated the number of bytes that have been allocated to
+ *                     the working buffer.
+ *
+ * @return the size of the data available in the working buffer.
+ */
+size_t rdfa_init_base(
+   rdfacontext* context, char** working_buffer, size_t* working_buffer_size)
+{
+   size_t temp_buffer_size = sizeof(char) * READ_BUFFER_SIZE;
+   char* temp_buffer = malloc(temp_buffer_size);
+   size_t bytes_read = 0;
+   char* head_end = NULL;
+
+   // search for the end of <head>, stop if <head> was found, or we've
+   // processed 131072 bytes
+   char* offset = *working_buffer;
+   do
+   {
+      bytes_read += context->buffer_filler_callback(
+         temp_buffer, temp_buffer_size);
+
+      // extend the working buffer size
+      if(*working_buffer_size < bytes_read)
+      {
+         *working_buffer_size += temp_buffer_size;
+         *working_buffer =
+            (char*)realloc(working_buffer, *working_buffer_size);
+         offset = *working_buffer + bytes_read;
+      }
+
+      // append to the working buffer
+      memcpy(offset, temp_buffer, temp_buffer_size);
+
+      // search for the end of </head> in 
+      head_end = strstr(*working_buffer, "</head>");
+      offset = (char*)(*working_buffer + temp_buffer_size);
+   }
+   while((head_end == NULL) || (bytes_read > (1 << 17)));
+
+   // if </head> was found, search for <base and extract the base URI
+   if(head_end != NULL)
+   {
+      char* base_start = strstr(*working_buffer, "<base ");
+      if(base_start != NULL)
+      {
+         char* href_start = strstr(base_start, "href=");
+         char* uri_start = href_start + 6;
+         char* uri_end = index(uri_start, '"');
+
+         if((uri_start != NULL) && (uri_end != NULL))
+         {
+            if(*uri_start != '"')
+            {
+               size_t uri_size = uri_end - uri_start;
+               char* temp_uri = malloc(sizeof(char) * uri_size + 1);
+               strncpy(temp_uri, uri_start, uri_size);
+               temp_uri[uri_size] = '\0';
+
+               // TODO: This isn't in the processing rules, should it
+               //       be? Setting current_object_resource will make
+               //       sure that the BASE element is inherited by all
+               //       subcontexts.
+               context->current_object_resource =
+                  rdfa_replace_string(context->current_object_resource,
+                                      temp_uri);
+               context->base =
+                  rdfa_replace_string(context->base,
+                                      temp_uri);
+               
+               free(temp_uri);
+            }
+         }         
+      }
+   }
+   
+   free(temp_buffer);
+
+   return bytes_read;
+}
+
+/**
  * Creates a new context for the current element by cloning certain
  * parts of the old context on the top of the given stack.
  *
@@ -104,7 +190,7 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rdfa_init_context(rval);
    
    // set the parent_object
-   if(parent_context->parent_object != NULL)
+   if(parent_context->current_object_resource != NULL)
    {
       rval->parent_object =
          rdfa_replace_string(rval->parent_object,
@@ -153,6 +239,14 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rdfa_replace_string(rval->language, parent_context->language);
    }
 
+   // inherit the parent context's current_subject
+   // TODO: This is not anywhere in the syntax processing document
+   if(parent_context->current_subject != NULL)
+   {
+      rval->current_subject =rdfa_replace_string(
+         rval->current_subject, parent_context->current_subject);
+   }
+   
    // set the triple callback
    rval->triple_callback = parent_context->triple_callback;
    rval->buffer_filler_callback = parent_context->buffer_filler_callback;
@@ -173,6 +267,11 @@ static void XMLCALL
    rdfalist* context_stack = user_data;
    rdfacontext* context = rdfa_create_new_element_context(context_stack);
    rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
+
+   if(DEBUG)
+   {
+      printf("DEBUG: ------- START - %s -------\n", name);
+   }
    
    // start the XML Literal text
    if(context->xml_literal == NULL)
@@ -509,6 +608,12 @@ static void XMLCALL
    
    // append the text to the current context's XML literal
    char* buffer = malloc(strlen(name) + 4);
+   
+   if(DEBUG)
+   {
+      printf("DEBUG: </%s>\n", name);
+   }
+   
    sprintf(buffer, "</%s>", name);
    if(context->xml_literal == NULL)
    {
@@ -712,7 +817,9 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
 int rdfa_parse(rdfacontext* context)
 {
    // create the buffers and expat parser
-   char buf[READ_BUFFER_SIZE];
+   size_t wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
+   char* working_buffer = malloc(wb_allocated);
+
    XML_Parser parser = XML_ParserCreate(NULL);
    int done;
    rdfalist* context_stack = rdfa_create_list(32);
@@ -724,20 +831,44 @@ int rdfa_parse(rdfacontext* context)
    XML_SetUserData(parser, context_stack);
    XML_SetElementHandler(parser, start_element, end_element);
    XML_SetCharacterDataHandler(parser, character_data);
-      
+
    rdfa_init_context(context);
-   
+
+   // search for the <base> tag and use the href contained therein to
+   // set the parsing context.
+   working_buffer[0] = 'X';
+   working_buffer[1] = '\0';
+   size_t wb_preread = rdfa_init_base(context, &working_buffer, &wb_allocated);
+   int preread = 1;
+
    do
    {
-      size_t len = context->buffer_filler_callback(buf, sizeof(buf));
-      done = len < sizeof(buf);
-      if(XML_Parse(parser, buf, len, done) == XML_STATUS_ERROR)
+      size_t wblen;
+
+      // check to see if we're using the working buffer or the
+      // temporary buffer
+      if(preread == 0)
+      {         
+         wblen = context->buffer_filler_callback(working_buffer, wb_allocated);
+      }
+      else
+      {
+         wblen = wb_preread;
+      }
+      done = (wb_preread < wb_allocated);
+
+      if(XML_Parse(parser, working_buffer, wblen, done) == XML_STATUS_ERROR)
       {
          fprintf(stderr,
                  "%s at line %d\n",
                  XML_ErrorString(XML_GetErrorCode(parser)),
                  XML_GetCurrentLineNumber(parser));
          return 1;
+      }
+
+      if(preread == 1)
+      {
+         preread = 0;
       }
    }
    while(!done);

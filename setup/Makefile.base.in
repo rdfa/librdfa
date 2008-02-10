@@ -18,7 +18,7 @@ all: build-directories build-objects build-libraries build-executables
 
 # Linux-specific variables
 LINUX_CC = @LINUX_CC@
-LINUX_CC_FLAGS = -Wall -fPIC -g -pg
+LINUX_CC_FLAGS = -Wall -fPIC -g
 LINUX_INCLUDES = $(INCLUDES)
 LINUX_LIB_DIR = $(RDFA)/libs/linux
 LINUX_LIBS = -L$(LINUX_LIB_DIR)
@@ -146,7 +146,7 @@ ifeq ($(BUILD_FOR_LINUX),yes)
 #	# This is a fake target to override the default .a build
 $(LINUX_EXECUTABLES): $(LINUX_SOURCES) $(STATIC_LINUX_LIBRARIES)
 	@echo "Building $(@F)..."
-	@$(LINUX_CC) $(LINUX_CC_FLAGS) -L$(LINUX_LIB_DIR) -o $@ $(LINUX_BUILD_DIR)/$(@F)-linux.o -static $(DYNAMIC_LINUX_LIBRARIES:%=-l%)
+	@$(LINUX_CC) $(LINUX_CC_FLAGS) -L$(LINUX_LIB_DIR) -o $@ $(LINUX_BUILD_DIR)/$(@F)-linux.o $(DYNAMIC_LINUX_LIBRARIES:%=-l%)
 endif
 
 ifeq ($(BUILD_FOR_WINDOWS),yes)

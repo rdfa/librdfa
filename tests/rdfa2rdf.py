@@ -16,17 +16,17 @@ URL_TYPE_FILE = 2
 # @param subject the subject of the triple.
 # @param predicate the predicate for the triple.
 # @param obj the object of the triple.
-# @param object_type the type for the object in the triple.
-# @param datatype the datatype for the object in the triple.
+# @param objectType the type for the object in the triple.
+# @param dataType the dataType for the object in the triple.
 # @param language the language for the object in the triple.
-def handle_triple(rdf, subject, predicate, obj, object_type, datatype,
+def handleTriple(rdf, subject, predicate, obj, objectType, dataType,
                   language):
     
-    if(object_type == rdfa.RDF_TYPE_NAMESPACE_PREFIX):
+    if(objectType == rdfa.RDF_TYPE_NAMESPACE_PREFIX):
         rdf['namespaces'][predicate] = obj
     else:
         rdf['triples'].append(
-            (subject, predicate, obj, object_type, datatype, language))
+            (subject, predicate, obj, objectType, dataType, language))
         
 ##
 # Called whenever the processing buffer for the C-side needs to be re-filled.
@@ -35,7 +35,7 @@ def handle_triple(rdf, subject, predicate, obj, object_type, datatype,
 # @param bufferSize the size of the buffer to return. Returning anything less
 #                   than bufferSize will halt execution after the returned
 #                   buffer has been processed.
-def handle_buffer(dataFile, bufferSize):
+def fillBuffer(dataFile, bufferSize):
     return dataFile.read()
 
 ##
@@ -46,7 +46,7 @@ def handle_buffer(dataFile, bufferSize):
 # @param iri the IRI to prefix.
 #
 # @return the prefixed IRI if it is prefixable.
-def prefix_namespace(namespaces, iri):
+def prefixNamespace(namespaces, iri):
     rval = iri
 
     for key, value in namespaces.items():
@@ -55,48 +55,115 @@ def prefix_namespace(namespaces, iri):
     return rval
 
 ##
+# Gets a set of triples from a list given a subject.
+#
+# @param subject the subject to use when retrieving the list of triples.
+# @param triples the list of triples to search for the given subject.
+#
+# @return a list of triples based on the given subject.
+def getTriplesBySubject(subject, triples):
+    rval = []
+
+    for item in triples:
+        if(item[0] == subject):
+            rval.append(item)
+
+    return rval
+
+##
+# Deletes a set of triples from the given list given a subject.
+#
+# @param subject the subject to use when deleting the list of triples.
+# @param triples the list of triples to search when deleting triples.
+#
+# @return a list of triples that have the given subject removed from them
+def deleteTriplesBySubject(subject, triples):
+    rval = []
+
+    for item in triples:
+        if(item[0] != subject):
+            rval.append(item)
+
+    return rval
+
+##
+# Prints a set of triples, grouping them by subject.
+#
+# @param triples the list of triples that must all have the same subject.
+def printTriplesBySubject(namespaces, triples):
+    subject = triples[0][0]
+    subjectType = "rdf:Description"
+
+    # Figure out what the subject of the triple should be, and then 
+    for triple in triples:
+        if(triple[1] == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
+            subjectType = prefixNamespace(namespaces, triple[2])
+            break
+
+    print " <%s rdf:about=\"%s\">" % (subjectType, subject)
+
+    for triple in triples:
+        predicate = prefixNamespace(namespaces, triple[1])
+        obj = triple[2]
+        objectType = triple[3]
+        dataType = triple[4]
+        language = triple[5]
+        tripleText = ""
+        lang = ""
+        
+        if(language):
+            lang = " xml:lang=\"%s\"" % (language,)
+
+        if(predicate == "rdf:type"):
+            continue
+        elif(objectType == rdfa.RDF_TYPE_PLAIN_LITERAL):
+            tripleText += "  <%s%s>%s</%s>" % \
+                (predicate, lang, obj, predicate)
+        elif(objectType == rdfa.RDF_TYPE_IRI):
+            tripleText += "  <%s rdf:resource=\"%s\"%s/>" % \
+                (predicate, obj, lang)
+        elif(objectType == rdfa.RDF_TYPE_TYPED_LITERAL):
+            tripleText += "  <%s rdf:datatype=\"%s\"%s>%s</%s>" % \
+                (predicate, dataType, lang, obj, predicate)
+        elif(objectType == rdfa.RDF_TYPE_XML_LITERAL):
+            tripleText += \
+                "  <%s rdf:datatype=\"%s\"%s><![CDATA[%s]]></%s>" % \
+                (predicate,
+                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral",
+                 lang, obj, predicate)
+        else:
+            tripleText += " <%s>%s</%s>\n" % \
+                (predicate, "UNKNOWN LITERAL", predicate)
+        print tripleText
+
+    print " </%s>" % (subjectType)
+
+##
 # Prints RDF/XML given an object with pre-defined namespaces and triples.
 #
 # @param rdf the rdf dictionary object that contains namespaces and triples.
-def print_rdf(rdf):
+def printRdf(rdf):
     print '<?xml version="1.0" encoding="utf-8"?>'
     print '<rdf:RDF'
-    print ' xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"'
 
+    # Append the RDF namespace and print the prefix namespace mappings
+    rdf['namespaces']['xh1'] = "http://www.w3.org/1999/xhtml/vocab#"
+    rdf['namespaces']['rdf'] = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     for prefix, uri in rdf['namespaces'].items():
         print " xmlns:%s=\"%s\"" % (prefix, uri)
 
     print '>'
 
-    for triple in rdf['triples']:
-        subject = triple[0]
-        predicate = prefix_namespace(rdf['namespaces'], triple[1])
-        obj = triple[2]
-        obj_type = triple[3]
-        datatype = triple[4]
-        language = triple[5]
-        desc = "<rdf:Description rdf:about=\"%s\">\n" % (subject)
-        lang = ""
-        if(language):
-            lang = " xml:lang=\"%s\"" % (language,)
+    # Print each subject-based triple to the screen
+    triples = rdf['triples']
+    while(len(triples) > 0):
+        # Get the subject and start printing triples by subject
+        subject = triples[0][0]
+        striples = getTriplesBySubject(subject, triples)
+        triples = deleteTriplesBySubject(subject, triples)
 
-        if(obj_type == rdfa.RDF_TYPE_PLAIN_LITERAL):
-            desc += " <%s%s>%s</%s>\n" % (predicate, lang, obj, predicate)
-        elif(obj_type == rdfa.RDF_TYPE_IRI):
-            desc += " <%s rdf:resource=\"%s\"%s/>\n" % (predicate, obj, lang)
-        elif(obj_type == rdfa.RDF_TYPE_TYPED_LITERAL):
-            desc += " <%s rdf:datatype=\"%s\"%s>%s</%s>\n" % \
-                (predicate, datatype, lang, obj, predicate)
-        elif(obj_type == rdfa.RDF_TYPE_XML_LITERAL):
-            desc += " <%s rdf:datatype=\"%s\"%s><![CDATA[%s]]></%s>\n" % \
-                (predicate,
-                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral",
-                 lang, obj, predicate)
-        else:
-            desc += " <%s>%s</%s>\n" %(predicate, "UNKNOWN LITERAL", predicate)
-        desc += '</rdf:Description>'
-        print desc
-        
+        printTriplesBySubject(rdf['namespaces'], striples)
+
     print '</rdf:RDF>'
 
 ##
@@ -143,8 +210,8 @@ def main(argv, stdout, environ):
     rdf['triples'] = []
 
     # Setup the parser
-    parser.setTripleHandler(handle_triple, rdf)
-    parser.setBufferHandler(handle_buffer, dataFile)
+    parser.setTripleHandler(handleTriple, rdf)
+    parser.setBufferHandler(fillBuffer, dataFile)
 
     # Parse the document
     parser.parse()
@@ -153,7 +220,7 @@ def main(argv, stdout, environ):
     dataFile.close()
 
     # Print the RDF to stdout
-    print_rdf(rdf)
+    printRdf(rdf)
     
 ##
 # Run the rdfa2n3 python application.

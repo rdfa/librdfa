@@ -70,7 +70,7 @@ else
 install-python:
 endif
 
-packages:
+packages: all
 	mkdir -p installers/packages
 	dpkg-buildpackage -us -uc -rfakeroot
 	mv ../*rdfa*$(RELEASE)*deb installers/packages

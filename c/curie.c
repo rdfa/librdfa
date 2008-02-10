@@ -228,16 +228,23 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
    int i = 0;
+   const char* resource = uri;
+
+   // check to make sure the URI doesn't have an empty prefix
+   if(uri[0] == ':')
+   {
+      resource++;
+   }
 
    // search all of the XHTML @rel/@rev reserved words for a match
    // against the given URI
    for(i = 0; i < XHTML_RELREV_RESERVED_WORDS_SIZE; i++)
    {
-      if(strcmp(g_relrev_reserved_words[i], uri) == 0)
+      if(strcmp(g_relrev_reserved_words[i], resource) == 0)
       {
          // since the URI is a reserved word for @rel/@rev, generate
          // the full IRI and stop the loop.
-         rval = rdfa_join_string(XHTML_VOCAB_URI, uri);         
+         rval = rdfa_join_string(XHTML_VOCAB_URI, resource);         
          i = XHTML_RELREV_RESERVED_WORDS_SIZE;
       }
    }
@@ -268,18 +275,25 @@ char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
    int i = 0;
+   const char* resource = uri;
 
+   // check to make sure the URI doesn't have an empty prefix
+   if(uri[0] == ':')
+   {
+      resource++;
+   }
+   
    // TODO: Is it clear that property has predefined values in the
    //       Syntax doc?
    // search all of the XHTML @property reserved words for a match
    // against the given URI
    for(i = 0; i < XHTML_PROPERTY_RESERVED_WORDS_SIZE; i++)
    {
-      if(strcmp(g_property_reserved_words[i], uri) == 0)
+      if(strcmp(g_property_reserved_words[i], resource) == 0)
       {
          // since the URI is a reserved word, generate the full IRI
          // and stop the loop.
-         rval = rdfa_join_string(XHTML_VOCAB_URI, uri);
+         rval = rdfa_join_string(XHTML_VOCAB_URI, resource);
          i = XHTML_PROPERTY_RESERVED_WORDS_SIZE;
       }
    }
