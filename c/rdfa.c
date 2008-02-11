@@ -31,10 +31,10 @@ void rdfa_update_uri_mappings(
 void rdfa_update_base(rdfacontext* context, const char* base);
 void rdfa_update_language(rdfacontext* context, const char* lang);
 void rdfa_establish_new_subject(
-   rdfacontext* context, const char* about, const char* src,
+   rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, rdfalist* instanceof);
 void rdfa_establish_new_subject_with_relrev(
-   rdfacontext* context, const char* about, const char* src,
+   rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, rdfalist* instanceof);
 void rdfa_complete_incomplete_triples(rdfacontext* context);
 void rdfa_complete_type_triples(rdfacontext* context, rdfalist* instanceof);
@@ -367,14 +367,13 @@ static void XMLCALL
             property_curie = value;
             property =
                rdfa_resolve_curie_list(
-                  context, property_curie, CURIE_PARSE_INSTANCEOF_DATATYPE);
+                  context, property_curie, CURIE_PARSE_PROPERTY);
          }
          else if(strcmp(attribute, "resource") == 0)
          {
             resource_curie = value;
             resource = rdfa_resolve_curie(
                context, resource_curie, CURIE_PARSE_ABOUT_RESOURCE);
-            resource = rdfa_resolve_uri(context, resource_curie);
          }
          else if(strcmp(attribute, "href") == 0)
          {
@@ -476,7 +475,7 @@ static void XMLCALL
       // 4. Establish new subject if @rel/@rev don't exist on current
       //    element
       rdfa_establish_new_subject(
-         context, about, src, resource, href, instanceof);
+         context, name, about, src, resource, href, instanceof);
    }
    else
    {
@@ -485,7 +484,7 @@ static void XMLCALL
       //    URI Processing, then the next step is to establish both a
       //    value for [new subject] and a value for [current object resource]:
       rdfa_establish_new_subject_with_relrev(
-         context, about, src, resource, href, instanceof);
+         context, name, about, src, resource, href, instanceof);
    }
 
    if(context->new_subject != NULL)
@@ -836,8 +835,6 @@ int rdfa_parse(rdfacontext* context)
 
    // search for the <base> tag and use the href contained therein to
    // set the parsing context.
-   working_buffer[0] = 'X';
-   working_buffer[1] = '\0';
    size_t wb_preread = rdfa_init_base(context, &working_buffer, &wb_allocated);
    int preread = 1;
 
@@ -874,7 +871,8 @@ int rdfa_parse(rdfacontext* context)
    while(!done);
 
    XML_ParserFree(parser);
-   
+
+   free(working_buffer);
    free(context_stack->items[0]);
    free(context_stack->items);
    

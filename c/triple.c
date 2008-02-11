@@ -53,17 +53,24 @@ void rdfa_print_triple(rdftriple* triple)
    if(triple->object_type == RDF_TYPE_NAMESPACE_PREFIX)
    {
       printf("%s %s: <%s> .\n",
-         triple->subject, triple->predicate, triple->object);      
+         triple->subject, triple->predicate, triple->object);
    }
    else
-   {   
+   {
       if(triple->subject != NULL)
       {
-         printf("<%s>\n", triple->subject);
+         if((triple->subject[0] == '_') && (triple->subject[1] == ':'))
+         {
+            printf("%s\n", triple->subject);
+         }
+         else
+         {
+            printf("<%s>\n", triple->subject);
+         }
       }
       else
       {
-         printf("INCOMPLETE\n");   
+         printf("INCOMPLETE\n");
       }
 
       if(triple->predicate != NULL)
@@ -72,14 +79,21 @@ void rdfa_print_triple(rdftriple* triple)
       }
       else
       {
-         printf("   INCOMPLETE\n");   
+         printf("   INCOMPLETE\n");
       }
    
       if(triple->object != NULL)
       {
          if(triple->object_type == RDF_TYPE_IRI)
          {
-            printf("      <%s>", triple->object);
+            if((triple->object[0] == '_') && (triple->object[1] == ':'))
+            {
+               printf("      %s", triple->object);
+            }
+            else
+            {
+               printf("      <%s>", triple->object);
+            }
          }
          else if(triple->object_type == RDF_TYPE_PLAIN_LITERAL)
          {
@@ -163,7 +177,6 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
    // incomplete triple has a [direction] value that it used to
    // determine what will become the subject, and what the object of
    // each generated triple.
-
    int i;
    for(i = 0; i < context->incomplete_triples->num_items; i++)
    {
@@ -256,7 +269,7 @@ void rdfa_complete_relrev_triples(
    // predicate
    //    full URI
    // object
-   //    [current object resource]
+   //    [current object resource]   
    if(rel != NULL)
    {
       rdfalistitem** relptr = rel->items;
@@ -331,6 +344,8 @@ void rdfa_save_incomplete_triples(
          rdfa_add_item(
             context->incomplete_triples, curie->data,
                RDFALIST_FLAG_FORWARD | RDFALIST_FLAG_TEXT);
+         
+         relptr++;
       }
    }
    
@@ -352,6 +367,8 @@ void rdfa_save_incomplete_triples(
          rdfa_add_item(
             context->incomplete_triples, curie->data,
                RDFALIST_FLAG_REVERSE | RDFALIST_FLAG_TEXT);
+
+         revptr++;
       }
    }   
 }
@@ -390,7 +407,7 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
       type = RDF_TYPE_PLAIN_LITERAL;
    }
    else if(index(context->xml_literal, '<') == NULL)
-   {
+   {      
       current_object_literal = context->plain_literal;
       type = RDF_TYPE_PLAIN_LITERAL;
    }
@@ -460,10 +477,23 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    {
       
       rdfalistitem* curie = *pptr;
+      rdftriple* triple = NULL;
       
-      rdftriple* triple = rdfa_create_triple(context->current_subject,
-         curie->data, current_object_literal, type, context->datatype,
-         context->language);
+      if(type == RDF_TYPE_PLAIN_LITERAL)
+      {
+         char* canonicalized_literal =
+            rdfa_canonicalize_string(current_object_literal);
+         triple = rdfa_create_triple(context->current_subject,
+            curie->data, canonicalized_literal, type, context->datatype,
+            context->language);
+         free(canonicalized_literal);
+      }
+      else
+      {
+         triple = rdfa_create_triple(context->current_subject,
+            curie->data, current_object_literal, type, context->datatype,
+            context->language);
+      }
       
       context->triple_callback(triple);
       pptr++;

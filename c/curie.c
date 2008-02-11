@@ -184,9 +184,18 @@ char* rdfa_resolve_curie(
       }
       else if(prefix != NULL)
       {
-         // if the prefix was defined, get it from the set of URI mappings.
-         expanded_prefix =
-            rdfa_get_mapping(context->uri_mappings, prefix);
+         if(strcmp(prefix, "_") == 0)
+         {
+            // if the prefix specifies this as a blank node, then we
+            // use the blank node prefix
+            expanded_prefix = "_";
+         }
+         else
+         {
+            // if the prefix was defined, get it from the set of URI mappings.
+            expanded_prefix =
+               rdfa_get_mapping(context->uri_mappings, prefix);
+         }
       }
 
       // get the length of the expanded prefix if it exists.
@@ -199,7 +208,14 @@ char* rdfa_resolve_curie(
       // full IRI.
       if((expanded_prefix != NULL) && (reference != NULL))
       {
-         rval = rdfa_join_string(expanded_prefix, reference);
+         if(strcmp(expanded_prefix, "_") == 0)
+         {
+            rval = rdfa_join_string("_:", reference);
+         }
+         else
+         {
+            rval = rdfa_join_string(expanded_prefix, reference);
+         }
       }
 
       free(working_copy);

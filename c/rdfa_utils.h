@@ -205,6 +205,17 @@ char* rdfa_append_string(char* old_string, const char* suffix);
 char* rdfa_join_string(const char* prefix, const char* suffix);
 
 /**
+ * Canonicalizes a given string by condensing all whitespace to single
+ * spaces and stripping leading and trailing whitespace.
+ *
+ * @param str the string to canonicalize.
+ *
+ * @return a pointer to a newly allocated string that contains the
+ *         canonicalized text.
+ */
+char* rdfa_canonicalize_string(const char* str);
+
+/**
  * Creates a triple given the subject, predicate, object, datatype and
  * language for the triple.
  *

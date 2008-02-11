@@ -4,6 +4,8 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
+#define RDFA_WHITESPACE_CHARACTERS " \a\b\t\n\v\f\r"
+
 char* rdfa_join_string(const char* prefix, const char* suffix)
 {
    char* rval = NULL;
@@ -49,6 +51,39 @@ char* rdfa_replace_string(char* old_string, const char* new_string)
       strcpy(rval, new_string);
    }
    
+   return rval;
+}
+
+char* rdfa_canonicalize_string(const char* str)
+{
+   char* rval = malloc(sizeof(char) * (strlen(str) + 2));
+   char* working_string = NULL;
+   working_string = rdfa_replace_string(working_string, str);
+   char* token = NULL;
+   char* wptr = NULL;
+   char* offset = rval;
+   
+   // split on any whitespace character that we may find
+   token = strtok_r(working_string, RDFA_WHITESPACE_CHARACTERS, &wptr);
+   while(token != NULL)
+   {
+      size_t token_length = strlen(token);
+      memcpy(offset, token, token_length);
+      offset += token_length;
+      *offset++ = ' ';
+      *offset = '\0';
+      
+      token = strtok_r(NULL, RDFA_WHITESPACE_CHARACTERS, &wptr);
+   }
+
+   if(offset != rval)
+   {      
+      offset--;
+      *offset = '\0';
+   }
+
+   free(working_string);
+
    return rval;
 }
 

@@ -223,6 +223,8 @@ void run_curie_tests()
             rdfa_resolve_curie, NULL, CURIE_PARSE_PROPERTY);
    run_test(context, "Empty safe CURIE", "[]",
             rdfa_resolve_curie, NULL, CURIE_PARSE_PROPERTY);
+   run_test(context, "Blank named safe CURIE", "[_:frank]",
+            rdfa_resolve_curie, "_:frank", CURIE_PARSE_PROPERTY);
 
    rdfalist* dctvlist = rdfa_create_list(2);
    rdfa_add_item(

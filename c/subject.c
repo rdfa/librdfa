@@ -33,6 +33,7 @@ char* rdfa_create_bnode(rdfacontext* context)
  * value is updated if a new subject is found.
  *
  * @param context the RDFa context.
+ * @param name the name of the current element that is being processed.
  * @param about the full IRI for about, or NULL if there isn't one.
  * @param src the full IRI for src, or NULL if there isn't one.
  * @param resource the full IRI for resource, or NULL if there isn't one.
@@ -40,7 +41,7 @@ char* rdfa_create_bnode(rdfacontext* context)
  * @param instanceof the full IRI for instanceof, or NULL if there isn't one.
  */
 void rdfa_establish_new_subject(
-   rdfacontext* context, const char* about, const char* src,
+   rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const char* instanceof)
 {
    // 4. If the [current element] contains no valid @rel or @rev URI,
@@ -57,6 +58,14 @@ void rdfa_establish_new_subject(
       //   to the section on CURIE and URI Processing;
       context->new_subject =
          rdfa_replace_string(context->new_subject, about);
+   }
+   else if(strcmp(name, "head") == 0)
+   {
+      // TODO: This isn't in the syntax processing document - we
+      //       don't state that HEAD should have an implicit document as
+      //       the subject.
+      context->new_subject =
+         rdfa_replace_string(context->new_subject, context->base);
    }
    else if(src != NULL)
    {   
@@ -111,7 +120,7 @@ void rdfa_establish_new_subject(
  * @param instanceof the full IRI for instanceof, or NULL if there isn't one.
  */
 void rdfa_establish_new_subject_with_relrev(
-   rdfacontext* context, const char* about, const char* src,
+   rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const char* instanceof)
 {
    // 5. If the [current element] does contain a valid @rel or @rev URI,
@@ -128,6 +137,14 @@ void rdfa_establish_new_subject_with_relrev(
       //   to the section on CURIE and URI Processing;
       context->new_subject =
          rdfa_replace_string(context->new_subject, about);
+   }
+   else if(strcmp(name, "head") == 0)
+   {
+      // TODO: This isn't in the syntax processing document - we
+      //       don't state that HEAD should have an implicit document as
+      //       the subject.
+      context->new_subject =
+         rdfa_replace_string(context->new_subject, context->base);
    }
    else if(src != NULL)
    {
