@@ -461,6 +461,17 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
       type = RDF_TYPE_TYPED_LITERAL;
    }
 
+   // TODO: Setting the current object literal to the plain literal in
+   //       the case of xsd:string isn't mentioned in the syntax
+   //       processing document.
+   if((current_object_literal == NULL) && (context->datatype != NULL) &&
+      (strcmp(
+         context->datatype, "http://www.w3.org/2001/XMLSchema#string") == 0))
+   {
+      current_object_literal = context->plain_literal;
+      type = RDF_TYPE_TYPED_LITERAL;
+   }
+   
    // TODO: shouldn't this be used with EACH predicate?
    // The [current object literal] is then used with the predicate to
    // generate a triple as follows:
@@ -479,7 +490,9 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
       rdfalistitem* curie = *pptr;
       rdftriple* triple = NULL;
       
-      if(type == RDF_TYPE_PLAIN_LITERAL)
+      if((type == RDF_TYPE_PLAIN_LITERAL) ||
+         ((type == RDF_TYPE_TYPED_LITERAL) && (strcmp(
+         context->datatype, "http://www.w3.org/2001/XMLSchema#string") == 0)))
       {
          char* canonicalized_literal =
             rdfa_canonicalize_string(current_object_literal);
