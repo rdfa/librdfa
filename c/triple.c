@@ -1,4 +1,7 @@
 /**
+ * Copyright 2008 Digital Bazaar, Inc.
+ * This file is a part of librdfa and is licensed under the GNU LGPL v3.
+ *
  * Handles all triple functionality including all incomplete triple
  * functionality.
  *
@@ -399,8 +402,6 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    // by concatenating the text content of each of the child elements
    // of the [current element] in document order, and then normalising
    // white-space according to [WHITESPACERULES].
-   //
-   // TODO: Whitespace normalization
    if((context->content != NULL))
    {
       current_object_literal = context->content;

@@ -1,4 +1,7 @@
 /**
+ * Copyright 2008 Digital Bazaar, Inc.
+ * This file is a part of librdfa and is licensed under the GNU LGPL v3.
+ *
  * The librdfa library is the Fastest RDFa Parser in the Universe. It is
  * a stream parser, meaning that it takes an XML data as input and spits
  * out RDF triples as it comes across them in the stream. Due to this

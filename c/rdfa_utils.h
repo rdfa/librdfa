@@ -1,4 +1,7 @@
 /**
+ * Copyright 2008 Digital Bazaar, Inc.
+ * This file is a part of librdfa and is licensed under the GNU LGPL v3.
+ *
  * This file contains functions used for common rdfa utility functions.
  */
 #ifndef _RDFA_UTILS_H_

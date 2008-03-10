@@ -1,4 +1,7 @@
 /**
+ * Copyright 2008 Digital Bazaar, Inc.
+ * This file is a part of librdfa and is licensed under the GNU LGPL v3.
+ *
  * The CURIE module is used to resolve all forms of CURIEs that
  * XHTML+RDFa accepts.
  *
