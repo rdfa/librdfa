@@ -226,17 +226,17 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
 void rdfa_complete_type_triples(
    rdfacontext* context, const rdfalist* instanceof)
 {
-   // 6.2 One or more 'types' for the [new subject] can be set by using
-   //     @instanceof. If present, the attribute must contain one or more
-   //     URIs, obtained according to the section on URI and CURIE
-   //     Processing, each of which is used to generate a triple as follows:
+   // 6.1 One or more 'types' for the [new subject] can be set by
+   // using @instanceof. If present, the attribute must contain one or
+   // more URIs, obtained according to the section on URI and CURIE
+   // Processing, each of which is used to generate a triple as follows:
    //
-   //     subject
-   //        [new subject]
-   //     predicate
-   //        http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-   //     object
-   //        full URI of 'type'
+   // subject
+   //    [new subject]
+   // predicate
+   //    http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+   // object
+   //    full URI of 'type'
    int i;
 
    rdfalistitem** iptr = instanceof->items;

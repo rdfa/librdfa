@@ -47,13 +47,11 @@ void rdfa_establish_new_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const char* instanceof)
 {
-   // 4. If the [current element] contains no valid @rel or @rev URI,
-   // obtained according to the section on CURIE and URI Processing,
-   // then the next step is to establish a value for [new subject]. Any
-   // of the attributes that can carry a resource can set [new subject];
-   //
-   // [new subject] is set to the URI obtained from the first match from the
-   // following rules:
+   // 4. If the [current element] contains no valid @rel or @rev
+   // URI, obtained according to the section on CURIE and URI
+   // Processing, then the next step is to establish a value for
+   // [new subject]. Any of the attributes that can carry a
+   // resource can set [new subject];
 
    if(about != NULL)
    {
@@ -61,14 +59,6 @@ void rdfa_establish_new_subject(
       //   to the section on CURIE and URI Processing;
       context->new_subject =
          rdfa_replace_string(context->new_subject, about);
-   }
-   else if(strcmp(name, "head") == 0)
-   {
-      // TODO: This isn't in the syntax processing document - we
-      //       don't state that HEAD should have an implicit document as
-      //       the subject.
-      context->new_subject =
-         rdfa_replace_string(context->new_subject, context->base);
    }
    else if(src != NULL)
    {   
@@ -92,21 +82,30 @@ void rdfa_establish_new_subject(
       context->new_subject =
          rdfa_replace_string(context->new_subject, href);
    }
+   // * If no URI is provided by a resource attribute, then the first
+   // match from the following rules will apply:
+   else if((strcmp(name, "head") == 0) || (strcmp(name, "body") == 0))
+   {
+      // * if the element is the head or body element then act as if
+      // there is an empty @about present, and process it according to
+      // the rule for @about, above;
+      context->new_subject =
+         rdfa_replace_string(context->new_subject, context->base);
+   }
    else if(instanceof != NULL)
    {
-      // If no URI is provided by a resource attribute, then the first
-      // match from the following rules will apply:
-      // * if @instanceof is present, obtained according to the section
-      // on CURIE and URI Processing, then [new subject] is set to be a
-      // newly created [bnode];
+      // * if @instanceof is present, obtained according to the
+      // section on CURIE and URI Processing, then [new subject] is
+      // set to be a newly created [bnode];
       context->new_subject = rdfa_create_bnode(context);
    }
    else if(context->parent_object != NULL)
    {
       // * otherwise, if [parent object] is present, [new subject] is
-      // set to that;
+      // set to that and the [skip element] flag is set to 'true';
       context->new_subject =
          rdfa_replace_string(context->new_subject, context->parent_object);
+      context->skip_element = 1;
    }
 }
 
@@ -126,44 +125,43 @@ void rdfa_establish_new_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const char* instanceof)
 {
-   // 5. If the [current element] does contain a valid @rel or @rev URI,
-   // obtained according to the section on CURIE and URI Processing, then
-   // the next step is to establish both a value for [new subject] and
-   // a value for [current object resource]:
+   // 5. If the [current element] does contain a valid @rel or @rev
+   // URI, obtained according to the section on CURIE and URI
+   // Processing, then the next step is to establish both a value
+   // for [new subject] and a value for [current object resource]:
    //
    // [new subject] is set to the URI obtained from the first match
    // from the following rules:
    
    if(about != NULL)
    {
-      // * by using the URI from @about, if present, obtained according
-      //   to the section on CURIE and URI Processing;
+      // * by using the URI from @about, if present, obtained
+      // according to the section on CURIE and URI Processing;
       context->new_subject =
          rdfa_replace_string(context->new_subject, about);
-   }
-   else if(strcmp(name, "head") == 0)
-   {
-      // TODO: This isn't in the syntax processing document - we
-      //       don't state that HEAD should have an implicit document as
-      //       the subject.
-      context->new_subject =
-         rdfa_replace_string(context->new_subject, context->base);
    }
    else if(src != NULL)
    {
       // * otherwise, by using the URI from @src, if present, obtained
-      //   according to the section on CURIE and URI Processing.
+      // according to the section on CURIE and URI Processing.
       context->new_subject =
          rdfa_replace_string(context->new_subject, src);
    }
+   // * If no URI is provided then the first match from the following
+   // rules will apply:
+   else if((strcmp(name, "head") == 0) || (strcmp(name, "body") == 0))
+   {
+      // * if the element is the head or body element then act as if
+      // there is an empty @about present, and process it according to
+      // the rule for @about, above;
+      context->new_subject =
+         rdfa_replace_string(context->new_subject, context->base);
+   }
    else if(instanceof != NULL)
    {
-      // If no URI is provided then the first match from the following
-      // rules will apply:
-      //
       // * if @instanceof is present, obtained according to the
-      //   section on CURIE and URI Processing, then [new subject] is
-      //   set to be a newly created [bnode];
+      // section on CURIE and URI Processing, then [new subject] is
+      // set to be a newly created [bnode];
       context->new_subject = rdfa_create_bnode(context);
    }
    else if(context->parent_object != NULL)

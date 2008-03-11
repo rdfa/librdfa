@@ -49,19 +49,16 @@ void rdfa_complete_object_literal_triples(rdfacontext* context);
 
 void rdfa_init_context(rdfacontext* context)
 {   
-   // the [current subject] is set to the [base] value;
-   context->current_subject = NULL;
+   // the [parent subject] is set to the [base] value;
+   context->parent_subject = NULL;
    if(context->base != NULL)
    {
-      context->current_subject =
-         rdfa_replace_string(context->current_subject, context->base);
+      context->parent_subject =
+         rdfa_replace_string(context->parent_subject, context->base);
    }
-
+   
    // the [parent object] is set to null;
    context->parent_object = NULL;
-   
-   // the [parent bnode] is set to null;
-   context->parent_bnode = NULL;
    
    // the [list of URI mappings] is cleared;
    context->uri_mappings = (char**)rdfa_create_mapping(MAX_URI_MAPPINGS);
@@ -71,17 +68,38 @@ void rdfa_init_context(rdfacontext* context)
    
    // the [language] is set to null.
    context->language = NULL;
-
-   // set the bnode_count to 0.
-   context->bnode_count = 0;
-
+   
    // set the [current object resource] to null;
    context->current_object_resource = NULL;
 
-   // the next two are initialized to make the C compiler and valgrind
-   // happy - they are not a part of the RDFa spec.
-   context->recurse = 0;
+   // 1. First, the local values are initialized, as follows:
+   //
+   // * the [recurse] flag is set to 'true';
+   context->recurse = 1;
+
+   // * the [skip element] flag is set to 'false';
+   context->skip_element = 0;
+      
+   // * [new subject] is set to null;
    context->new_subject = NULL;
+
+   // * [current object resource] is set to null;
+   context->current_object_resource = NULL;
+   
+   // * the [local list of URI mappings] is set to the list of URI
+   //   mappings from the [evaluation context];
+   //   NOTE: This step is done in rdfa_create_new_element_context()
+
+   // * the [local list of incomplete triples] is set to null;
+   context->local_incomplete_triples = rdfa_create_list(3);
+
+   // * the [current language] value is set to the [language] value
+   //   from the [evaluation context].
+   //   NOTE: This step is done in rdfa_create_new_element_context()
+   
+   // The next set of variables are initialized to make the C compiler
+   // and valgrind happy - they are not a part of the RDFa spec.
+   context->bnode_count = 0;
    context->content = NULL;
    context->datatype = NULL;
    context->property = NULL;
@@ -286,13 +304,6 @@ static void XMLCALL
       context->xml_literal = rdfa_append_string(context->xml_literal, "<");
    }
    context->xml_literal = rdfa_append_string(context->xml_literal, name);
-         
-   // 1. First, some of the local values are initialised, as follows:
-   // * the [recurse] flag is set to true;
-   context->recurse = 0;
-   
-   // * [new subject] is set to null.
-   context->new_subject = NULL;
 
    // prepare all of the RDFa-specific attributes we are looking for.
    const char** aptr = attributes;
@@ -404,8 +415,11 @@ static void XMLCALL
          }
          else if(strstr(attribute, "xmlns") != NULL)
          {
-            // 2. Next the [current element] is parsed for [URI
-            //    mapping]s and these are added to the [list of URI mappings].
+            // 2. Next the [current element] is parsed for
+            //    [URI mapping]s and these are added to the
+            //    [local list of URI mappings]. Note that a
+            //    [URI mapping] will simply overwrite any current
+            //    mapping in the list that has the same name;
             rdfa_update_uri_mappings(context, attribute, value);
          }
       }
@@ -414,7 +428,7 @@ static void XMLCALL
    // close the XML Literal value
    context->xml_literal = rdfa_append_string(context->xml_literal, ">");
    
-   // 2.1 The [current element] is parsed for xml:base and [base] is set
+   // TODO: 2.1 The [current element] is parsed for xml:base and [base] is set
    // to this value if it exists. -- manu (not in the processing rules
    // yet)
    rdfa_update_base(context, xml_base);
@@ -475,17 +489,20 @@ static void XMLCALL
    
    if((rel == NULL) && (rev == NULL))
    {
-      // 4. Establish new subject if @rel/@rev don't exist on current
-      //    element
+      // 4. If the [current element] contains no valid @rel or @rev
+      // URI, obtained according to the section on CURIE and URI
+      // Processing, then the next step is to establish a value for
+      // [new subject]. Any of the attributes that can carry a
+      // resource can set [new subject];
       rdfa_establish_new_subject(
          context, name, about, src, resource, href, instanceof);
    }
    else
    {
-      // 5. If the [current element] does contain a valid @rel or
-      //    @rev URI, obtained according to the section on CURIE and
-      //    URI Processing, then the next step is to establish both a
-      //    value for [new subject] and a value for [current object resource]:
+      // 5. If the [current element] does contain a valid @rel or @rev
+      // URI, obtained according to the section on CURIE and URI
+      // Processing, then the next step is to establish both a value
+      // for [new subject] and a value for [current object resource]:
       rdfa_establish_new_subject_with_relrev(
          context, name, about, src, resource, href, instanceof);
    }
@@ -497,18 +514,19 @@ static void XMLCALL
          printf("DEBUG: new_subject = %s\n", context->new_subject);
       }
       
-      // 6. If in any of the previous steps a [new subject] was set to a
-      //    non-null value, it is now used to:
+      // 6. If in any of the previous steps a [new subject] was set to
+      // a non-null value, 
       
-      // complete any incomplete triples;
-      rdfa_complete_incomplete_triples(context);
+      // TODO: Where does this go? - complete any incomplete triples;
+      //rdfa_complete_incomplete_triples(context);
 
-      // provide a subject for type values;
+      // it is now used to provide a subject for type values;
       if(instanceof != NULL)
       {
          rdfa_complete_type_triples(context, instanceof);
       }
 
+      /* TODO: This entire section needs to be moved to Step # 11
       // furnish a new value for [current subject].
       // Once all 'incomplete triples' have been resolved,
       // [current subject] is set to [new subject].
@@ -528,13 +546,14 @@ static void XMLCALL
          free(context->parent_object);
          context->parent_object = NULL;
       }
+      */
 
       // Note that none of this block is executed if there is no
-      // [new subject] value, i.e., [new subject] remains null, which
-      // means that [current subject] will not be modified, and will
-      // remain exactly as it was during the processing of the parent element.
+      // [new subject] value, i.e., [new subject] remains null.
    }
 
+   // TODO: YOU ARE HERE!
+   
    if(context->current_object_resource != NULL)
    {
       // 7. Process the [current object resource] if it is not null

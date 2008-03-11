@@ -108,11 +108,11 @@ typedef struct rdfalist
 typedef struct rdfacontext
 {
    char* base;
-   char* current_subject;
+   char* parent_subject;
    char* parent_object;
-   char* parent_bnode;
    char** uri_mappings;
    rdfalist* incomplete_triples;
+   rdfalist* local_incomplete_triples;
    char* language;
 
    triple_handler_fp triple_callback;
@@ -120,6 +120,7 @@ typedef struct rdfacontext
 
    size_t bnode_count;
    unsigned char recurse;
+   unsigned char skip_element;
    char* new_subject;
    char* current_object_resource;
 
@@ -128,6 +129,10 @@ typedef struct rdfacontext
    rdfalist* property;
    char* plain_literal;
    char* xml_literal;
+
+   // TODO: variables below here are no longer needed
+   char* parent_bnode;
+   char* current_subject;
 } rdfacontext;
 
 /**
