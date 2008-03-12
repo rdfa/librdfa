@@ -13,6 +13,8 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
+char* rdfa_create_bnode(rdfacontext* context);
+
 rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
    const char* object, rdfresource_t object_type, const char* datatype,
    const char* language)
@@ -171,15 +173,23 @@ void rdfa_generate_namespace_triple(
  */
 void rdfa_complete_incomplete_triples(rdfacontext* context)
 {
-   // 5.5.6.1 complete any incomplete triples;
-   //
-   // The [list of incomplete triples] will contain zero or more
-   // predicate URIs. If [new subject] is non-null then this list is
-   // iterated, and each of the predicates is used with [current
-   // subject] and [new subject] to generate a triple. Note that each
-   // incomplete triple has a [direction] value that it used to
-   // determine what will become the subject, and what the object of
-   // each generated triple.
+   // 11. If the [skip element] flag is 'false', and either: the
+   // previous step resulted in a 'true' flag, or [new subject] was
+   // set to a non-null and non-bnode value, then any
+   // [incomplete triple]s within the current context should be completed:
+   //   
+   // The [list of incomplete triples] from the current
+   // [evaluation context] (not the [local list of incomplete triples])
+   // will contain zero or more predicate URIs. This list is iterated,
+   // and each of the predicates is used with [parent subject] and
+   // [new subject] to generate a triple. Note that if [new subject]
+   // is a bnode, then the process of completion will only happen if
+   // triples were created during the course of processing descendant
+   // elements. Note also that at each level there are two, lists of
+   // [incomplete triple]s; one for the current processing level
+   // (which is passed to each child element in the previous step),
+   // and one that was received as part of the [evaluation
+   // context]. It is the latter that is used in processing during this step.
    int i;
    for(i = 0; i < context->incomplete_triples->num_items; i++)
    {
@@ -191,7 +201,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
          // If [direction] is 'forward' then the following triple is generated:
          //
          // subject
-         //    [current subject]
+         //    [parent subject]
          // predicate
          //    the predicate from the iterated incomplete triple
          // object
@@ -211,7 +221,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
          // predicate
          //    the predicate from the iterated incomplete triple
          // object
-         //    [current subject]
+         //    [parent subject]
          rdftriple* triple =
             rdfa_create_triple(context->new_subject,
                incomplete_triple->data, context->current_subject, RDF_TYPE_IRI,
@@ -221,6 +231,8 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
       free(incomplete_triple);
    }
    context->incomplete_triples->num_items = 0;
+
+   context->triples_generated = 1;
 }
 
 void rdfa_complete_type_triples(
@@ -251,13 +263,15 @@ void rdfa_complete_type_triples(
       context->triple_callback(triple);
       iptr++;
    }
+
+   context->triples_generated = 1;
 }
 
 void rdfa_complete_relrev_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev)
 {
-   // 7. If in any of the previous steps a [current object resource]
-   //    was set to a non-null value, it is now used to generate triples:
+   // 7. If in any of the previous steps a [current object  resource]
+   // was set to a non-null value, it is now used to generate triples
    int i;
 
    // Predicates for the [current object resource] can be set by using
@@ -268,7 +282,7 @@ void rdfa_complete_relrev_triples(
    // which is used to generate a triple as follows:
    //
    // subject
-   //    [current subject]
+   //    [new subject]
    // predicate
    //    full URI
    // object
@@ -280,7 +294,7 @@ void rdfa_complete_relrev_triples(
       {
          rdfalistitem* curie = *relptr;
       
-         rdftriple* triple = rdfa_create_triple(context->current_subject,
+         rdftriple* triple = rdfa_create_triple(context->new_subject,
             curie->data, context->current_object_resource, RDF_TYPE_IRI,
             NULL, NULL);
       
@@ -298,7 +312,7 @@ void rdfa_complete_relrev_triples(
    // predicate
    //    full URI
    // object
-   //    [current subject] 
+   //    [new subject] 
    if(rev != NULL)
    {
       rdfalistitem** revptr = rev->items;
@@ -308,30 +322,31 @@ void rdfa_complete_relrev_triples(
       
          rdftriple* triple = rdfa_create_triple(
             context->current_object_resource, curie->data,
-            context->current_subject, RDF_TYPE_IRI, NULL, NULL);
+            context->new_subject, RDF_TYPE_IRI, NULL, NULL);
       
          context->triple_callback(triple);
          revptr++;
       }
    }
+
+   context->triples_generated = 1;
 }
 
 void rdfa_save_incomplete_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev)
 {
    int i;
-
-   // 8. If however [current object resource] was set to null, but there
-   // are predicates present, then they must be stored as 'incomplete triples'
-   // pending the discovery of a subject that can be used as the
-   // object;
-   //
-   // Predicates for 'incomplete triples' can be set by using one or
-   // both of the @rel and @rev attributes.
+   // 8. If however [current object resource] was set to null, but
+   // there are predicates present, then they must be stored as
+   // [incomplete triple]s, pending the discovery of a subject that
+   // can be used as the object. Also, [current object resource]
+   // should be set to a newly created [bnode]
+   context->current_object_resource = rdfa_create_bnode(context);
 
    // If present, @rel must contain one or more URIs, obtained
    // according to the section on CURIE and URI Processing each of
-   // which is added to the [list of incomplete triples] as follows:
+   // which is added to the [local local list of incomplete triples]
+   // as follows:
    //
    // predicate
    //    full URI
@@ -345,7 +360,7 @@ void rdfa_save_incomplete_triples(
          rdfalistitem* curie = *relptr;
 
          rdfa_add_item(
-            context->incomplete_triples, curie->data,
+            context->local_incomplete_triples, curie->data,
                RDFALIST_FLAG_FORWARD | RDFALIST_FLAG_TEXT);
          
          relptr++;
@@ -354,7 +369,7 @@ void rdfa_save_incomplete_triples(
    
    // If present, @rev must contain one or more URIs, obtained
    // according to the section on CURIE and URI Processing, each of
-   // which is added to the [list of incomplete triples] as follows:
+   // which is added to the [local list of incomplete triples] as follows:
    //
    // predicate
    //    full URI
@@ -368,7 +383,7 @@ void rdfa_save_incomplete_triples(
          rdfalistitem* curie = *revptr;
 
          rdfa_add_item(
-            context->incomplete_triples, curie->data,
+            context->local_incomplete_triples, curie->data,
                RDFALIST_FLAG_REVERSE | RDFALIST_FLAG_TEXT);
 
          revptr++;
@@ -378,8 +393,8 @@ void rdfa_save_incomplete_triples(
 
 void rdfa_complete_object_literal_triples(rdfacontext* context)
 {
-   // 9. The final step of the iteration is to establish any
-   //    [current object literal];
+   // 9. The next step of the iteration is to establish any
+   // [current object literal];
    //
    // Predicates for the [current object literal] can be set by using
    // @property. If present, a URI is obtained according to the
@@ -395,13 +410,12 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    //   o or the body of the [current element] does have non-text
    //     child nodes but @datatype is present, with an empty value.
    //
-   // * Additionally, if there is a value for [current language] then
+   // Additionally, if there is a value for [current language] then
    // the value of the [plain literal] should include this language
    // information, as described in [RDF-CONCEPTS]. The actual literal
    // is either the value of @content (if present) or a string created
-   // by concatenating the text content of each of the child elements
-   // of the [current element] in document order, and then normalising
-   // white-space according to [WHITESPACERULES].
+   // by concatenating the text content of each of the descendant
+   // elements of the [current element] in document order.
    if((context->content != NULL))
    {
       current_object_literal = context->content;
@@ -432,9 +446,10 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    //      simply text nodes, and @datatype is not present, or is
    //      present, but is set to rdf:XMLLiteral.
    //
-   // The value of the [XML literal] is a string created from the
-   // inner content of the [current element], i.e., not including
-   // the element itself, with the datatype of rdf:XMLLiteral.
+   // The value of the [XML literal] is a string created by
+   // serializing to text, all nodes that are descendants of the
+   // [current element], i.e., not including the element itself, and
+   // giving it a datatype of rdf:XMLLiteral.
    if((current_object_literal == NULL) &&
       (index(context->xml_literal, '<') != NULL) &&
       ((context->datatype == NULL) ||
@@ -448,13 +463,12 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    //    o @datatype is present, and does not have an empty
    //      value.
    //
-   // The actual literal is either the value of @content (if
-   // present) or a string created by concatenating the inner
-   // content of each of the child elements in turn, of the
-   // [current element]. The final string includes the datatype
-   // URI, as described in [RDF-CONCEPTS], which will have been
-   // obtained according to the section on CURIE and URI
-   // Processing.      
+   // The actual literal is either the value of @content (if present)
+   // or a string created by concatenating the value of all descendant
+   // text nodes, of the [current element] in turn. The final string
+   // includes the datatype URI, as described in [RDF-CONCEPTS], which
+   // will have been obtained according to the section on CURIE and
+   // URI Processing.
    if((context->content != NULL) && (context->datatype != NULL) &&
       (strlen(context->datatype) > 0))
    {
@@ -473,12 +487,11 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
       type = RDF_TYPE_TYPED_LITERAL;
    }
    
-   // TODO: shouldn't this be used with EACH predicate?
-   // The [current object literal] is then used with the predicate to
+   // The [current object literal] is then used with each predicate to
    // generate a triple as follows:
    //
    // subject
-   //    [current subject]
+   //    [new subject]
    // predicate
    //    full URI
    // object
@@ -491,32 +504,20 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
       rdfalistitem* curie = *pptr;
       rdftriple* triple = NULL;
       
-      if((type == RDF_TYPE_PLAIN_LITERAL) ||
-         ((type == RDF_TYPE_TYPED_LITERAL) && (strcmp(
-         context->datatype, "http://www.w3.org/2001/XMLSchema#string") == 0)))
-      {
-         char* canonicalized_literal =
-            rdfa_canonicalize_string(current_object_literal);
-         triple = rdfa_create_triple(context->current_subject,
-            curie->data, canonicalized_literal, type, context->datatype,
-            context->language);
-         free(canonicalized_literal);
-      }
-      else
-      {
-         triple = rdfa_create_triple(context->current_subject,
-            curie->data, current_object_literal, type, context->datatype,
-            context->language);
-      }
+      triple = rdfa_create_triple(context->new_subject,
+         curie->data, current_object_literal, type, context->datatype,
+         context->language);
       
       context->triple_callback(triple);
       pptr++;
    }
 
+   context->triples_generated = 1;
+   
    // TODO: Implement recurse flag being set to false
    //
    // Once the triple has been created, if the [datatype] of the
    // [current object literal] is rdf:XMLLiteral, then the [recurse]
    // flag is set to false
-
+   context->recurse = 0;
 }

@@ -105,6 +105,8 @@ void rdfa_init_context(rdfacontext* context)
    context->property = NULL;
    context->plain_literal = NULL;
    context->xml_literal = NULL;
+   context->triples_generated = 0;
+   context->complete_incomplete_triples = 0;
 }
 
 /**
@@ -206,52 +208,28 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
       context_stack->items[context_stack->num_items - 1]->data;
    rdfacontext* rval = rdfa_create_context(parent_context->base);
 
+   // 10. If the [recurse] flag is 'true', all elements that are
+   // children of the [current element] are processed using the rules
+   // described here, using a new [evaluation context], initialized as follows:
+   //
+   // If the [skip element] flag is 'true' then the new
+   // [evaluation context] is a copy of the current context that was
+   // passed in to this level of processing, with the [language] and
+   // [list of URI mappings] values replaced with the local values;
+   //
+   // TODO: Don't know if this is quite correct... should probably
+   // check [skip element] later on in this function.
+   
    // initialize the context
    rval->base = rdfa_replace_string(rval->base, parent_context->base);
    rdfa_init_context(rval);
-   
-   // set the parent_object
-   if(parent_context->current_object_resource != NULL)
-   {
-      rval->parent_object =
-         rdfa_replace_string(rval->parent_object,
-            parent_context->current_object_resource);
-   }
-   else
-   {
-      rval->parent_object =
-         rdfa_replace_string(rval->parent_object,
-            parent_context->current_subject);
-   }
 
-   // TODO: Is this step really needed? Why do we need parent_bnode?
-   if(rval->parent_object != NULL)
-   {
-      if(strlen(rval->parent_object) > 1)
-      {
-         if((rval->parent_object[0] == '_') &&
-            (rval->parent_object[0] == ':'))
-         {
-            rval->parent_bnode =
-               rdfa_replace_string(rval->parent_bnode, rval->parent_object);
-         }
-      }
-   }
-
-   // copy the mappings and the incomplete triples
+   // copy the URI mappings
    if(rval->uri_mappings != NULL)
    {
       rdfa_free_mapping(rval->uri_mappings);
    }
    rval->uri_mappings = rdfa_copy_mapping(parent_context->uri_mappings);
-
-   if(rval->incomplete_triples != NULL)
-   {
-      rdfa_free_list(rval->incomplete_triples);
-   }
-   
-   rval->incomplete_triples =
-      rdfa_copy_list(parent_context->incomplete_triples);
 
    // inherit the parent context's language
    if(parent_context->language != NULL)
@@ -260,14 +238,6 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rdfa_replace_string(rval->language, parent_context->language);
    }
 
-   // inherit the parent context's current_subject
-   // TODO: This is not anywhere in the syntax processing document
-   if(parent_context->current_subject != NULL)
-   {
-      rval->current_subject =rdfa_replace_string(
-         rval->current_subject, parent_context->current_subject);
-   }
-   
    // set the triple callback
    rval->triple_callback = parent_context->triple_callback;
    rval->buffer_filler_callback = parent_context->buffer_filler_callback;
@@ -275,7 +245,107 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    // set the bnode count and inherit the recurse flag
    rval->bnode_count = parent_context->bnode_count;
    rval->recurse = parent_context->recurse;
+   rval->skip_element = 0;
+   
+   if(parent_context->skip_element == 0)
+   {
+      // the [parent subject] is set to the value of [new subject], if
+      // non-null, or the value of the [parent subject] of the current
+      // [evaluation context];
+      if(parent_context->new_subject != NULL)
+      {
+         rval->parent_subject = rdfa_replace_string(
+            rval->parent_subject, parent_context->new_subject);
+      }
+      else
+      {
+         rval->parent_subject = rdfa_replace_string(
+            rval->parent_subject, parent_context->parent_subject);
+      }
+      
+      // the [parent object] is set to value of
+      // [current object resource], if non-null, or the value of
+      // [new subject], if non-null, or the value of the
+      // [parent subject] of the current [evaluation context];
+      if(parent_context->current_object_resource != NULL)
+      {
+         rval->parent_object =
+            rdfa_replace_string(
+               rval->parent_object, parent_context->current_object_resource);
+      }
+      else if(parent_context->new_subject != NULL)
+      {
+         rval->parent_object =
+            rdfa_replace_string(
+               rval->parent_object, parent_context->new_subject);
+      }
+      else
+      {
+         rval->parent_object =
+            rdfa_replace_string(
+               rval->parent_object, parent_context->parent_subject);
+      }
+      
+      // TODO: Is this step really needed? Why do we need
+      // parent_bnode?
+      /*
+      if(rval->parent_object != NULL)
+      {
+         if(strlen(rval->parent_object) > 1)
+         {
+            if((rval->parent_object[0] == '_') &&
+               (rval->parent_object[1] == ':'))
+            {
+               rval->parent_bnode =
+                  rdfa_replace_string(rval->parent_bnode, rval->parent_object);
+            }
+         }
+      }
+      */
+   
+      // copy the incomplete triples
+      if(rval->incomplete_triples != NULL)
+      {
+         rdfa_free_list(rval->incomplete_triples);
+      }
+   
+      rval->incomplete_triples =
+         rdfa_copy_list(parent_context->local_incomplete_triples);
 
+      // inherit the parent context's current_subject
+      // TODO: This is not anywhere in the syntax processing document
+      //if(parent_context->current_subject != NULL)
+      //{
+      //   rval->current_subject = rdfa_replace_string(
+      //      rval->current_subject, parent_context->current_subject);
+      //}
+   }
+   else
+   {
+      rval->parent_subject = rdfa_replace_string(
+         rval->parent_subject, parent_context->parent_subject);
+      rval->parent_object = rdfa_replace_string(
+         rval->parent_object, parent_context->parent_object);
+
+      // copy the incomplete triples
+      if(rval->incomplete_triples != NULL)
+      {
+         rdfa_free_list(rval->incomplete_triples);
+      }
+   
+      rval->incomplete_triples =
+         rdfa_copy_list(parent_context->incomplete_triples);
+
+      // copy the local list of incomplete triples
+      if(rval->local_incomplete_triples != NULL)
+      {
+         rdfa_free_list(rval->local_incomplete_triples);
+      }
+   
+      rval->local_incomplete_triples =
+         rdfa_copy_list(parent_context->local_incomplete_triples);
+   }
+   
    return rval;
 }
 
@@ -515,11 +585,8 @@ static void XMLCALL
       }
       
       // 6. If in any of the previous steps a [new subject] was set to
-      // a non-null value, 
+      // a non-null value,
       
-      // TODO: Where does this go? - complete any incomplete triples;
-      //rdfa_complete_incomplete_triples(context);
-
       // it is now used to provide a subject for type values;
       if(instanceof != NULL)
       {
@@ -551,18 +618,20 @@ static void XMLCALL
       // Note that none of this block is executed if there is no
       // [new subject] value, i.e., [new subject] remains null.
    }
-
-   // TODO: YOU ARE HERE!
    
    if(context->current_object_resource != NULL)
    {
-      // 7. Process the [current object resource] if it is not null
+      // 7. If in any of the previous steps a [current object  resource]
+      // was set to a non-null value, it is now used to generate triples
       rdfa_complete_relrev_triples(context, rel, rev);
    }
    else
    {
-      // 8. Save all incomplete triples if no [current object
-      //     resource] was found.
+      // 8. If however [current object resource] was set to null, but
+      // there are predicates present, then they must be stored as
+      // [incomplete triple]s, pending the discovery of a subject that
+      // can be used as the object. Also, [current object resource]
+      // should be set to a newly created [bnode]
       rdfa_save_incomplete_triples(context, rel, rev);
    }
 
@@ -626,6 +695,8 @@ static void XMLCALL
 {
    rdfalist* context_stack = user_data;
    rdfacontext* context = (rdfacontext*)rdfa_pop_item(context_stack);
+   rdfacontext* parent_context = (rdfacontext*)
+      context_stack->items[context_stack->num_items - 1]->data;
    
    // append the text to the current context's XML literal
    char* buffer = malloc(strlen(name) + 4);
@@ -648,10 +719,10 @@ static void XMLCALL
    }
    free(buffer);
    
-   // 9. The final step of the iteration is to establish any
-   //    [current object literal];
+   // 9. The next step of the iteration is to establish any
+   // [current object literal];
 
-   // generate the complete object literate triples
+   // generate the complete object literal triples
    if(context->property != NULL)
    {
       // ensure to mark only the inner-content of the XML node for
@@ -696,9 +767,6 @@ static void XMLCALL
    // literals
    if(context->xml_literal != NULL)
    {
-      rdfacontext* parent_context = (rdfacontext*)
-         context_stack->items[context_stack->num_items - 1]->data;
-
       if(parent_context->xml_literal == NULL)
       {
          parent_context->xml_literal =
@@ -730,6 +798,36 @@ static void XMLCALL
       }
    }
 
+
+   
+   // 11. If the [skip element] flag is 'false', and either: the
+   // previous step resulted in a 'true' flag, or [new subject] was
+   // set to a non-null and non-bnode value, then any
+   // [incomplete triple]s within the current context should be completed:
+   if((context->skip_element == 0) &&
+      (context->complete_incomplete_triples ||
+       ((context->new_subject != NULL) && (context->new_subject[0] != '_') &&
+        (context->new_subject[1] != ':'))))
+   {
+      rdfa_complete_incomplete_triples(context);
+   }
+
+   // 12.  If any triples were created during the current level of
+   // processing, or [new subject] was set to a non-null and non-bnode
+   // value, or a value of 'true' was returned from the recursion step
+   // (step 10, above), then a value of 'true' should be returned from
+   // this level of processing. Otherwise a value of false should be
+   // returned. This returned value is forwarded to step 10 and
+   // determines whether to complete any [incomplete triple]s after
+   // having recursed into the processing of descendants.
+   if(context->triples_generated ||
+      ((context->new_subject != NULL) && (context->new_subject[0] != '_') &&
+       (context->new_subject[1] != ':')) ||
+      context->complete_incomplete_triples == 1)
+   {
+      parent_context->complete_incomplete_triples = 1;
+   }
+   
    // free the context
    rdfa_free_context(context);
 }

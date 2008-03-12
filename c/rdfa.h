@@ -129,6 +129,8 @@ typedef struct rdfacontext
    rdfalist* property;
    char* plain_literal;
    char* xml_literal;
+   unsigned char triples_generated;
+   unsigned char complete_incomplete_triples;
 
    // TODO: variables below here are no longer needed
    char* parent_bnode;
