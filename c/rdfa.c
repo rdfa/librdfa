@@ -151,6 +151,9 @@ size_t rdfa_init_base(
 
       // search for the end of </head> in 
       head_end = strstr(*working_buffer, "</head>");
+      if(head_end == NULL)
+         head_end = strstr(*working_buffer, "</HEAD>");
+
       offset = (char*)(*working_buffer + temp_buffer_size);
    }
    while((head_end == NULL) || (bytes_read > (1 << 17)));
