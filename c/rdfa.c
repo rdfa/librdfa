@@ -107,7 +107,7 @@ void rdfa_init_context(rdfacontext* context)
    context->xml_literal = NULL;
    context->triples_generated = 0;
    context->complete_incomplete_triples = 0;
-   context->callback_data = NULL;
+   //context->callback_data = NULL;
 }
 
 /**
@@ -135,7 +135,7 @@ size_t rdfa_init_base(
    do
    {
       bytes_read += context->buffer_filler_callback(
-         temp_buffer, temp_buffer_size);
+         temp_buffer, temp_buffer_size, context->callback_data);
 
       // extend the working buffer size
       if(*working_buffer_size < bytes_read)
@@ -926,7 +926,8 @@ int rdfa_parse(rdfacontext* context)
       // temporary buffer
       if(preread == 0)
       {         
-         wblen = context->buffer_filler_callback(working_buffer, wb_allocated);
+         wblen = context->buffer_filler_callback(
+            working_buffer, wb_allocated, context->callback_data);
       }
       else
       {

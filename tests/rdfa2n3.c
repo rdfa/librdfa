@@ -12,13 +12,13 @@
 
 FILE* g_xhtml_file = NULL;
 
-void process_triple(rdftriple* triple)
+void process_triple(rdftriple* triple, rdfacontext* context)
 {
    rdfa_print_triple(triple);
    rdfa_free_triple(triple);
 }
 
-size_t fill_buffer(char* buffer, size_t buffer_length)
+size_t fill_buffer(char* buffer, size_t buffer_length, rdfacontext* context)
 {
    size_t rval = fread(buffer, sizeof(char), buffer_length, g_xhtml_file);
    

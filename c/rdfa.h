@@ -69,13 +69,13 @@ typedef struct rdftriple
  * triples. Produces a triple that must be freed once the application
  * is done with the object.
  */
-typedef void (*triple_handler_fp)(rdftriple*);
+typedef void (*triple_handler_fp)(rdftriple*, void*);
 
 /**
  * The specification for a callback that is capable of handling
  * triples.
  */
-typedef size_t (*buffer_filler_fp)(char*, size_t);
+typedef size_t (*buffer_filler_fp)(char*, size_t, void*);
 
 /**
  * An RDFA list item is used to hold each datum in an rdfa list. It

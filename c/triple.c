@@ -161,7 +161,7 @@ void rdfa_generate_namespace_triple(
    rdftriple* triple =
       rdfa_create_triple(
          "@prefix", prefix, iri, RDF_TYPE_NAMESPACE_PREFIX, NULL, NULL);
-   context->triple_callback(triple);
+   context->triple_callback(triple, context->callback_data);
 }
 
 /**
@@ -210,7 +210,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
             rdfa_create_triple(context->parent_subject,
                incomplete_triple->data, context->new_subject, RDF_TYPE_IRI,
                NULL, NULL);
-         context->triple_callback(triple);
+         context->triple_callback(triple, context->callback_data);
       }
       else
       {
@@ -226,7 +226,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
             rdfa_create_triple(context->new_subject,
                incomplete_triple->data, context->parent_subject, RDF_TYPE_IRI,
                NULL, NULL);
-         context->triple_callback(triple);
+         context->triple_callback(triple, context->callback_data);
       }
       free(incomplete_triple);
    }
@@ -260,7 +260,7 @@ void rdfa_complete_type_triples(
          "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
          curie->data, RDF_TYPE_IRI, NULL, NULL);
       
-      context->triple_callback(triple);
+      context->triple_callback(triple, context->callback_data);
       iptr++;
    }
 
@@ -298,7 +298,7 @@ void rdfa_complete_relrev_triples(
             curie->data, context->current_object_resource, RDF_TYPE_IRI,
             NULL, NULL);
       
-         context->triple_callback(triple);
+         context->triple_callback(triple, context->callback_data);
          relptr++;
       }
    }
@@ -324,7 +324,7 @@ void rdfa_complete_relrev_triples(
             context->current_object_resource, curie->data,
             context->new_subject, RDF_TYPE_IRI, NULL, NULL);
       
-         context->triple_callback(triple);
+         context->triple_callback(triple, context->callback_data);
          revptr++;
       }
    }
@@ -508,7 +508,7 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
          curie->data, current_object_literal, type, context->datatype,
          context->language);
       
-      context->triple_callback(triple);
+      context->triple_callback(triple, context->callback_data);
       pptr++;
    }
 

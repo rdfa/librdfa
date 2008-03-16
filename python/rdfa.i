@@ -6,8 +6,8 @@
 #include "rdfa.h"
 
 RdfaParser* gRdfaParser = NULL;
-void process_triple(rdftriple* triple);
-size_t fill_buffer(char* buffer, size_t buffer_length);
+void process_triple(rdftriple* triple, void* callback_data);
+size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data);
 
 %}
 
@@ -30,7 +30,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length);
 %include RdfaParser.h
 
 %{
-void process_triple(rdftriple* triple)
+void process_triple(rdftriple* triple, void* callback_data)
 {
    PyGILState_STATE state = PyGILState_Ensure();
    PyObject* func;
@@ -52,7 +52,7 @@ void process_triple(rdftriple* triple)
    PyGILState_Release(state);
 }
 
-size_t fill_buffer(char* buffer, size_t buffer_length)
+size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
 {
    PyGILState_STATE state = PyGILState_Ensure();
 
