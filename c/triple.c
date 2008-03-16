@@ -166,8 +166,8 @@ void rdfa_generate_namespace_triple(
 
 /**
  * Completes all incomplete triples that are part of the current
- * context by matching the current_subject and the new_subject with
- * the list of incomplete triple predicates.
+ * context by matching the new_subject with the list of incomplete
+ * triple predicates.
  *
  * @param context the RDFa context.
  */
@@ -207,7 +207,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
          // object
          //    [new subject]
          rdftriple* triple =
-            rdfa_create_triple(context->current_subject,
+            rdfa_create_triple(context->parent_subject,
                incomplete_triple->data, context->new_subject, RDF_TYPE_IRI,
                NULL, NULL);
          context->triple_callback(triple);
@@ -224,7 +224,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
          //    [parent subject]
          rdftriple* triple =
             rdfa_create_triple(context->new_subject,
-               incomplete_triple->data, context->current_subject, RDF_TYPE_IRI,
+               incomplete_triple->data, context->parent_subject, RDF_TYPE_IRI,
                NULL, NULL);
          context->triple_callback(triple);
       }

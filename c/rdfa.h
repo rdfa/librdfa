@@ -132,9 +132,7 @@ typedef struct rdfacontext
    unsigned char triples_generated;
    unsigned char complete_incomplete_triples;
 
-   // TODO: variables below here are no longer needed
-   char* parent_bnode;
-   char* current_subject;
+   void* callback_data;
 } rdfacontext;
 
 /**

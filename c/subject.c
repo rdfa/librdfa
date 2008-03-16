@@ -105,7 +105,10 @@ void rdfa_establish_new_subject(
       // set to that and the [skip element] flag is set to 'true';
       context->new_subject =
          rdfa_replace_string(context->new_subject, context->parent_object);
-      context->skip_element = 1;
+
+      // TODO: The skip element flag will be set even if there is a
+      // @property value, which is a bug, isn't it?
+      //context->skip_element = 1;
    }
 }
 

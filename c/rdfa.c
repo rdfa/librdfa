@@ -107,6 +107,7 @@ void rdfa_init_context(rdfacontext* context)
    context->xml_literal = NULL;
    context->triples_generated = 0;
    context->complete_incomplete_triples = 0;
+   context->callback_data = NULL;
 }
 
 /**
@@ -246,6 +247,15 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->bnode_count = parent_context->bnode_count;
    rval->recurse = parent_context->recurse;
    rval->skip_element = 0;
+   rval->callback_data = parent_context->callback_data;
+   
+   // inherit the parent context's new_subject
+   // TODO: This is not anywhere in the syntax processing document
+   //if(parent_context->new_subject != NULL)
+   //{
+   //   rval->new_subject = rdfa_replace_string(
+   //      rval->new_subject, parent_context->new_subject);
+   //}
    
    if(parent_context->skip_element == 0)
    {
@@ -286,23 +296,6 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
                rval->parent_object, parent_context->parent_subject);
       }
       
-      // TODO: Is this step really needed? Why do we need
-      // parent_bnode?
-      /*
-      if(rval->parent_object != NULL)
-      {
-         if(strlen(rval->parent_object) > 1)
-         {
-            if((rval->parent_object[0] == '_') &&
-               (rval->parent_object[1] == ':'))
-            {
-               rval->parent_bnode =
-                  rdfa_replace_string(rval->parent_bnode, rval->parent_object);
-            }
-         }
-      }
-      */
-   
       // copy the incomplete triples
       if(rval->incomplete_triples != NULL)
       {
@@ -311,14 +304,6 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    
       rval->incomplete_triples =
          rdfa_copy_list(parent_context->local_incomplete_triples);
-
-      // inherit the parent context's current_subject
-      // TODO: This is not anywhere in the syntax processing document
-      //if(parent_context->current_subject != NULL)
-      //{
-      //   rval->current_subject = rdfa_replace_string(
-      //      rval->current_subject, parent_context->current_subject);
-      //}
    }
    else
    {
@@ -556,6 +541,15 @@ static void XMLCALL
          printf("DEBUG: @datatype = %s\n", datatype);
       }
    }
+
+   // TODO: This isn't part of the processing model, it needs to be
+   // included and is a correction for the last item in step #4.
+   if((about == NULL) && (src == NULL) && (instanceof == NULL) &&
+      (rel == NULL) && (rev == NULL) && (property == NULL) &&
+      (resource == NULL) && (href == NULL))
+   {
+      context->skip_element = 1;
+   }
    
    if((rel == NULL) && (rev == NULL))
    {
@@ -592,29 +586,7 @@ static void XMLCALL
       {
          rdfa_complete_type_triples(context, instanceof);
       }
-
-      /* TODO: This entire section needs to be moved to Step # 11
-      // furnish a new value for [current subject].
-      // Once all 'incomplete triples' have been resolved,
-      // [current subject] is set to [new subject].
-      context->current_subject =
-         rdfa_replace_string(context->current_subject, context->new_subject);
-
-      // * The values [parent bnode] and [parent object] are both
-      // cleared so that they are not passed on to child statements
-      // when recursing.
-      if(context->parent_bnode != NULL)
-      {
-         free(context->parent_bnode);
-         context->parent_bnode = NULL;
-      }
-      if(context->parent_object != NULL)
-      {
-         free(context->parent_object);
-         context->parent_object = NULL;
-      }
-      */
-
+      
       // Note that none of this block is executed if there is no
       // [new subject] value, i.e., [new subject] remains null.
    }
@@ -625,7 +597,7 @@ static void XMLCALL
       // was set to a non-null value, it is now used to generate triples
       rdfa_complete_relrev_triples(context, rel, rev);
    }
-   else
+   else if((rel != NULL) || (rev != NULL))
    {
       // 8. If however [current object resource] was set to null, but
       // there are predicates present, then they must be stored as
@@ -802,12 +774,10 @@ static void XMLCALL
    
    // 11. If the [skip element] flag is 'false', and either: the
    // previous step resulted in a 'true' flag, or [new subject] was
-   // set to a non-null and non-bnode value, then any
-   // [incomplete triple]s within the current context should be completed:
+   // set to a non-null value, then any [incomplete triple]s within
+   // the current context should be completed:
    if((context->skip_element == 0) &&
-      (context->complete_incomplete_triples ||
-       ((context->new_subject != NULL) && (context->new_subject[0] != '_') &&
-        (context->new_subject[1] != ':'))))
+      (context->complete_incomplete_triples || (context->new_subject != NULL)))
    {
       rdfa_complete_incomplete_triples(context);
    }
@@ -855,19 +825,9 @@ void rdfa_free_context(rdfacontext* context)
       free(context->base);
    }
    
-   if(context->current_subject != NULL)
-   {
-      free(context->current_subject);
-   }
-   
    if(context->parent_object != NULL)
    {
       free(context->parent_object);
-   }
-
-   if(context->parent_bnode != NULL)
-   {
-      free(context->parent_bnode);
    }
 
    if(context->uri_mappings != NULL)
@@ -972,7 +932,7 @@ int rdfa_parse(rdfacontext* context)
       {
          wblen = wb_preread;
       }
-      done = (wb_preread < wb_allocated);
+      done = (wb_preread < wb_allocated) || (wblen == 0);
 
       if(XML_Parse(parser, working_buffer, wblen, done) == XML_STATUS_ERROR)
       {

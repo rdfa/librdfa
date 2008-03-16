@@ -20,7 +20,9 @@ void process_triple(rdftriple* triple)
 
 size_t fill_buffer(char* buffer, size_t buffer_length)
 {
-   return fread(buffer, sizeof(char), buffer_length, g_xhtml_file);
+   size_t rval = fread(buffer, sizeof(char), buffer_length, g_xhtml_file);
+   
+   return rval;
 }
 
 int main(int argc, char** argv)
