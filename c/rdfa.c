@@ -1,6 +1,20 @@
 /**
  * Copyright 2008 Digital Bazaar, Inc.
- * This file is a part of librdfa and is licensed under the GNU LGPL v3.
+ *
+ * This file is part of librdfa.
+ *
+ * librdfa is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * librdfa is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with librdfa. If not, see <http://www.gnu.org/licenses/>.
  *
  * The librdfa library is the Fastest RDFa Parser in the Universe. It is
  * a stream parser, meaning that it takes an XML data as input and spits
@@ -12,6 +26,7 @@
  * Usage:
  *
  *    rdfacontext* context = rdfa_create_context(BASE_URI);
+ *    context->callback_data = your_user_data;
  *    rdfa_set_triple_handler(context, &process_triple);
  *    rdfa_set_buffer_filler(context, &fill_buffer);
  *    rdfa_parse(context);
