@@ -171,7 +171,7 @@ size_t rdfa_init_base(
 
       offset = (char*)(*working_buffer + temp_buffer_size);
    }
-   while((head_end == NULL) || (bytes_read > (1 << 17)));
+   while((head_end == NULL) || (bytes_read < (1 << 17)));
 
    // if </head> was found, search for <base and extract the base URI
    if(head_end != NULL)
@@ -914,6 +914,7 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
 int rdfa_parse(rdfacontext* context)
 {
    // create the buffers and expat parser
+   int rval = RDFA_PARSE_SUCCESS;
    size_t wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
    char* working_buffer = malloc(wb_allocated);
 
@@ -951,15 +952,16 @@ int rdfa_parse(rdfacontext* context)
       {
          wblen = wb_preread;
       }
-      done = (wb_preread < wb_allocated) || (wblen == 0);
+      done = (wb_preread < wb_allocated) || (wblen < wb_allocated);
 
       if(XML_Parse(parser, working_buffer, wblen, done) == XML_STATUS_ERROR)
       {
          fprintf(stderr,
-                 "%s at line %d\n",
+                 "%s at line %d, column %d\n",
                  XML_ErrorString(XML_GetErrorCode(parser)),
-                 XML_GetCurrentLineNumber(parser));
-         return 1;
+                 XML_GetCurrentLineNumber(parser),
+                 XML_GetCurrentColumnNumber(parser));
+         rval = RDFA_PARSE_FAILED;
       }
 
       if(preread == 1)
@@ -967,7 +969,7 @@ int rdfa_parse(rdfacontext* context)
          preread = 0;
       }
    }
-   while(!done);
+   while(!done && (rval != RDFA_PARSE_FAILED));
 
    XML_ParserFree(parser);
 
@@ -975,5 +977,5 @@ int rdfa_parse(rdfacontext* context)
    free(context_stack->items[0]);
    free(context_stack->items);
    
-   return RDFA_PARSE_FAILED;
+   return rval;
 }

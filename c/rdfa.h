@@ -43,8 +43,9 @@ extern "C"
 
 #define DEBUG 0
 
-#define RDFA_PARSE_FAILED -1
 #define RDFA_PARSE_WARNING -2
+#define RDFA_PARSE_FAILED -1
+#define RDFA_PARSE_UNKNOWN 0
 #define RDFA_PARSE_SUCCESS 1
 
 #define MAX_URI_MAPPINGS 512
