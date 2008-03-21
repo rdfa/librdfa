@@ -36,6 +36,8 @@
 #define _LIBRDFA_RDFA_H_
 #include <stdlib.h>
 
+#include <expat.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -149,6 +151,16 @@ typedef struct rdfacontext
    unsigned char complete_incomplete_triples;
 
    void* callback_data;
+
+   /* parse state */
+   size_t wb_allocated;
+   char* working_buffer;
+   size_t wb_offset;
+   XML_Parser parser;
+   int done;
+   rdfalist* context_stack;
+   size_t wb_preread;
+   int preread;
 } rdfacontext;
 
 /**

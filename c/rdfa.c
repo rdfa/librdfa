@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <expat.h>
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
@@ -137,42 +136,34 @@ void rdfa_init_context(rdfacontext* context)
  * @return the size of the data available in the working buffer.
  */
 size_t rdfa_init_base(
-   rdfacontext* context, char** working_buffer, size_t* working_buffer_size)
+   rdfacontext* context, char** working_buffer, size_t* working_buffer_size,
+   char* temp_buffer, size_t bytes_read)
 {
    size_t temp_buffer_size = sizeof(char) * READ_BUFFER_SIZE;
-   char* temp_buffer = malloc(temp_buffer_size);
-   size_t bytes_read = 0;
    char* head_end = NULL;
+   size_t offset = context->wb_offset;
 
-   // search for the end of <head>, stop if <head> was found, or we've
-   // processed 131072 bytes
-   char* offset = *working_buffer;
-   do
+   // search for the end of <head>, stop if <head> was found
+   // extend the working buffer size
+   if((offset + bytes_read) > *working_buffer_size)
    {
-      bytes_read += context->buffer_filler_callback(
-         temp_buffer, temp_buffer_size, context->callback_data);
-
-      // extend the working buffer size
-      if(*working_buffer_size < bytes_read)
-      {
-         *working_buffer_size += temp_buffer_size;
-         *working_buffer =
-            (char*)realloc(working_buffer, *working_buffer_size);
-         offset = *working_buffer + bytes_read;
-      }
-
-      // append to the working buffer
-      memcpy(offset, temp_buffer, temp_buffer_size);
-
-      // search for the end of </head> in 
-      head_end = strstr(*working_buffer, "</head>");
-      if(head_end == NULL)
-         head_end = strstr(*working_buffer, "</HEAD>");
-
-      offset = (char*)(*working_buffer + temp_buffer_size);
+      *working_buffer_size += temp_buffer_size;
+      *working_buffer = (char*)realloc(working_buffer, *working_buffer_size);
    }
-   while((head_end == NULL) || (bytes_read < (1 << 17)));
+   
+   // append to the working buffer
+   memmove(*working_buffer + offset, temp_buffer, bytes_read);
+ 
+   // search for the end of </head> in 
+   head_end = strstr(*working_buffer, "</head>");
+   if(head_end == NULL)
+      head_end = strstr(*working_buffer, "</HEAD>");
+   
+   context->wb_offset += bytes_read;
 
+   if(head_end == NULL)
+      return bytes_read;
+   
    // if </head> was found, search for <base and extract the base URI
    if(head_end != NULL)
    {
@@ -209,8 +200,6 @@ size_t rdfa_init_base(
       }
    }
    
-   free(temp_buffer);
-
    return bytes_read;
 }
 
@@ -400,7 +389,7 @@ static void XMLCALL
    char* href = NULL;
    const char* content = NULL;
    const char* datatype_curie = NULL;
-   const char* datatype = NULL;
+   char* datatype = NULL;
 
    // scan all of the attributes for the RDFa-specific attributes
    if(aptr != NULL)
@@ -638,6 +627,7 @@ static void XMLCALL
    rdfa_free_list(rev);
    free(resource);
    free(href);
+   free(datatype);
 }
 
 static void XMLCALL character_data(void *user_data, const char *s, int len)
@@ -831,6 +821,16 @@ rdfacontext* rdfa_create_context(const char* base)
       rval = malloc(sizeof(rdfacontext));
       rval->base = NULL;
       rval->base = rdfa_replace_string(rval->base, base);
+
+      /* parse state */
+      rval->wb_allocated = 0;
+      rval->working_buffer = NULL;
+      rval->wb_offset = 0;
+      rval->parser = NULL;
+      rval->done = 0;
+      rval->context_stack = NULL;
+      rval->wb_preread = 0;
+      rval->preread = 0;
    }
    
    return rval;
@@ -843,6 +843,11 @@ void rdfa_free_context(rdfacontext* context)
       free(context->base);
    }
    
+   if(context->parent_subject != NULL)
+   {
+      free(context->parent_subject);
+   }
+
    if(context->parent_object != NULL)
    {
       free(context->parent_object);
@@ -898,6 +903,18 @@ void rdfa_free_context(rdfacontext* context)
       free(context->xml_literal);
    }
 
+   // TODO: These should be moved into their own data structure
+   if(context->local_incomplete_triples != NULL)
+   {
+      rdfa_free_list(context->local_incomplete_triples);
+   }
+   rdfa_free_list(context->context_stack);
+
+   if(context->working_buffer != NULL)
+   {
+      free(context->working_buffer);
+   }
+   
    free(context);
 }
 
@@ -911,71 +928,111 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
    context->buffer_filler_callback = bf;
 }
 
-int rdfa_parse(rdfacontext* context)
+int rdfa_parse_start(rdfacontext* context)
 {
    // create the buffers and expat parser
    int rval = RDFA_PARSE_SUCCESS;
-   size_t wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
-   char* working_buffer = malloc(wb_allocated);
+   
+   context->wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
+   context->working_buffer = malloc(context->wb_allocated);
 
-   XML_Parser parser = XML_ParserCreate(NULL);
-   int done;
-   rdfalist* context_stack = rdfa_create_list(32);
+   context->parser = XML_ParserCreate(NULL);
+   context->done = 0;
+   context->context_stack = rdfa_create_list(32);
 
    // initialize the context stack
-   rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
-
+   rdfa_push_item(context->context_stack, context, RDFALIST_FLAG_CONTEXT);
+   
    // set up the context stack
-   XML_SetUserData(parser, context_stack);
-   XML_SetElementHandler(parser, start_element, end_element);
-   XML_SetCharacterDataHandler(parser, character_data);
-
+   XML_SetUserData(context->parser, context->context_stack);
+   XML_SetElementHandler(context->parser, start_element, end_element);
+   XML_SetCharacterDataHandler(context->parser, character_data);
+   
    rdfa_init_context(context);
 
-   // search for the <base> tag and use the href contained therein to
-   // set the parsing context.
-   size_t wb_preread = rdfa_init_base(context, &working_buffer, &wb_allocated);
-   int preread = 1;
+   return rval;
+}
 
-   do
+int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
+{
+   // it is an error to call this before rdfa_parse_start()
+   if(context->done)
    {
-      size_t wblen;
-
-      // check to see if we're using the working buffer or the
-      // temporary buffer
-      if(preread == 0)
-      {         
-         wblen = context->buffer_filler_callback(
-            working_buffer, wb_allocated, context->callback_data);
-      }
-      else
-      {
-         wblen = wb_preread;
-      }
-      done = (wb_preread < wb_allocated) || (wblen < wb_allocated);
-
-      if(XML_Parse(parser, working_buffer, wblen, done) == XML_STATUS_ERROR)
+      return RDFA_PARSE_FAILED;
+   }
+   
+   if(!context->preread)
+   {
+      // search for the <base> tag and use the href contained therein to
+      // set the parsing context.
+      context->wb_preread = rdfa_init_base(context,
+         &context->working_buffer, &context->wb_allocated, data, wblen);
+      
+      // continue looking if in first 131072 bytes of data
+      if(!context->base && context->wb_preread < (1<<17))
+         return RDFA_PARSE_SUCCESS;
+      
+      if(XML_Parse(context->parser, context->working_buffer,
+         context->wb_offset, 0) == XML_STATUS_ERROR)
       {
          fprintf(stderr,
                  "%s at line %d, column %d\n",
-                 XML_ErrorString(XML_GetErrorCode(parser)),
-                 XML_GetCurrentLineNumber(parser),
-                 XML_GetCurrentColumnNumber(parser));
-         rval = RDFA_PARSE_FAILED;
+                 XML_ErrorString(XML_GetErrorCode(context->parser)),
+                 XML_GetCurrentLineNumber(context->parser),
+                 XML_GetCurrentColumnNumber(context->parser));
+         return RDFA_PARSE_FAILED;
       }
-
-      if(preread == 1)
-      {
-         preread = 0;
-      }
+      
+      context->preread = 1;
+      
+      return RDFA_PARSE_SUCCESS;
    }
-   while(!done && (rval != RDFA_PARSE_FAILED));
 
-   XML_ParserFree(parser);
-
-   free(working_buffer);
-   free(context_stack->items[0]);
-   free(context_stack->items);
+   // otherwise just parse the block passed in
+   if(XML_Parse(context->parser, data, wblen, done) == XML_STATUS_ERROR)
+   {
+      fprintf(stderr,
+              "%s at line %d\n",
+              XML_ErrorString(XML_GetErrorCode(context->parser)),
+              XML_GetCurrentLineNumber(context->parser));
+      return RDFA_PARSE_FAILED;
+   }
    
-   return rval;
+   return RDFA_PARSE_SUCCESS;
+}
+
+void rdfa_parse_end(rdfacontext* context)
+{
+   // Free the expat parser and the like
+   XML_ParserFree(context->parser);
+}
+
+int rdfa_parse(rdfacontext* context)
+{
+  int rval;
+
+  rval = rdfa_parse_start(context);
+  if(rval != RDFA_PARSE_SUCCESS)
+  {
+    context->done = 1;
+    return rval;
+  }
+
+  do
+  {
+     size_t wblen;
+     
+     wblen = context->buffer_filler_callback(
+        context->working_buffer, context->wb_allocated,
+        context->callback_data);
+     context->done = (wblen == 0);
+     
+     rval = rdfa_parse_chunk(
+        context, context->working_buffer, wblen, context->done);
+  }
+  while(!context->done && rval == RDFA_PARSE_SUCCESS);
+
+  rdfa_parse_end(context);
+  
+  return rval;
 }

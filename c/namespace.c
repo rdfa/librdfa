@@ -63,6 +63,7 @@ void rdfa_update_uri_mappings(
    {
       // check to make sure we're actually dealing with an
       // xmlns: namespace attribute
+      // TODO: Could we segfault here? Probably.
       if((attribute[5] == ':') && (attribute[6] != '\0'))
       {
          rdfa_generate_namespace_triple(context, &attribute[6], value);
