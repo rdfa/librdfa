@@ -72,7 +72,7 @@ fi
 #AC_CHECK_HEADERS(iostream)
 
 # Make sure the proper libraries exist
-AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library))
+AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L/usr/lib)
 
 # Set the OS so that we can do certain build modifications if needed
 OS="$build_os"
