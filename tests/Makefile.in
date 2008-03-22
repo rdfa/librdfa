@@ -3,7 +3,7 @@
 EXECUTABLES = rdfa2n3 rdfastring2n3 curies speed
 
 DYNAMIC_LINK_LIBRARIES = rdfa
-DYNAMIC_LINUX_LIBRARIES = expat
+DYNAMIC_UNIX_LIBRARIES = expat
 DYNAMIC_WINDOWS_LIBRARIES = expat
 
 # ----------- Standard Makefile

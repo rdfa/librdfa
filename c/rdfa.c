@@ -168,6 +168,9 @@ size_t rdfa_init_base(
    if(head_end != NULL)
    {
       char* base_start = strstr(*working_buffer, "<base ");
+      if(base_start == NULL)
+         base_start = strstr(*working_buffer, "<BASE ");
+      
       if(base_start != NULL)
       {
          char* href_start = strstr(base_start, "href=");
@@ -832,6 +835,10 @@ rdfacontext* rdfa_create_context(const char* base)
       rval->wb_preread = 0;
       rval->preread = 0;
    }
+   else
+   {
+      printf("OMG!\n");
+   }
    
    return rval;
 }
@@ -908,7 +915,12 @@ void rdfa_free_context(rdfacontext* context)
    {
       rdfa_free_list(context->local_incomplete_triples);
    }
-   rdfa_free_list(context->context_stack);
+
+   if(context->context_stack != NULL)
+   {
+      // TODO: This leaks memory! Must be fixed!
+      //rdfa_free_list(context->context_stack);
+   }
 
    if(context->working_buffer != NULL)
    {
@@ -934,7 +946,7 @@ int rdfa_parse_start(rdfacontext* context)
    int rval = RDFA_PARSE_SUCCESS;
    
    context->wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
-   context->working_buffer = malloc(context->wb_allocated);
+   context->working_buffer = calloc(context->wb_allocated, sizeof(char));
 
    context->parser = XML_ParserCreate(NULL);
    context->done = 0;

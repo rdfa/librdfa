@@ -26,16 +26,6 @@ RDFADIR=`pwd`
 RELEASE=`date +%Y%m%d`
 
 # Check for particular build options
-AC_ARG_ENABLE([linux],
-               AC_HELP_STRING([--enable-linux],
-                              [compile for linux (default is YES)]),
-              [ac_enable_linux_build=yes], [ac_enable_linux_build=yes])
-
-AC_ARG_ENABLE([windows],
-               AC_HELP_STRING([--enable-windows],
-                              [compile for windows (default is NO)]),
-              [ac_enable_windows_build=yes], [ac_enable_windows_build=no])
-
 AC_ARG_ENABLE([python],
                AC_HELP_STRING([--enable-python],
                               [compile extensions for Python (default is NO)]),
@@ -55,32 +45,14 @@ AC_CANONICAL_BUILD()
 #AC_LANG(C++)
 AC_PROG_INSTALL()
 
-# Check to see if we need to build for linux
-if test "$ac_enable_linux_build" = "yes" ; then
-   AC_PROG_CC()
-   AC_CHECK_PROG(LINUX_AR, ar, ar, not found)
-   LINUX_CC="$CC"
-   BUILD_FOR_LINUX="yes"
-fi
+# Get the C compiler for this system
+AC_PROG_CC()
+AC_CHECK_PROG(AR, ar, ar, not found)
+AC_CHECK_PROG(AS, as, as, not found)
 
-# Check to see if we need to build for windows
-if test "$ac_enable_windows_build" = "yes" ; then
-   AC_CHECK_PROG(WINDOWS_CC, i586-mingw32msvc-gcc, 
-                 i586-mingw32msvc-gcc, not found)
-   AC_CHECK_PROG(WINDOWS_AR, i586-mingw32msvc-ar, 
-                 i586-mingw32msvc-ar, not found)
-   AC_CHECK_PROG(WINDOWS_DLLWRAP, i586-mingw32msvc-dllwrap,
-                 i586-mingw32msvc-dllwrap, not found)
-   AC_CHECK_PROG(WINDOWS_AS, i586-mingw32msvc-as,
-                 i586-mingw32msvc-as, not found)
-   # If the mingw32 compiler wasn't found, use the system default
-   if test "$WINDOWS_CC" = "not found" ; then
-      AC_PROG_CC()
-      WINDOWS_CC="$CC"
-   fi
+AC_CHECK_PROG(DLLWRAP, dllwrap, dllwrap, not found)
 
-   BUILD_FOR_WINDOWS="yes"
-fi
+CC="$CC"
 
 # Check to see if we need to build the Python modules
 if test "$ac_enable_python_build" = "yes" ; then
@@ -102,6 +74,8 @@ fi
 # Make sure the proper libraries exist
 AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library))
 
+# Set the OS so that we can do certain build modifications if needed
+OS="$build_os"
 
 # Make all the proper substitutions
 AC_SUBST(RDFADIR)
@@ -115,17 +89,12 @@ AC_SUBST(BUILD_FOR_LINUX)
 AC_SUBST(BUILD_FOR_WINDOWS)
 AC_SUBST(BUILD_FOR_PYTHON)
 
-AC_SUBST(LINUX_CC)
-AC_SUBST(WINDOWS_CC)
+AC_SUBST(CC)
+AC_SUBST(AR)
+AC_SUBST(AS)
+AC_SUBST(DLLWRAP)
 
-AC_SUBST(LINUX_AR)
-AC_SUBST(WINDOWS_AR)
-
-AC_SUBST(WINDOWS_AS)
-AC_SUBST(WINDOWS_DLLWRAP)
-
-AC_SUBST(DBCOREDIR)
-AC_SUBST(SIGNTOOL)
+AC_SUBST(OS)
 
 # Generating files
 AC_OUTPUT(Makefile \
@@ -137,26 +106,22 @@ AC_OUTPUT(Makefile \
           installers/debian/changelog)
 
 # Dump the build configuration for the developer
-echo -e "\n--------- Bitmunk Build Environment -----------"
-echo "Product           : $PACKAGE_STRING-$RELEASE"
-echo "Build system      : $build_cpu-$build_vendor-$build_os"
-if test "$BUILD_FOR_LINUX" = "yes"; then
-   echo "Linux C++ compiler: $LINUX_CC"
-   echo "Linux C++ archiver: $LINUX_AR"
+echo -e "\n--------- librdfa Build Environment -----------"
+echo "Product        : $PACKAGE_STRING-$RELEASE"
+echo "Build system   : $build_cpu-$build_vendor-$build_os"
+echo "C compiler     : $CC"
+echo "Archiver       : $AR"
+if test "$DLLWRAP" != "not found"; then
+   echo "DLL wrapper    : $DLLWRAP"
 fi
-if test "$BUILD_FOR_WINDOWS" = "yes"; then
-   echo "Win32 C++ compiler: $WINDOWS_CC"
-   echo "Win32 C++ archiver: $WINDOWS_AR"
-   echo "Win32 assembler   : $WINDOWS_AS"
-   echo "Win32 DLL wrapper : $WINDOWS_DLLWRAP"
-fi
+
 if test "$BUILD_FOR_PYTHON" = "yes"; then
-   echo "Python modules    : enabled"
+   echo "Python modules : enabled"
 else
-   echo "Python modules    : disabled"
+   echo "Python modules : disabled"
 fi
 if test "$ac_enable_docs_build" = "yes"; then
-   echo "Documentation     : enabled"
+   echo "Documentation  : enabled"
 else
-   echo "Documentation     : disabled (use --enable-docs to enable)"
+   echo "Documentation  : disabled (use --enable-docs to enable)"
 fi

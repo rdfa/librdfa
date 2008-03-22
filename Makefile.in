@@ -1,8 +1,6 @@
 # The top-level Makefile that is used to build 
 
 # State the platforms for which we are building
-BUILD_FOR_LINUX=@BUILD_FOR_LINUX@
-BUILD_FOR_WINDOWS=@BUILD_FOR_WINDOWS@
 BUILD_FOR_PYTHON=@BUILD_FOR_PYTHON@
 
 VERSION = @VERSION@
@@ -21,13 +19,7 @@ MAKE_CMD = $(MAKE) -j -l 5.0 --no-print-directory -s
 MAKE_DIR = $(MAKE_CMD) -C $(dir)
 endif
 
-ifeq ($(BUILD_FOR_LINUX),yes)
-LINUX_LIBS_DIR = @RDFADIR@/libs/linux
-endif
-
-ifeq ($(BUILD_FOR_WINDOWS),yes)
-WINDOWS_LIBS_DIR = @RDFADIR@/libs/windows
-endif
+LIBS_DIR = @RDFADIR@/libs
 
 .PHONY: all verbose clean test docs
 
@@ -41,22 +33,22 @@ clean:
 	@echo "Removed all objects and libraries."
 
 tests: all
-	LD_LIBRARY_PATH=@RDFADIR@/libs/linux tests/dist/linux/curies
-	LD_LIBRARY_PATH=@RDFADIR@/libs/linux tests/dist/linux/rdfa2n3 tests/testsuite/0001.xhtml
+	LD_LIBRARY_PATH=@RDFADIR@/libs tests/dist/curies
+	LD_LIBRARY_PATH=@RDFADIR@/libs tests/dist/rdfa2n3 tests/testsuite/0001.xhtml
 
 docs:
 	@$(MAKE_DIR) docs
 
 install-librdfa:
 	install -d $(PREFIX)/usr/lib/
-	install -m 644 $(LINUX_LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
+	install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
 	ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
 
 install-librdfa-dev:
 	install -d $(PREFIX)/usr/lib/
 	install -d $(PREFIX)/usr/include/
-	install -m 644 $(LINUX_LIBS_DIR)/librdfa.a $(PREFIX)/usr/lib/librdfa.a
-	install -m 644 $(LINUX_LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
+	install -m 644 $(LIBS_DIR)/librdfa.a $(PREFIX)/usr/lib/librdfa.a
+	install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
 	ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
 	install -m 644 c/rdfa.h $(PREFIX)/usr/include/
 	install -m 644 c/rdfa_utils.h $(PREFIX)/usr/include/

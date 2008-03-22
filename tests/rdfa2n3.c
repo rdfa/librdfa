@@ -61,7 +61,7 @@ int main(int argc, char** argv)
          rdfa_set_buffer_filler(context, &fill_buffer);
          rdfa_parse(context);
          rdfa_free_context(context);
-
+         
          fclose(xhtml_file);
          free(base_uri);
       }

@@ -1,9 +1,5 @@
 # This file contains basic Makefile includes that contain all building
 # instructions for all binaries and packages.
-
-BUILD_FOR_LINUX=@BUILD_FOR_LINUX@
-BUILD_FOR_WINDOWS=@BUILD_FOR_WINDOWS@
-
 AR_FLAGS = cr
 RDFA = @RDFADIR@
 INCLUDES = \
@@ -16,149 +12,110 @@ CURRENT_DIR = $(shell pwd)
 
 all: build-directories build-objects build-libraries build-executables
 
-# Linux-specific variables
-LINUX_CC = @LINUX_CC@
-LINUX_CC_FLAGS = -Wall -fPIC -g
-LINUX_INCLUDES = $(INCLUDES)
-LINUX_LIB_DIR = $(RDFA)/libs/linux
-LINUX_LIBS = -L$(LINUX_LIB_DIR)
-LINUX_AR = @LINUX_AR@
-LINUX_BUILD_DIR = build/linux
-LINUX_DIST_DIR = dist/linux
-LINUX_SOURCES := $(patsubst %.c,$(LINUX_BUILD_DIR)/%.c, $(SOURCES))
-LINUX_SOURCES += $(patsubst %,$(LINUX_BUILD_DIR)/%.c, $(EXECUTABLES))
-LINUX_OBJECTS := $(patsubst %.c,$(LINUX_BUILD_DIR)/%-linux.o, $(SOURCES))
-LINUX_OBJECTS += $(patsubst %,$(LINUX_BUILD_DIR)/%-linux.o, $(EXECUTABLES))
-DYNAMIC_LINUX_LIBRARIES := $(DYNAMIC_LINK_LIBRARIES) $(DYNAMIC_LINUX_LIBRARIES)
-LINUX_EXECUTABLES := $(patsubst %,$(LINUX_DIST_DIR)/%, $(EXECUTABLES))
-LINUX_DEPENDENCIES := $(patsubst %.c,$(LINUX_BUILD_DIR)/%-linux.P, $(SOURCES))
+# Variables
+CC = @CC@
 
-LINUX_LIBRARIES := $(patsubst %,$(LINUX_DIST_DIR)/lib%.so, $(LIBRARIES))
-LINUX_LIBRARIES += $(patsubst %,$(LINUX_DIST_DIR)/lib%.a, $(LIBRARIES))
+ifeq ($(OS),windows)
+CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
+else
+CC_FLAGS = -Wall -fPIC -g
+endif
 
-# Windows-specific variables
-WINDOWS_CC = @WINDOWS_CC@
-WINDOWS_CC_FLAGS += -g -Wall -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
-WINDOWS_INCLUDES = $(INCLUDES) -I$(DBCORE)/3rdparty/cpp/expat/include
-WINDOWS_LIB_DIR = $(RDFA)/libs/windows
-WINDOWS_LIBS = -L$(WINDOWS_LIB_DIR)
-WINDOWS_AR = @WINDOWS_AR@
-WINDOWS_AS = @WINDOWS_AS@
-DYNAMIC_WINDOWS_LIBRARIES := $(DYNAMIC_LINK_LIBRARIES) $(DYNAMIC_WINDOWS_LIBRARIES)
-WINDOWS_DLLWRAP = @WINDOWS_DLLWRAP@
-WINDOWS_DLLWRAP_FLAGS = --as=$(WINDOWS_AS) --export-all --driver-name $(WINDOWS_CC) -s
-WINDOWS_BUILD_DIR = build/windows
-WINDOWS_DIST_DIR = dist/windows
-WINDOWS_SOURCES := $(patsubst %.c,$(WINDOWS_BUILD_DIR)/%.c, $(SOURCES))
-WINDOWS_SOURCES += $(patsubst %,$(WINDOWS_BUILD_DIR)/%.c, $(EXECUTABLES))
-WINDOWS_OBJECTS := $(patsubst %.c,$(WINDOWS_BUILD_DIR)/%-windows.o, $(SOURCES))
-WINDOWS_OBJECTS += $(patsubst %,$(WINDOWS_BUILD_DIR)/%-windows.o, $(EXECUTABLES))
-WINDOWS_EXECUTABLES := $(patsubst %,$(WINDOWS_DIST_DIR)/%, $(EXECUTABLES))
-WINDOWS_DEPENDENCIES := $(patsubst %.c,$(WINDOWS_BUILD_DIR)/%-windows.P, $(SOURCES))
+LIB_DIR = $(RDFA)/libs
+LIBS = -L$(LIB_DIR)
+AR = @AR@
+OS = @OS@
+DLLWRAP = @DLLWRAP@
+DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
+BUILD_DIR = build
+DIST_DIR = dist
+DEPENDENCIES := $(patsubst %.c,$(BUILD_DIR)/%.P, $(SOURCES))
+OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o, $(SOURCES))
+OBJECTS += $(patsubst %,$(BUILD_DIR)/%.o, $(EXECUTABLES))
+LIBDEPS := $(DYNAMIC_LINK_LIBRARIES)
 
-WINDOWS_LIBRARIES := $(patsubst %,$(WINDOWS_DIST_DIR)/%.lib, $(LIBRARIES))
-WINDOWS_LIBRARIES += $(patsubst %,$(WINDOWS_DIST_DIR)/%.dll, $(LIBRARIES))
+# All variables
+ALL_SOURCES := $(patsubst %.c,$(BUILD_DIR)/%.c, $(SOURCES))
+ALL_SOURCES += $(patsubst %,$(BUILD_DIR)/%.c, $(EXECUTABLES))
+ALL_DEPENDENCIES += $(DEPENDENCIES)
+ALL_OBJECTS += $(OBJECTS)
 
-ifeq ($(BUILD_FOR_LINUX),yes)
-ALL_SOURCES += $(LINUX_SOURCES)
-ALL_OBJECTS += $(LINUX_OBJECTS)
-ALL_LIBRARIES += $(LINUX_LIBRARIES)
-ALL_EXECUTABLES += $(LINUX_EXECUTABLES)
-ALL_DIRECTORIES += $(LINUX_BUILD_DIR) $(LINUX_DIST_DIR)
+ifeq ($(OS),windows)
+ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.dll, $(LIBRARIES))
+ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.lib, $(LIBRARIES))
+else 
+ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.so, $(LIBRARIES))
+ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/lib%.a, $(LIBRARIES))
+endif
+
+ifeq ($(OS),windows)
+LIBDEPS := $(DYNAMIC_WINDOWS_LIBRARIES)
+ALL_EXECUTABLES := $(patsubst %,$(DIST_DIR)/%.exe, $(EXECUTABLES))
+else
+LIBDEPS := $(DYNAMIC_LINUX_LIBRARIES)
+ALL_EXECUTABLES := $(patsubst %,$(DIST_DIR)/%, $(EXECUTABLES))
+endif
+
+ALL_DIRECTORIES += $(BUILD_DIR) $(DIST_DIR)
 ifndef MAKE_CLEAN_ACTIVE
--include $(LINUX_DEPENDENCIES)
-endif
-endif
-ifeq ($(BUILD_FOR_WINDOWS),yes)
-ALL_SOURCES += $(WINDOWS_SOURCES)
-ALL_OBJECTS += $(WINDOWS_OBJECTS)
-ALL_LIBRARIES += $(WINDOWS_LIBRARIES)
-ALL_EXECUTABLES += $(WINDOWS_EXECUTABLES)
-ALL_DIRECTORIES += $(WINDOWS_BUILD_DIR) $(WINDOWS_DIST_DIR)
-ifndef MAKE_CLEAN_ACTIVE
--include $(WINDOWS_DEPENDENCIES)
-endif
+-include $(DEPENDENCIES)
 endif
 
 $(ALL_DIRECTORIES):
 	mkdir -p $@
 
-ifeq ($(BUILD_FOR_LINUX),yes)
-$(LINUX_SOURCES):
+$(ALL_SOURCES):
 	@mkdir -p $(dir $@)
-	@ln -sf $(subst $(LINUX_BUILD_DIR)/,$(CURRENT_DIR)/,$@) $@
-endif
+	@ln -sf $(subst $(BUILD_DIR)/,$(CURRENT_DIR)/,$@) $@
 
-ifeq ($(BUILD_FOR_WINDOWS),yes)
-$(WINDOWS_SOURCES):
-	@mkdir -p $(dir $@)
-	@ln -sf $(subst $(WINDOWS_BUILD_DIR)/,$(CURRENT_DIR)/,$@) $@
-endif
-
-ifeq ($(BUILD_FOR_LINUX),yes)
-%-linux.o %-linux.P: %.c
+%.o %.P: %.c
 	@echo "Building $(basename $@).o..."
-	@$(LINUX_CC) $(LINUX_CC_FLAGS) -c -MD -o $(basename $@).o $(LINUX_INCLUDES) -I. $<
+	@$(CC) $(CC_FLAGS) -c -MD -o $(basename $@).o $(INCLUDES) -I. $<
 	@cp $(basename $@).d $(basename $@).P; \
 		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' -e '/^$$/ d' -e 's/$$/ :/' < $(basename $@).d >> $(basename $@).P; \
 		rm -f $(basename $@).d
-endif
 
-ifeq ($(BUILD_FOR_WINDOWS),yes)
-%-windows.o %-windows.P: %.c
-	@echo "Building $(basename $@).o..."
-	@$(WINDOWS_CC) $(WINDOWS_CC_FLAGS) -c -MD -o $(basename $@).o $(WINDOWS_INCLUDES) -I. $<
-	@cp $(basename $@).d $(basename $@).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' -e '/^$$/ d' -e 's/$$/ :/' < $(basename $@).d >> $(basename $@).P; \
-		rm -f $(basename $@).d
-endif
-
-%.so: $(LINUX_OBJECTS)
+%.so: $(OBJECTS)
 	@echo "Building $@..."
-	@$(LINUX_CC) $(LINUX_LIBS) -shared -o $@ $(LINUX_OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
-	@mkdir -p $(LINUX_LIB_DIR)
-	@ln -sf $(CURRENT_DIR)/$@ $(LINUX_LIB_DIR)/$(@F)
+	@$(CC) $(LIBS) -shared -o $@ $(OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
+	@mkdir -p $(LIB_DIR)
+	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
-%.dll: $(WINDOWS_OBJECTS)
+%.dll: $(OBJECTS)
 	@echo "Building $@..."
-	@$(WINDOWS_DLLWRAP) $(WINDOWS_DLLWRAP_FLAGS) $(WINDOWS_LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_WINDOWS_LIBRARIES:%=$(WINDOWS_LIB_DIR)/%.dll) $(EXTRA_WINDOWS_LIBRARIES)
-	@mkdir -p $(WINDOWS_LIB_DIR)
-	@ln -sf $(CURRENT_DIR)/$@ $(WINDOWS_LIB_DIR)/$(@F)
+	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_WINDOWS_LIBRARIES:%=$(WINDOWS_LIB_DIR)/%.dll) $(EXTRA_WINDOWS_LIBRARIES)
+	@mkdir -p $(LIB_DIR)
+	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
-#ifeq ($(BUILD_FOR_LINUX),yes)
-%.a: $(LINUX_OBJECTS)
+%.lib: $(OBJECTS)
 	@echo "Building $@..."
-	@$(LINUX_AR) $(AR_FLAGS) $@ $(LINUX_OBJECTS)
-	@mkdir -p $(LINUX_LIB_DIR)
-	@ln -sf $(CURRENT_DIR)/$@ $(LINUX_LIB_DIR)/$(@F)
-#endif
+	@$(AR) $(AR_FLAGS) $@ $(OBJECTS)
+	@mkdir -p $(LIB_DIR)
+	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
-%.lib: $(WINDOWS_OBJECTS)
+%.a: $(OBJECTS)
 	@echo "Building $@..."
-	@$(WINDOWS_AR) $(AR_FLAGS) $@ $(WINDOWS_OBJECTS)
-	@mkdir -p $(WINDOWS_LIB_DIR)
-	@ln -sf $(CURRENT_DIR)/$@ $(WINDOWS_LIB_DIR)/$(@F)
-
+	@$(AR) $(AR_FLAGS) $@ $(OBJECTS)
+	@mkdir -p $(LIB_DIR)
+	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
 ifdef EXECUTABLES
-ifeq ($(BUILD_FOR_LINUX),yes)
-#$(STATIC_LINUX_LIBRARIES):
-#	# This is a fake target to override the default .a build
-$(LINUX_EXECUTABLES): $(LINUX_SOURCES) $(STATIC_LINUX_LIBRARIES)
-	@echo "Building $(@F)..."
-	@$(LINUX_CC) $(LINUX_CC_FLAGS) -L$(LINUX_LIB_DIR) -o $@ $(LINUX_BUILD_DIR)/$(@F)-linux.o $(DYNAMIC_LINUX_LIBRARIES:%=-l%)
-endif
-
 ifeq ($(BUILD_FOR_WINDOWS),yes)
 $(STATIC_WINDOWS_LIBRARIES):
 	# This is a fake target to override the default .lib build
-$(WINDOWS_EXECUTABLES): $(WINDOWS_SOURCES) $(STATIC_WINDOWS_LIBRARIES)
+$(ALL_EXECUTABLES): $(SOURCES) $(LIBRARIES)
 	@echo "Building $(@F)..."
-	@$(WINDOWS_CC) $(WINDOWS_CC_FLAGS) -o $@ $(WINDOWS_BUILD_DIR)/$(@F)-windows.o $(STATIC_WINDOWS_LIBRARIES) $(EXTRA_WINDOWS_LIBRARIES)
+	@$(CC) $(CC_FLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(STATIC_WINDOWS_LIBRARIES) $(EXTRA_WINDOWS_LIBRARIES)
+else
+#$(STATIC_LINUX_LIBRARIES):
+#	# This is a fake target to override the default .a build
+$(ALL_EXECUTABLES): $(ALL_SOURCES) $(STATIC_LINUX_LIBRARIES)
+	@echo "Building $(@F)..."
+	@$(CC) $(CC_FLAGS) -L$(LIB_DIR) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
 endif
 endif
 
-build-objects: $(ALL_DIRECTORIES) $(ALL_SOURCES) $(ALL_OBJECTS)
+build-objects: $(ALL_DIRECTORIES) $(ALL_SOURCES) $(ALL_DEPENDENCIES) $(ALL_OBJECTS)
 
 build-libraries: $(ALL_DIRECTORIES) $(ALL_LIBRARIES)
 
@@ -167,18 +124,16 @@ build-executables: $(ALL_DIRECTORIES) $(ALL_EXECUTABLES)
 clean: clean-libraries clean-objects
 
 clean-objects:
-ifeq ($(BUILD_FOR_LINUX),yes)
-	@rm -rf $(LINUX_BUILD_DIR)
-endif
-ifeq ($(BUILD_FOR_WINDOWS),yes)
-	@rm -rf $(WINDOWS_BUILD_DIR)
-endif
+	@rm -rf $(BUILD_DIR)
 
 clean-libraries:
-ifeq ($(BUILD_FOR_LINUX),yes)
-	@rm -rf $(LINUX_DIST_DIR)
-endif
-ifeq ($(BUILD_FOR_WINDOWS),yes)
-	@rm -rf $(WINDOWS_DIST_DIR)
-endif
+	@rm -rf $(DIST_DIR)
 
+vars:
+	@echo ALL_SOURCES: $(ALL_SOURCES)
+	@echo ALL_DEPENDENCIES: $(ALL_DEPENDENCIES)
+	@echo ALL_OBJECTS: $(ALL_OBJECTS)
+	@echo ALL_LIBRARIES: $(ALL_LIBRARIES)
+	@echo ALL_EXECUTABLES: $(ALL_EXECUTABLES)
+	@echo ALL_DIRECTORIES: $(ALL_DIRECTORIES)
+	@echo ALL_LIBRARIES: $(ALL_LIBRARIES)
