@@ -56,8 +56,8 @@ install-librdfa-dev:
 ifeq ($(BUILD_FOR_PYTHON),yes)
 install-python:
 	install -d $(PREFIX)/usr/lib/python$(PYVER)/site-packages
-	install -m 644 python/dist/linux/rdfa.py $(PREFIX)/usr/lib/python$(PYVER)/site-packages
-	install -m 644 python/dist/linux/python$(PYVER)-rdfa.so $(PREFIX)/usr/lib/python$(PYVER)/site-packages/_rdfa.so
+	install -m 644 python/dist/rdfa.py $(PREFIX)/usr/lib/python$(PYVER)/site-packages
+	install -m 644 python/dist/python$(PYVER)-rdfa.so $(PREFIX)/usr/lib/python$(PYVER)/site-packages/_rdfa.so
 else
 install-python:
 endif
