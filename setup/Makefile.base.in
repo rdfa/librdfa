@@ -3,6 +3,7 @@
 AR_FLAGS = cr
 RDFA = @RDFADIR@
 INCLUDES = \
+        -I$/usr/include \
 	-I$(RDFA)/c \
 	-I$(RDFA)/tests
 
@@ -15,14 +16,14 @@ all: build-directories build-objects build-libraries build-executables
 # Variables
 CC = @CC@
 
-ifeq ($(OS),windows)
+ifeq ($(OS),mingw32)
 CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
 else
 CC_FLAGS = -Wall -fPIC -g
 endif
 
 LIB_DIR = $(RDFA)/libs
-LIBS = -L$(LIB_DIR)
+LIBS = -L$(LIB_DIR) -L/usr/lib
 AR = @AR@
 OS = @OS@
 DLLWRAP = @DLLWRAP@
@@ -40,15 +41,15 @@ ALL_SOURCES += $(patsubst %,$(BUILD_DIR)/%.c, $(EXECUTABLES))
 ALL_DEPENDENCIES += $(DEPENDENCIES)
 ALL_OBJECTS += $(OBJECTS)
 
-ifeq ($(OS),windows)
-ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.dll, $(LIBRARIES))
-ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.lib, $(LIBRARIES))
+ifeq ($(OS),mingw32)
+ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.lib, $(LIBRARIES))
+ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.dll, $(LIBRARIES))
 else 
 ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.so, $(LIBRARIES))
 ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/lib%.a, $(LIBRARIES))
 endif
 
-ifeq ($(OS),windows)
+ifeq ($(OS),mingw32)
 LIBDEPS := $(DYNAMIC_WINDOWS_LIBRARIES)
 ALL_EXECUTABLES := $(patsubst %,$(DIST_DIR)/%.exe, $(EXECUTABLES))
 else
@@ -83,7 +84,7 @@ $(ALL_SOURCES):
 
 %.dll: $(OBJECTS)
 	@echo "Building $@..."
-	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_WINDOWS_LIBRARIES:%=$(WINDOWS_LIB_DIR)/%.dll) $(EXTRA_WINDOWS_LIBRARIES)
+	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(EXTRA_WINDOWS_LIBRARIES)
 	@mkdir -p $(LIB_DIR)
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
@@ -111,7 +112,7 @@ else
 #	# This is a fake target to override the default .a build
 $(ALL_EXECUTABLES): $(ALL_SOURCES) $(STATIC_LINUX_LIBRARIES)
 	@echo "Building $(@F)..."
-	@$(CC) $(CC_FLAGS) -L$(LIB_DIR) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
+	@$(CC) $(CC_FLAGS) -L$(LIBS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
 endif
 endif
 
@@ -130,6 +131,7 @@ clean-libraries:
 	@rm -rf $(DIST_DIR)
 
 vars:
+	@echo OS: $(OS)
 	@echo ALL_SOURCES: $(ALL_SOURCES)
 	@echo ALL_DEPENDENCIES: $(ALL_DEPENDENCIES)
 	@echo ALL_OBJECTS: $(ALL_OBJECTS)

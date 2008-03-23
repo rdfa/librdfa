@@ -1,6 +1,11 @@
 # Makefile to compile the module in this directory
 
-SOURCES = $(wildcard *.c)
+SOURCES = curie.c language.c namespace.c rdfa.c rdfa_utils.c subject.c triple.c
+
+ifeq (@OS@,mingw32)
+SOURCES += mingw32_utils.c
+endif
+
 LIBRARIES = rdfa
 DYNAMIC_LINK_LIBRARIES = expat 
 DYNAMIC_WINDOWS_LIBRARIES = 
