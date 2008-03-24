@@ -59,7 +59,7 @@ endif
 
 ALL_DIRECTORIES += $(BUILD_DIR) $(DIST_DIR)
 ifndef MAKE_CLEAN_ACTIVE
--include $(DEPENDENCIES)
+-include $(ALL_DEPENDENCIES)
 endif
 
 $(ALL_DIRECTORIES):
@@ -101,16 +101,16 @@ $(ALL_SOURCES):
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
 ifdef EXECUTABLES
-ifeq ($(BUILD_FOR_WINDOWS),yes)
+ifeq ($(OS),mingw32)
 $(STATIC_WINDOWS_LIBRARIES):
 	# This is a fake target to override the default .lib build
-$(ALL_EXECUTABLES): $(SOURCES) $(LIBRARIES)
+$(ALL_EXECUTABLES): $(ALL_SOURCES) $(ALL_OBJECTS)
 	@echo "Building $(@F)..."
-	@$(CC) $(CC_FLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(STATIC_WINDOWS_LIBRARIES) $(EXTRA_WINDOWS_LIBRARIES)
+	@$(CC) $(CC_FLAGS) $(LIBS) -o $@ $(BUILD_DIR)/$(basename $(@F)).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_WINDOWS_LIBRARIES:%=-l%)
 else
 #$(STATIC_LINUX_LIBRARIES):
 #	# This is a fake target to override the default .a build
-$(ALL_EXECUTABLES): $(ALL_SOURCES) $(STATIC_LINUX_LIBRARIES)
+$(ALL_EXECUTABLES): $(ALL_SOURCES) $(ALL_OBJECTS) 
 	@echo "Building $(@F)..."
 	@$(CC) $(CC_FLAGS) -L$(LIBS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
 endif
