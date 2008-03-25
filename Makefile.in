@@ -65,11 +65,24 @@ endif
 packages: all
 	mkdir -p installers/packages
 	dpkg-buildpackage -us -uc -rfakeroot
-	mv ../*rdfa*$(RELEASE)*deb installers/packages
+	mv ../*rdfa*@RELEASE@*deb installers/packages
 	cd installers/packages && fakeroot alien --to-rpm -k *deb
 	cd installers/packages && fakeroot alien --to-tgz -k *deb
 	cd installers/packages && fakeroot alien --to-pkg -k *deb
 	cd installers/packages && fakeroot alien --to-slp -k *deb
+
+ifeq (@OS@,mingw32)
+install-windows:
+	mkdir -p installers/librdfa-windows-@RELEASE@
+	cp c/rdfa.h installers/librdfa-windows-@RELEASE@
+	cp c/rdfa_utils.h installers/librdfa-windows-@RELEASE@
+	cp libs/rdfa.dll installers/librdfa-windows-@RELEASE@
+	cp libs/rdfa.lib installers/librdfa-windows-@RELEASE@
+	cp c/dist/rdfa.def installers/librdfa-windows-@RELEASE@
+	cd installers && zip -r librdfa-@VERSION@-windows-@RELEASE@.zip \
+		librdfa-windows-@RELEASE@
+	rm -rf installers/librdfa-windows-@RELEASE@
+endif
 
 install: install-librdfa install-librdfa-dev install-python
 

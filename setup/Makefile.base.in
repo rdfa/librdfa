@@ -84,7 +84,7 @@ $(ALL_SOURCES):
 
 %.dll: $(OBJECTS)
 	@echo "Building $@..."
-	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(EXTRA_WINDOWS_LIBRARIES)
+	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_LINK_LIBRARIES:%=-l%) --exclude-symbols $(EXCLUDE_DLL_SYMBOLS)
 	@mkdir -p $(LIB_DIR)
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
