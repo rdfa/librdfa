@@ -2,10 +2,7 @@
 # instructions for all binaries and packages.
 AR_FLAGS = cr
 RDFA = @RDFADIR@
-INCLUDES = \
-        -I$/usr/include \
-	-I$(RDFA)/c \
-	-I$(RDFA)/tests
+INCLUDES = -I$/usr/include -I$(RDFA)/c -I$(RDFA)/tests
 
 CURRENT_DIR = $(shell pwd)
 
@@ -23,7 +20,7 @@ CC_FLAGS = -Wall -fPIC -g
 endif
 
 LIB_DIR = $(RDFA)/libs
-LIBS = -L$(LIB_DIR) -L/usr/lib
+LDFLAGS = -L$(LIB_DIR) -L/usr/lib
 AR = @AR@
 OS = @OS@
 DLLWRAP = @DLLWRAP@
@@ -78,13 +75,13 @@ $(ALL_SOURCES):
 
 %.so: $(OBJECTS)
 	@echo "Building $@..."
-	@$(CC) $(LIBS) -shared -o $@ $(OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
+	@$(CC) $(LDFLAGS) -shared -o $@ $(OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
 	@mkdir -p $(LIB_DIR)
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
 %.dll: $(OBJECTS)
 	@echo "Building $@..."
-	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LIBS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_LINK_LIBRARIES:%=-l%) --exclude-symbols $(EXCLUDE_DLL_SYMBOLS)
+	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LDFLAGS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_LINK_LIBRARIES:%=-l%) --exclude-symbols $(EXCLUDE_DLL_SYMBOLS)
 	@mkdir -p $(LIB_DIR)
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
@@ -106,13 +103,13 @@ $(STATIC_WINDOWS_LIBRARIES):
 	# This is a fake target to override the default .lib build
 $(ALL_EXECUTABLES): $(ALL_SOURCES) $(ALL_OBJECTS)
 	@echo "Building $(@F)..."
-	@$(CC) $(CC_FLAGS) $(LIBS) -o $@ $(BUILD_DIR)/$(basename $(@F)).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_WINDOWS_LIBRARIES:%=-l%)
+	@$(CC) $(CC_FLAGS) $(LDFLAGS) -o $@ $(BUILD_DIR)/$(basename $(@F)).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_WINDOWS_LIBRARIES:%=-l%)
 else
 #$(STATIC_LINUX_LIBRARIES):
 #	# This is a fake target to override the default .a build
 $(ALL_EXECUTABLES): $(ALL_SOURCES) $(ALL_OBJECTS) 
 	@echo "Building $(@F)..."
-	@$(CC) $(CC_FLAGS) -L$(LIBS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
+	@$(CC) $(CC_FLAGS) $(LDFLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
 endif
 endif
 
