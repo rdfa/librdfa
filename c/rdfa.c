@@ -1004,9 +1004,10 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
    if(XML_Parse(context->parser, data, wblen, done) == XML_STATUS_ERROR)
    {
       fprintf(stderr,
-              "%s at line %d\n",
+              "%s at line %d, column %d.\n",
               XML_ErrorString(XML_GetErrorCode(context->parser)),
-              XML_GetCurrentLineNumber(context->parser));
+              XML_GetCurrentLineNumber(context->parser),
+              XML_GetCurrentColumnNumber(context->parser));
       return RDFA_PARSE_FAILED;
    }
    

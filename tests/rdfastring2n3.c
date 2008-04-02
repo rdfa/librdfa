@@ -52,6 +52,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
    {
       rval = buffer_length;
       memcpy(buffer, &bstatus->buffer[bstatus->current_offset], buffer_length);
+      bstatus->current_offset += buffer_length;
    }
    else
    {
