@@ -250,10 +250,10 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
 }
 
 void rdfa_complete_type_triples(
-   rdfacontext* context, const rdfalist* instanceof)
+   rdfacontext* context, const rdfalist* type_of)
 {
    // 6.1 One or more 'types' for the [new subject] can be set by
-   // using @instanceof. If present, the attribute must contain one or
+   // using @type_of. If present, the attribute must contain one or
    // more URIs, obtained according to the section on URI and CURIE
    // Processing, each of which is used to generate a triple as follows:
    //
@@ -265,8 +265,8 @@ void rdfa_complete_type_triples(
    //    full URI of 'type'
    int i;
 
-   rdfalistitem** iptr = instanceof->items;
-   for(i = 0; i < instanceof->num_items; i++)
+   rdfalistitem** iptr = type_of->items;
+   for(i = 0; i < type_of->num_items; i++)
    {
       rdfalistitem* curie = *iptr;
       

@@ -247,7 +247,7 @@ void run_curie_tests()
    rdfa_add_item(
       dctvlist, "http://purl.org/dc/dcmitype/Sound", RDFALIST_FLAG_NONE);
    run_list_test(
-      context, "XHTML multiple @instanceof", "[dctv:Image] [dctv:Sound]",
+      context, "XHTML multiple @type_of", "[dctv:Image] [dctv:Sound]",
       rdfa_resolve_curie_list, dctvlist, CURIE_PARSE_INSTANCEOF_DATATYPE);
    rdfa_free_list(dctvlist);
 

@@ -55,11 +55,11 @@ char* rdfa_create_bnode(rdfacontext* context)
  * @param src the full IRI for src, or NULL if there isn't one.
  * @param resource the full IRI for resource, or NULL if there isn't one.
  * @param href the full IRI for href, or NULL if there isn't one.
- * @param instanceof the full IRI for instanceof, or NULL if there isn't one.
+ * @param type_of the full IRI for type_of, or NULL if there isn't one.
  */
 void rdfa_establish_new_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,
-   const char* resource, const char* href, const char* instanceof)
+   const char* resource, const char* href, const char* type_of)
 {
    // 4. If the [current element] contains no valid @rel or @rev
    // URI, obtained according to the section on CURIE and URI
@@ -106,9 +106,9 @@ void rdfa_establish_new_subject(
       context->new_subject =
          rdfa_replace_string(context->new_subject, context->base);
    }
-   else if(instanceof != NULL)
+   else if(type_of != NULL)
    {
-      // * if @instanceof is present, obtained according to the
+      // * if @type_of is present, obtained according to the
       // section on CURIE and URI Processing, then [new subject] is
       // set to be a newly created [bnode];
       context->new_subject = rdfa_create_bnode(context);
@@ -136,11 +136,11 @@ void rdfa_establish_new_subject(
  * @param src the full IRI for src, or NULL if there isn't one.
  * @param resource the full IRI for resource, or NULL if there isn't one.
  * @param href the full IRI for href, or NULL if there isn't one.
- * @param instanceof the full IRI for instanceof, or NULL if there isn't one.
+ * @param type_of the full IRI for type_of, or NULL if there isn't one.
  */
 void rdfa_establish_new_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
-   const char* resource, const char* href, const char* instanceof)
+   const char* resource, const char* href, const char* type_of)
 {
    // 5. If the [current element] does contain a valid @rel or @rev
    // URI, obtained according to the section on CURIE and URI
@@ -174,9 +174,9 @@ void rdfa_establish_new_subject_with_relrev(
       context->new_subject =
          rdfa_replace_string(context->new_subject, context->base);
    }
-   else if(instanceof != NULL)
+   else if(type_of != NULL)
    {
-      // * if @instanceof is present, obtained according to the
+      // * if @type_of is present, obtained according to the
       // section on CURIE and URI Processing, then [new subject] is
       // set to be a newly created [bnode];
       context->new_subject = rdfa_create_bnode(context);

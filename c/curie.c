@@ -160,7 +160,7 @@ char* rdfa_resolve_curie(
    }
 
    // if we are processing a safe CURIE OR
-   // if we are parsing an unsafe CURIE that is an @instanceof,
+   // if we are parsing an unsafe CURIE that is an @type_of,
    // @datatype, @property, @rel, or @rev attribute, treat the curie
    // as not an IRI, but an unsafe CURIE
    if((ctype == CURIE_TYPE_SAFE) ||

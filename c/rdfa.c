@@ -49,12 +49,12 @@ void rdfa_update_base(rdfacontext* context, const char* base);
 void rdfa_update_language(rdfacontext* context, const char* lang);
 void rdfa_establish_new_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,
-   const char* resource, const char* href, rdfalist* instanceof);
+   const char* resource, const char* href, rdfalist* type_of);
 void rdfa_establish_new_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
-   const char* resource, const char* href, rdfalist* instanceof);
+   const char* resource, const char* href, rdfalist* type_of);
 void rdfa_complete_incomplete_triples(rdfacontext* context);
-void rdfa_complete_type_triples(rdfacontext* context, rdfalist* instanceof);
+void rdfa_complete_type_triples(rdfacontext* context, rdfalist* type_of);
 void rdfa_complete_relrev_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 void rdfa_save_incomplete_triples(
@@ -378,8 +378,8 @@ static void XMLCALL
    char* about = NULL;
    const char* src_curie = NULL;
    char* src = NULL;
-   const char* instanceof_curie = NULL;
-   rdfalist* instanceof = NULL;
+   const char* type_of_curie = NULL;
+   rdfalist* type_of = NULL;
    const char* rel_curie = NULL;
    rdfalist* rel = NULL;
    const char* rev_curie = NULL;
@@ -422,11 +422,11 @@ static void XMLCALL
             src_curie = value;
             src = rdfa_resolve_curie(context, src_curie, CURIE_PARSE_HREF_SRC);
          }
-         else if(strcmp(attribute, "instanceof") == 0)
+         else if(strcmp(attribute, "type_of") == 0)
          {
-            instanceof_curie = value;
-            instanceof = rdfa_resolve_curie_list(
-               context, instanceof_curie,
+            type_of_curie = value;
+            type_of = rdfa_resolve_curie_list(
+               context, type_of_curie,
                CURIE_PARSE_INSTANCEOF_DATATYPE);
          }
          else if(strcmp(attribute, "rel") == 0)
@@ -514,10 +514,10 @@ static void XMLCALL
       {
          printf("DEBUG: @src = %s\n", src);
       }
-      if(instanceof != NULL)
+      if(type_of != NULL)
       {
-         printf("DEBUG: @instanceof = ");
-         rdfa_print_list(instanceof);
+         printf("DEBUG: @type_of = ");
+         rdfa_print_list(type_of);
       }
       if(rel != NULL)
       {
@@ -554,7 +554,7 @@ static void XMLCALL
 
    // TODO: This isn't part of the processing model, it needs to be
    // included and is a correction for the last item in step #4.
-   if((about == NULL) && (src == NULL) && (instanceof == NULL) &&
+   if((about == NULL) && (src == NULL) && (type_of == NULL) &&
       (rel == NULL) && (rev == NULL) && (property == NULL) &&
       (resource == NULL) && (href == NULL))
    {
@@ -569,7 +569,7 @@ static void XMLCALL
       // [new subject]. Any of the attributes that can carry a
       // resource can set [new subject];
       rdfa_establish_new_subject(
-         context, name, about, src, resource, href, instanceof);
+         context, name, about, src, resource, href, type_of);
    }
    else
    {
@@ -578,7 +578,7 @@ static void XMLCALL
       // Processing, then the next step is to establish both a value
       // for [new subject] and a value for [current object resource]:
       rdfa_establish_new_subject_with_relrev(
-         context, name, about, src, resource, href, instanceof);
+         context, name, about, src, resource, href, type_of);
    }
 
    if(context->new_subject != NULL)
@@ -592,9 +592,9 @@ static void XMLCALL
       // a non-null value,
       
       // it is now used to provide a subject for type values;
-      if(instanceof != NULL)
+      if(type_of != NULL)
       {
-         rdfa_complete_type_triples(context, instanceof);
+         rdfa_complete_type_triples(context, type_of);
       }
       
       // Note that none of this block is executed if there is no
@@ -625,7 +625,7 @@ static void XMLCALL
    // free the resolved CURIEs
    free(about);
    free(src);
-   rdfa_free_list(instanceof);
+   rdfa_free_list(type_of);
    rdfa_free_list(rel);
    rdfa_free_list(rev);
    free(resource);
