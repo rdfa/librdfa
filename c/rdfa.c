@@ -422,7 +422,7 @@ static void XMLCALL
             src_curie = value;
             src = rdfa_resolve_curie(context, src_curie, CURIE_PARSE_HREF_SRC);
          }
-         else if(strcmp(attribute, "type_of") == 0)
+         else if(strcmp(attribute, "typeof") == 0)
          {
             type_of_curie = value;
             type_of = rdfa_resolve_curie_list(
