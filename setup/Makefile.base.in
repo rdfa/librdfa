@@ -2,7 +2,7 @@
 # instructions for all binaries and packages.
 AR_FLAGS = cr
 RDFA = @RDFADIR@
-INCLUDES = -I$/usr/include -I$(RDFA)/c -I$(RDFA)/tests
+INCLUDES = -I/usr/include -I/sw/include -I$(RDFA)/c -I$(RDFA)/tests
 
 CURRENT_DIR = $(shell pwd)
 
@@ -20,7 +20,7 @@ CC_FLAGS = -Wall -fPIC -g
 endif
 
 LIB_DIR = $(RDFA)/libs
-LDFLAGS = -L$(LIB_DIR) -L/usr/lib
+LDFLAGS = -L$(LIB_DIR) -L/usr/lib -L/sw/lib
 AR = @AR@
 OS = @OS@
 DLLWRAP = @DLLWRAP@
@@ -38,11 +38,14 @@ ALL_SOURCES += $(patsubst %,$(BUILD_DIR)/%.c, $(EXECUTABLES))
 ALL_DEPENDENCIES += $(DEPENDENCIES)
 ALL_OBJECTS += $(OBJECTS)
 
+ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.so, $(LIBRARIES)) 
+ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.a, $(LIBRARIES)) 
 ifeq ($(OS),mingw32)
 ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.lib, $(LIBRARIES))
 ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.dll, $(LIBRARIES))
-else 
-ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.so, $(LIBRARIES))
+endif
+ifeq ($(OS),darwin8.9.1) 
+ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.dylib, $(LIBRARIES))
 ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/lib%.a, $(LIBRARIES))
 endif
 
@@ -76,6 +79,12 @@ $(ALL_SOURCES):
 %.so: $(OBJECTS)
 	@echo "Building $@..."
 	@$(CC) $(LDFLAGS) -shared -o $@ $(OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
+	@mkdir -p $(LIB_DIR)
+	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
+
+%.dylib: $(OBJECTS)
+	@echo "Building $@..."
+	$(CC) $(LDFLAGS) -dynamiclib -o $@ $(OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
 	@mkdir -p $(LIB_DIR)
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
