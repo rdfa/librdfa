@@ -43,26 +43,8 @@
 
 #define READ_BUFFER_SIZE 4096
 
-// All functions that rdfa.c needs.
-void rdfa_update_uri_mappings(
-   rdfacontext* context, const char* attribute, const char* value);
-void rdfa_update_base(rdfacontext* context, const char* base);
-void rdfa_update_language(rdfacontext* context, const char* lang);
-void rdfa_establish_new_subject(
-   rdfacontext* context, const char* name, const char* about, const char* src,
-   const char* resource, const char* href, rdfalist* type_of);
-void rdfa_establish_new_subject_with_relrev(
-   rdfacontext* context, const char* name, const char* about, const char* src,
-   const char* resource, const char* href, rdfalist* type_of);
-void rdfa_complete_incomplete_triples(rdfacontext* context);
-void rdfa_complete_type_triples(rdfacontext* context, rdfalist* type_of);
-void rdfa_complete_relrev_triples(
-   rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
-void rdfa_save_incomplete_triples(
-   rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
-void rdfa_complete_object_literal_triples(rdfacontext* context);
 
-void rdfa_init_context(rdfacontext* context)
+static void rdfa_init_context(rdfacontext* context)
 {   
    // the [parent subject] is set to the [base] value;
    context->parent_subject = NULL;
@@ -136,7 +118,7 @@ void rdfa_init_context(rdfacontext* context)
  *
  * @return the size of the data available in the working buffer.
  */
-size_t rdfa_init_base(
+static size_t rdfa_init_base(
    rdfacontext* context, char** working_buffer, size_t* working_buffer_size,
    char* temp_buffer, size_t bytes_read)
 {
@@ -214,7 +196,7 @@ size_t rdfa_init_base(
  * @param context_stack the context stack that is associated with this
  *                      processing run.
  */
-rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
+static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
 {
    rdfacontext* parent_context = (rdfacontext*)
       context_stack->items[context_stack->num_items - 1]->data;
@@ -353,25 +335,6 @@ static void XMLCALL
 {
    rdfalist* context_stack = user_data;
    rdfacontext* context = rdfa_create_new_element_context(context_stack);
-   rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
-
-   if(DEBUG)
-   {
-      printf("DEBUG: ------- START - %s -------\n", name);
-   }
-   
-   // start the XML Literal text
-   if(context->xml_literal == NULL)
-   {
-      context->xml_literal = rdfa_replace_string(context->xml_literal, "<");
-   }
-   else
-   {
-      context->xml_literal = rdfa_append_string(context->xml_literal, "<");
-   }
-   context->xml_literal = rdfa_append_string(context->xml_literal, name);
-
-   // prepare all of the RDFa-specific attributes we are looking for.
    const char** aptr = attributes;
    const char* xml_base = NULL;
    const char* xml_lang = NULL;
@@ -395,83 +358,105 @@ static void XMLCALL
    const char* datatype_curie = NULL;
    char* datatype = NULL;
 
+   rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
+
+   if(DEBUG)
+   {
+      printf("DEBUG: ------- START - %s -------\n", name);
+   }
+   
+   // start the XML Literal text
+   if(context->xml_literal == NULL)
+   {
+      context->xml_literal = rdfa_replace_string(context->xml_literal, "<");
+   }
+   else
+   {
+      context->xml_literal = rdfa_append_string(context->xml_literal, "<");
+   }
+   context->xml_literal = rdfa_append_string(context->xml_literal, name);
+
+   // prepare all of the RDFa-specific attributes we are looking for.
+
    // scan all of the attributes for the RDFa-specific attributes
    if(aptr != NULL)
    {
       while(*aptr != NULL)
       {
-         const char* attribute = *aptr;
-         aptr++;
-         const char* value = *aptr;
-         aptr++;
+         const char* attr;
+         const char* value;
+         char* literal_text;
+
+         attr = *aptr++;
+         value = *aptr++;
 
          // append the attribute-value pair to the XML literal
-         char* literal_text = malloc(strlen(attribute) + strlen(value) + 5);
-         sprintf(literal_text, " %s=\"%s\"", attribute, value);
+         literal_text = malloc(strlen(attr) + strlen(value) + 5);
+         sprintf(literal_text, " %s=\"%s\"", attr, value);
          context->xml_literal =
             rdfa_append_string(context->xml_literal, literal_text);
          free(literal_text);
          
-         if(strcmp(attribute, "about") == 0)
+         if(strcmp(attr, "about") == 0)
          {
             about_curie = value;
             about = rdfa_resolve_curie(
                context, about_curie, CURIE_PARSE_ABOUT_RESOURCE);
          }
-         else if(strcmp(attribute, "src") == 0)
+         else if(strcmp(attr, "src") == 0)
          {
             src_curie = value;
             src = rdfa_resolve_curie(context, src_curie, CURIE_PARSE_HREF_SRC);
          }
-         else if(strcmp(attribute, "typeof") == 0)
+         else if(strcmp(attr, "typeof") == 0)
          {
             type_of_curie = value;
             type_of = rdfa_resolve_curie_list(
                context, type_of_curie,
                CURIE_PARSE_INSTANCEOF_DATATYPE);
          }
-         else if(strcmp(attribute, "rel") == 0)
+         else if(strcmp(attr, "rel") == 0)
          {
             rel_curie = value;
             rel = rdfa_resolve_curie_list(
                context, rel_curie, CURIE_PARSE_RELREV);
          }
-         else if(strcmp(attribute, "rev") == 0)
+         else if(strcmp(attr, "rev") == 0)
          {
             rev_curie = value;
             rev = rdfa_resolve_curie_list(
                context, rev_curie, CURIE_PARSE_RELREV);
          }
-         else if(strcmp(attribute, "property") == 0)
+         else if(strcmp(attr, "property") == 0)
          {
             property_curie = value;
             property =
                rdfa_resolve_curie_list(
                   context, property_curie, CURIE_PARSE_PROPERTY);
          }
-         else if(strcmp(attribute, "resource") == 0)
+         else if(strcmp(attr, "resource") == 0)
          {
             resource_curie = value;
             resource = rdfa_resolve_curie(
                context, resource_curie, CURIE_PARSE_ABOUT_RESOURCE);
          }
-         else if(strcmp(attribute, "href") == 0)
+         else if(strcmp(attr, "href") == 0)
          {
             href_curie = value;
             href =
                rdfa_resolve_curie(context, href_curie, CURIE_PARSE_HREF_SRC);
          }
-         else if(strcmp(attribute, "content") == 0)
+         else if(strcmp(attr, "content") == 0)
          {
             content = value;
          }
-         else if(strcmp(attribute, "datatype") == 0)
+         else if(strcmp(attr, "datatype") == 0)
          {
             datatype_curie = value;
             datatype = rdfa_resolve_curie(context, datatype_curie,
                CURIE_PARSE_INSTANCEOF_DATATYPE);
          }
-         else if(strcmp(attribute, "xml:lang") == 0)
+         else if(strcmp(attr, "xml:lang") == 0)
          {
             xml_lang = value;
          }
@@ -479,14 +464,14 @@ static void XMLCALL
          {
             xml_base = value;
          }
-         else if(strstr(attribute, "xmlns") != NULL)
+         else if(strstr(attr, "xmlns") != NULL)
          {
             // 2. Next the [current element] is parsed for
             //    [URI mapping]s and these are added to the
             //    [local list of URI mappings]. Note that a
             //    [URI mapping] will simply overwrite any current
             //    mapping in the list that has the same name;
-            rdfa_update_uri_mappings(context, attribute, value);
+            rdfa_update_uri_mappings(context, attr, value);
          }
       }
    }
@@ -709,11 +694,13 @@ static void XMLCALL
    // generate the complete object literal triples
    if(context->property != NULL)
    {
+      char* saved_xml_literal = context->xml_literal;
+      char* working_xml_literal = NULL;
+
       // ensure to mark only the inner-content of the XML node for
       // processing the object literal.
       buffer = NULL;
-      char* saved_xml_literal = context->xml_literal;
-      char* working_xml_literal = NULL;
+
       if(context->xml_literal != NULL)
       {
          char* content_start = NULL;
@@ -1035,14 +1022,16 @@ int rdfa_parse(rdfacontext* context)
   do
   {
      size_t wblen;
+     int done;
      
      wblen = context->buffer_filler_callback(
         context->working_buffer, context->wb_allocated,
         context->callback_data);
-     context->done = (wblen == 0);
+     done = (wblen == 0);
      
      rval = rdfa_parse_chunk(
-        context, context->working_buffer, wblen, context->done);
+        context, context->working_buffer, wblen, done);
+     context->done=done;
   }
   while(!context->done && rval == RDFA_PARSE_SUCCESS);
 

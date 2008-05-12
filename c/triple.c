@@ -28,8 +28,6 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
-char* rdfa_create_bnode(rdfacontext* context);
-
 rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
    const char* object, rdfresource_t object_type, const char* datatype,
    const char* language)
@@ -205,7 +203,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
    // (which is passed to each child element in the previous step),
    // and one that was received as part of the [evaluation
    // context]. It is the latter that is used in processing during this step.
-   int i;
+   unsigned int i;
    for(i = 0; i < context->incomplete_triples->num_items; i++)
    {
       rdfalist* incomplete_triples = context->incomplete_triples;
@@ -264,7 +262,7 @@ void rdfa_complete_type_triples(
    //    http://www.w3.org/1999/02/22-rdf-syntax-ns#type
    // object
    //    full URI of 'type'
-   int i;
+   unsigned int i;
 
    rdfalistitem** iptr = type_of->items;
    for(i = 0; i < type_of->num_items; i++)
@@ -287,7 +285,7 @@ void rdfa_complete_relrev_triples(
 {
    // 7. If in any of the previous steps a [current object  resource]
    // was set to a non-null value, it is now used to generate triples
-   int i;
+   unsigned int i;
 
    // Predicates for the [current object resource] can be set by using
    // one or both of the @rel and @rev attributes.
@@ -350,7 +348,7 @@ void rdfa_complete_relrev_triples(
 void rdfa_save_incomplete_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev)
 {
-   int i;
+   unsigned int i;
    // 8. If however [current object resource] was set to null, but
    // there are predicates present, then they must be stored as
    // [incomplete triple]s, pending the discovery of a subject that
@@ -417,6 +415,9 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    // value is obtained as follows:
    char* current_object_literal = NULL;
    rdfresource_t type = RDF_TYPE_UNKNOWN;   
+
+   unsigned int i;
+   rdfalistitem** pptr;
    
    // * as a [plain literal] if:
    //   o @content is present;
@@ -443,7 +444,7 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    }
    else if(strlen(context->plain_literal) == 0)
    {
-      current_object_literal = "";
+     current_object_literal = (char*)"";
       type = RDF_TYPE_PLAIN_LITERAL;
    }
    else if((context->xml_literal != NULL) &&
@@ -511,8 +512,7 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    //    full URI
    // object
    //    [current object literal]
-   int i;
-   rdfalistitem** pptr = context->property->items;
+   pptr = context->property->items;
    for(i = 0; i < context->property->num_items; i++)
    {
       

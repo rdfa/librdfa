@@ -200,6 +200,12 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf);
  */
 int rdfa_parse(rdfacontext* context);
 
+int rdfa_parse_start(rdfacontext* context);
+
+int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done);
+
+void rdfa_parse_end(rdfacontext* context);
+
 /**
  * Destroys the given rdfa context by freeing all memory associated
  * with the context.

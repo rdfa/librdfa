@@ -302,6 +302,37 @@ char* rdfa_resolve_curie(
 rdfalist* rdfa_resolve_curie_list(
    rdfacontext* rdfa_context, const char* uris, curieparse_t mode);
 
+curie_t get_curie_type(const char* uri);
+
+char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri);
+
+char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
+
+void rdfa_update_language(rdfacontext* context, const char* lang);
+
+char* rdfa_create_bnode(rdfacontext* context);
+
+// All functions that rdfa.c needs.
+void rdfa_update_uri_mappings(rdfacontext* context, const char* attr, const char* value);
+void rdfa_update_base(rdfacontext* context, const char* base);
+void rdfa_establish_new_subject(
+   rdfacontext* context, const char* name, const char* about, const char* src,
+   const char* resource, const char* href, const char* type_of);
+void rdfa_establish_new_subject_with_relrev(
+   rdfacontext* context, const char* name, const char* about, const char* src,
+   const char* resource, const char* href, const char* type_of);
+void rdfa_complete_incomplete_triples(rdfacontext* context);
+void rdfa_complete_type_triples(rdfacontext* context, const rdfalist* type_of);
+void rdfa_complete_relrev_triples(
+   rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
+void rdfa_save_incomplete_triples(
+   rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
+void rdfa_complete_object_literal_triples(rdfacontext* context);
+
+/* triple.c - needed by namespace.c */
+void rdfa_generate_namespace_triple(
+   rdfacontext* context, const char* prefix, const char* iri);
+
 #ifdef __cplusplus
 }
 #endif

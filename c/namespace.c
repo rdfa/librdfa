@@ -29,8 +29,6 @@
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
 
 // pre-define functions that we will need in this module
-void rdfa_generate_namespace_triple(
-   rdfacontext* context, const char* prefix, const char* iri);
    
 /**
  * Attempts to update the uri mappings in the given context using the
@@ -40,7 +38,7 @@ void rdfa_generate_namespace_triple(
  * @param value the value of the attribute
  */
 void rdfa_update_uri_mappings(
-   rdfacontext* context, const char* attribute, const char* value)
+   rdfacontext* context, const char* attr, const char* value)
 {
    // * the [current element] is parsed for [URI mappings] and these
    // are added to the [list of URI mappings]. Note that a [URI
@@ -55,21 +53,21 @@ void rdfa_update_uri_mappings(
    // follow best practice for using namespaces, which includes not
    // using relative paths.
    
-   if(strcmp(attribute, "xmlns") == 0)
+   if(strcmp(attr, "xmlns") == 0)
    {
       rdfa_update_mapping(
          context->uri_mappings, XMLNS_DEFAULT_MAPPING, value);
    }
-   else if(strstr(attribute, "xmlns:") != NULL)
+   else if(strstr(attr, "xmlns:") != NULL)
    {
       // check to make sure we're actually dealing with an
       // xmlns: namespace attribute
       // TODO: Could we segfault here? Probably.
-      if((attribute[5] == ':') && (attribute[6] != '\0'))
+      if((attr[5] == ':') && (attr[6] != '\0'))
       {
-         rdfa_generate_namespace_triple(context, &attribute[6], value);
+         rdfa_generate_namespace_triple(context, &attr[6], value);
          rdfa_update_mapping(
-            context->uri_mappings, &attribute[6], value);
+            context->uri_mappings, &attr[6], value);
       }
    }
 }

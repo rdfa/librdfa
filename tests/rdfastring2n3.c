@@ -42,13 +42,13 @@ typedef struct buffer_status
    unsigned int total_length;
 } buffer_status;
 
-void process_triple(rdftriple* triple, void* callback_data)
+static void process_triple(rdftriple* triple, void* callback_data)
 {
    rdfa_print_triple(triple);
    rdfa_free_triple(triple);
 }
 
-size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
+static size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
 {
    size_t rval = 0;
    buffer_status* bstatus = (buffer_status*)callback_data;
@@ -62,7 +62,10 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
    else
    {
       rval = bstatus->total_length - bstatus->current_offset;
-      memcpy(buffer, &bstatus->buffer[bstatus->current_offset], rval);
+      if(rval) {
+        memcpy(buffer, &bstatus->buffer[bstatus->current_offset], rval);
+        bstatus->current_offset += rval;
+      }
    }
    
    return rval;
@@ -77,8 +80,10 @@ int main(int argc, char** argv)
    }
    else
    {
+      char* filename;
+
       g_xhtml_file = fopen(argv[1], "r");
-      char* filename = rindex(argv[1], '/');
+      filename = rindex(argv[1], '/');
       if(filename == NULL)
       {
          filename = argv[1];

@@ -39,7 +39,7 @@ char* rdfa_create_bnode(rdfacontext* context)
    char buffer[64];
 
    // print and increment the bnode count
-   sprintf(buffer, "_:bnode%i", context->bnode_count++);
+   sprintf(buffer, "_:bnode%i", (int)context->bnode_count++);
    rval = rdfa_replace_string(rval, buffer);
 
    return rval;

@@ -80,11 +80,12 @@ char* rdfa_canonicalize_string(const char* str)
 {
    char* rval = malloc(sizeof(char) * (strlen(str) + 2));
    char* working_string = NULL;
-   working_string = rdfa_replace_string(working_string, str);
    char* token = NULL;
    char* wptr = NULL;
    char* offset = rval;
    
+   working_string = rdfa_replace_string(working_string, str);
+
    // split on any whitespace character that we may find
    token = strtok_r(working_string, RDFA_WHITESPACE_CHARACTERS, &wptr);
    while(token != NULL)
@@ -124,6 +125,7 @@ rdfalist* rdfa_create_list(size_t size)
 rdfalist* rdfa_copy_list(rdfalist* list)
 {
    rdfalist* rval = malloc(sizeof(rdfalist));
+   unsigned int i;
 
    // copy the base list variables over
    rval->max_items = list->max_items;
@@ -135,7 +137,6 @@ rdfalist* rdfa_copy_list(rdfalist* list)
    // for each list member.
    //
    // TODO: Implement the copy for context, if it is needed.
-   int i;
    for(i = 0; i < list->max_items; i++)
    {
       if(i < rval->num_items)
@@ -160,9 +161,10 @@ rdfalist* rdfa_copy_list(rdfalist* list)
 
 void rdfa_print_list(rdfalist* list)
 {
+   unsigned int i;
+
    printf("[ ");
 
-   int i;
    for(i = 0; i < list->num_items; i++)
    {
       if(i != 0)
@@ -170,7 +172,7 @@ void rdfa_print_list(rdfalist* list)
          printf(", ");
       }
       
-      printf(list->items[i]->data);
+      puts(list->items[i]->data);
    }
 
    printf(" ]\n");
@@ -180,7 +182,7 @@ void rdfa_free_list(rdfalist* list)
 {
    if(list != NULL)
    {
-      int i;
+      unsigned int i;
       for(i = 0; i < list->num_items; i++)
       {
          free(list->items[i]->data);
@@ -337,10 +339,10 @@ void rdfa_print_mapping(char** mapping)
    printf("{\n");
    while(*mptr != NULL)
    {
-      char* key = *mptr;
-      mptr++;
-      char* value = *mptr;
-      mptr++;
+      char* key;
+      char* value;
+      key = *mptr++;
+      value = *mptr++;
 
       printf("   %s : %s", key, value);
       if(*mptr != NULL)

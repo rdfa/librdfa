@@ -127,10 +127,12 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
          if(end_index != NULL)
          {
             char* tmpstr = NULL;
+            char* end_index2;
+
             tmpstr = rdfa_replace_string(tmpstr, context->base);
-            char* end_index = rindex(tmpstr, '/');
-            end_index++;
-            *end_index = '\0';
+            end_index2= rindex(tmpstr, '/');
+            end_index2++;
+            *end_index2 = '\0';
 
             rval = rdfa_join_string(tmpstr, uri);
          }
@@ -171,34 +173,35 @@ char* rdfa_resolve_curie(
            (mode == CURIE_PARSE_RELREV))))
    {
       char* working_copy = NULL;
-      working_copy = malloc(strlen(uri) + 1);
-      strcpy(working_copy, uri);//rdfa_replace_string(working_copy, uri);
       char* wcptr = NULL;
       char* prefix = NULL;
-      char* reference = NULL;
+      char* curie_reference = NULL;
+      const char* expanded_prefix = NULL;
+      size_t expanded_prefix_length = 0;
+
+      working_copy = malloc(strlen(uri) + 1);
+      strcpy(working_copy, uri);//rdfa_replace_string(working_copy, uri);
 
       // if this is a safe CURIE, chop off the beginning and the end
       if(ctype == CURIE_TYPE_SAFE)
       {
          prefix = strtok_r(working_copy, "[:]", &wcptr);
-         reference = strtok_r(NULL, "[:]", &wcptr);
+         curie_reference = strtok_r(NULL, "[:]", &wcptr);
       }
       else if(ctype == CURIE_TYPE_IRI_OR_UNSAFE)
       {
          prefix = strtok_r(working_copy, ":", &wcptr);
-         reference = strtok_r(NULL, ":", &wcptr);
+         curie_reference = strtok_r(NULL, ":", &wcptr);
       }
 
       // fully resolve the prefix and get it's length
-      const char* expanded_prefix = NULL;
-      size_t expanded_prefix_length = 0;
 
       // if a colon was found, but no prefix, use the context->base as
       // the prefix IRI
       if(uri[0] == ':' || ((strlen(uri) > 2) && uri[1] == ':'))
       {
          expanded_prefix = context->base;
-         reference = prefix;
+         curie_reference = prefix;
          prefix = NULL;
       }
       else if(prefix != NULL)
@@ -225,15 +228,15 @@ char* rdfa_resolve_curie(
       
       // if the expanded prefix and the reference exist, generate the
       // full IRI.
-      if((expanded_prefix != NULL) && (reference != NULL))
+      if((expanded_prefix != NULL) && (curie_reference != NULL))
       {
          if(strcmp(expanded_prefix, "_") == 0)
          {
-            rval = rdfa_join_string("_:", reference);
+            rval = rdfa_join_string("_:", curie_reference);
          }
          else
          {
-            rval = rdfa_join_string(expanded_prefix, reference);
+            rval = rdfa_join_string(expanded_prefix, curie_reference);
          }
       }
 
