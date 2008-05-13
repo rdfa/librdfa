@@ -73,6 +73,10 @@ static size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_dat
 
 int main(int argc, char** argv)
 {
+#ifdef LIBRDFA_IN_RAPTOR
+   raptor_init();
+#endif
+
    if(argc < 2)
    {
       printf("%s usage:\n\n"
@@ -125,5 +129,8 @@ int main(int argc, char** argv)
       }
    }
    
+#ifdef LIBRDFA_IN_RAPTOR
+   raptor_finish();
+#endif
    return 0;
 }
