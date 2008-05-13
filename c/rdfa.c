@@ -43,7 +43,6 @@
 
 #define READ_BUFFER_SIZE 4096
 
-
 static void rdfa_init_context(rdfacontext* context)
 {   
    // the [parent subject] is set to the [base] value;
@@ -341,7 +340,6 @@ static void XMLCALL
    rdfalist* context_stack = user_data;
    rdfacontext* context = rdfa_create_new_element_context(context_stack);
    const char** aptr = attributes;
-   const char* xml_base = NULL;
    const char* xml_lang = NULL;
    const char* about_curie = NULL;
    char* about = NULL;
@@ -465,10 +463,6 @@ static void XMLCALL
          {
             xml_lang = value;
          }
-         else if(strcmp(name, "base") == 0)
-         {
-            xml_base = value;
-         }
          else if(strstr(attr, "xmlns") != NULL)
          {
             // 2. Next the [current element] is parsed for
@@ -483,16 +477,6 @@ static void XMLCALL
 
    // close the XML Literal value
    context->xml_literal = rdfa_append_string(context->xml_literal, ">");
-   
-   // TODO: 2.1 The [current element] is parsed for xml:base and [base] is set
-   // to this value if it exists. -- manu (not in the processing rules
-   // yet)
-#ifdef LIBRDFA_IN_RAPTOR
-   if(context->sax2)
-      rdfa_update_base(context, (const char*)raptor_uri_as_string(raptor_sax2_inscope_base_uri(context->sax2)));
-#else
-   rdfa_update_base(context, xml_base);
-#endif
    
    // 3. The [current element] is also parsed for any language
    //    information, and [language] is set in the [current
