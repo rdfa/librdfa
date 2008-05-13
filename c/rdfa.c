@@ -323,6 +323,11 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
       rval->local_incomplete_triples =
          rdfa_copy_list(parent_context->local_incomplete_triples);
    }
+
+#ifdef LIBRDFA_IN_RAPTOR
+   rval->sax2     = parent_context->sax2;
+   rval->base_uri = parent_context->base_uri;
+#endif
    
    return rval;
 }
@@ -482,12 +487,22 @@ static void XMLCALL
    // TODO: 2.1 The [current element] is parsed for xml:base and [base] is set
    // to this value if it exists. -- manu (not in the processing rules
    // yet)
+#ifdef LIBRDFA_IN_RAPTOR
+   if(context->sax2)
+      rdfa_update_base(context, (const char*)raptor_uri_as_string(raptor_sax2_inscope_base_uri(context->sax2)));
+#else
    rdfa_update_base(context, xml_base);
+#endif
    
    // 3. The [current element] is also parsed for any language
    //    information, and [language] is set in the [current
    //    evaluation context];
+#ifdef LIBRDFA_IN_RAPTOR
+   if(context->sax2)
+      rdfa_update_language(context, (const char*)raptor_sax2_inscope_xml_language(context->sax2));
+#else
    rdfa_update_language(context, xml_lang);
+#endif
 
    /***************** FOR DEBUGGING PURPOSES ONLY ******************/
    if(DEBUG)
@@ -801,6 +816,49 @@ static void XMLCALL
    rdfa_free_context(context);
 }
 
+
+#ifdef LIBRDFA_IN_RAPTOR
+static void raptor_start_element(void *user_data,
+                                 raptor_xml_element *xml_element) 
+{
+  raptor_qname* qname=raptor_xml_element_get_name(xml_element);
+  int attr_count=raptor_xml_element_get_attributes_count(xml_element);
+  raptor_qname** attrs=raptor_xml_element_get_attributes(xml_element);
+  const char* name=(const char*)raptor_qname_get_local_name(qname);
+  char** attr=NULL;
+  int i;
+
+  if(attr_count > 0) {
+    attr=(char**)malloc(sizeof(char*) * (1+(attr_count*2)));
+    for(i=0; i<attr_count; i++) {
+      attr[2*i]=(char*)raptor_qname_get_local_name(attrs[i]);
+      attr[1+(2*i)]=(char*)raptor_qname_get_value(attrs[i]);
+    }
+    attr[2*i]=NULL;
+  }
+  start_element(user_data, name, (const char**)attr);
+  if(attr)
+    free(attr);
+}
+
+static void raptor_end_element(void *user_data,
+                               raptor_xml_element* xml_element) 
+{
+  raptor_qname* qname=raptor_xml_element_get_name(xml_element);
+  const char* name=(const char*)raptor_qname_get_local_name(qname);
+
+  end_element(user_data, name);
+}
+
+static void raptor_character_data(void *user_data, 
+                                  raptor_xml_element* xml_element,
+                                  const unsigned char *s, int len) 
+{
+  character_data(user_data, (const char *)s, len);
+}
+#endif
+
+
 rdfacontext* rdfa_create_context(const char* base)
 {
    rdfacontext* rval = NULL;
@@ -817,7 +875,12 @@ rdfacontext* rdfa_create_context(const char* base)
       rval->wb_allocated = 0;
       rval->working_buffer = NULL;
       rval->wb_offset = 0;
+#ifdef LIBRDFA_IN_RAPTOR
+      rval->base_uri = NULL;
+      rval->sax2 = NULL;
+#else
       rval->parser = NULL;
+#endif
       rval->done = 0;
       rval->context_stack = NULL;
       rval->wb_preread = 0;
@@ -936,19 +999,40 @@ int rdfa_parse_start(rdfacontext* context)
    context->wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
    context->working_buffer = calloc(context->wb_allocated, sizeof(char));
 
+#ifdef LIBRDFA_IN_RAPTOR
+   raptor_error_handlers_init(&context->error_handlers);
+#else
    context->parser = XML_ParserCreate(NULL);
+#endif
    context->done = 0;
    context->context_stack = rdfa_create_list(32);
 
    // initialize the context stack
    rdfa_push_item(context->context_stack, context, RDFALIST_FLAG_CONTEXT);
    
+#ifdef LIBRDFA_IN_RAPTOR
+   context->sax2 = raptor_new_sax2(context->context_stack,
+                                   &context->error_handlers);
+#else
+#endif
+
    // set up the context stack
+#ifdef LIBRDFA_IN_RAPTOR
+   raptor_sax2_set_start_element_handler(context->sax2, raptor_start_element);
+   raptor_sax2_set_end_element_handler(context->sax2, raptor_end_element);
+   raptor_sax2_set_characters_handler(context->sax2, raptor_character_data);
+#else
    XML_SetUserData(context->parser, context->context_stack);
    XML_SetElementHandler(context->parser, start_element, end_element);
    XML_SetCharacterDataHandler(context->parser, character_data);
-   
+#endif
+
    rdfa_init_context(context);
+
+#ifdef LIBRDFA_IN_RAPTOR
+   context->base_uri=raptor_new_uri((const unsigned char*)context->base);
+   raptor_sax2_parse_start(context->sax2, context->base_uri);
+#endif
 
    return rval;
 }
@@ -971,7 +1055,16 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       // continue looking if in first 131072 bytes of data
       if(!context->base && context->wb_preread < (1<<17))
          return RDFA_PARSE_SUCCESS;
-      
+
+#ifdef LIBRDFA_IN_RAPTOR
+
+      if(raptor_sax2_parse_chunk(context->sax2,
+                                 (const unsigned char*)context->working_buffer,
+                                 context->wb_offset, done))
+      {
+         return RDFA_PARSE_FAILED;
+      }
+#else
       if(XML_Parse(context->parser, context->working_buffer,
          context->wb_offset, 0) == XML_STATUS_ERROR)
       {
@@ -982,6 +1075,7 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
                  XML_GetCurrentColumnNumber(context->parser));
          return RDFA_PARSE_FAILED;
       }
+#endif
       
       context->preread = 1;
       
@@ -989,6 +1083,12 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
    }
 
    // otherwise just parse the block passed in
+#ifdef LIBRDFA_IN_RAPTOR
+   if(raptor_sax2_parse_chunk(context->sax2, (const unsigned char*)data, wblen, done))
+   {
+      return RDFA_PARSE_FAILED;
+   }
+#else
    if(XML_Parse(context->parser, data, wblen, done) == XML_STATUS_ERROR)
    {
       fprintf(stderr,
@@ -998,14 +1098,22 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
               XML_GetCurrentColumnNumber(context->parser));
       return RDFA_PARSE_FAILED;
    }
-   
+#endif   
+
    return RDFA_PARSE_SUCCESS;
 }
 
 void rdfa_parse_end(rdfacontext* context)
 {
    // Free the expat parser and the like
+#ifdef LIBRDFA_IN_RAPTOR
+   if(context->base_uri)
+      raptor_free_uri(context->base_uri);
+   raptor_free_sax2(context->sax2);
+   context->sax2=NULL;
+#else
    XML_ParserFree(context->parser);
+#endif
 }
 
 int rdfa_parse(rdfacontext* context)

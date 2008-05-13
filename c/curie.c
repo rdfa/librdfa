@@ -215,8 +215,17 @@ char* rdfa_resolve_curie(
          else
          {
             // if the prefix was defined, get it from the set of URI mappings.
+#ifdef LIBRDFA_IN_RAPTOR
+            raptor_namespace *nspace;
+            raptor_uri* ns_uri;
+            nspace = raptor_namespaces_find_namespace(&context->sax2->namespaces,
+                                                      (const unsigned char*)prefix, strlen(prefix));
+            ns_uri = raptor_namespace_get_uri(nspace);
+            expanded_prefix = (const char*)raptor_uri_as_string(ns_uri);
+#else
             expanded_prefix =
                rdfa_get_mapping(context->uri_mappings, prefix);
+#endif
          }
       }
 

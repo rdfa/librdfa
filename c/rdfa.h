@@ -36,7 +36,19 @@
 #define _LIBRDFA_RDFA_H_
 #include <stdlib.h>
 
+#ifdef LIBRDFA_IN_RAPTOR
+#ifdef HAVE_CONFIG_H
+#include <raptor_config.h>
+#endif
+
+#ifdef WIN32
+#include <win32_raptor_config.h>
+#endif
+#include "raptor.h"
+#include "raptor_internal.h"
+#else
 #include <expat.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -156,7 +168,13 @@ typedef struct rdfacontext
    size_t wb_allocated;
    char* working_buffer;
    size_t wb_offset;
+#ifdef LIBRDFA_IN_RAPTOR
+   raptor_error_handlers error_handlers;
+   raptor_uri* base_uri;
+   raptor_sax2* sax2;
+#else
    XML_Parser parser;
+#endif
    int done;
    rdfalist* context_stack;
    size_t wb_preread;
