@@ -73,19 +73,3 @@ void rdfa_update_uri_mappings(
       }
    }
 }
-
-/**
- * Updates the base value for the given context given the new value
- * for the base value.
- *
- * @param context the context that should be modified
- * @param base the new value for the base value.
- */
-void rdfa_update_base(rdfacontext* context, const char* base)
-{
-   if(base != NULL)
-   {
-      rdfa_generate_namespace_triple(context, "base", base);
-      rdfa_replace_string(context->base, base);
-   }
-}

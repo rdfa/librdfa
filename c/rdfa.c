@@ -46,7 +46,6 @@
 // All functions that rdfa.c needs.
 void rdfa_update_uri_mappings(
    rdfacontext* context, const char* attribute, const char* value);
-void rdfa_update_base(rdfacontext* context, const char* base);
 void rdfa_update_language(rdfacontext* context, const char* lang);
 void rdfa_establish_new_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,
@@ -373,7 +372,6 @@ static void XMLCALL
 
    // prepare all of the RDFa-specific attributes we are looking for.
    const char** aptr = attributes;
-   const char* xml_base = NULL;
    const char* xml_lang = NULL;
    const char* about_curie = NULL;
    char* about = NULL;
@@ -475,10 +473,6 @@ static void XMLCALL
          {
             xml_lang = value;
          }
-         else if(strcmp(name, "base") == 0)
-         {
-            xml_base = value;
-         }
          else if(strstr(attribute, "xmlns") != NULL)
          {
             // 2. Next the [current element] is parsed for
@@ -493,11 +487,6 @@ static void XMLCALL
 
    // close the XML Literal value
    context->xml_literal = rdfa_append_string(context->xml_literal, ">");
-   
-   // TODO: 2.1 The [current element] is parsed for xml:base and [base] is set
-   // to this value if it exists. -- manu (not in the processing rules
-   // yet)
-   rdfa_update_base(context, xml_base);
    
    // 3. The [current element] is also parsed for any language
    //    information, and [language] is set in the [current
