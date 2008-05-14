@@ -66,6 +66,7 @@ typedef enum
    RDFALIST_FLAG_LAST = (1 << 5)
 } liflag_t;
 
+#ifdef LIBRDFA_IN_RAPTOR
 /**
  * Initializes a mapping given the number of elements the mapping is
  * expected to hold.
@@ -123,6 +124,7 @@ void rdfa_print_mapping(char** mapping);
  * @param mapping the mapping to free.
  */
 void rdfa_free_mapping(char** mapping);
+#endif
 
 /**
  * Creates a list and initializes it to the given size.

@@ -26,10 +26,11 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
+#ifndef LIBRDFA_IN_RAPTOR
+
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
 
 // pre-define functions that we will need in this module
-   
 /**
  * Attempts to update the uri mappings in the given context using the
  * given attribute/value pair.
@@ -71,3 +72,4 @@ void rdfa_update_uri_mappings(
       }
    }
 }
+#endif

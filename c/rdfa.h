@@ -140,7 +140,9 @@ typedef struct rdfacontext
    char* base;
    char* parent_subject;
    char* parent_object;
+#ifdef LIBRDFA_IN_RAPTOR
    char** uri_mappings;
+#endif
    rdfalist* incomplete_triples;
    rdfalist* local_incomplete_triples;
    char* language;

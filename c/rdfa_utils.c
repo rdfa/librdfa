@@ -243,6 +243,7 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
    list->num_items++;
 }
 
+#ifndef LIBRDFA_IN_RAPTOR
 char** rdfa_create_mapping(size_t elements)
 {
    size_t mapping_size = sizeof(char*) * MAX_URI_MAPPINGS * 2;
@@ -373,3 +374,4 @@ void rdfa_free_mapping(char** mapping)
       free(mapping);
    }
 }
+#endif

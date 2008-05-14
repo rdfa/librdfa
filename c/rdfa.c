@@ -56,9 +56,11 @@ static void rdfa_init_context(rdfacontext* context)
    // the [parent object] is set to null;
    context->parent_object = NULL;
    
+#ifndef LIBRDFA_IN_RAPTOR
    // the [list of URI mappings] is cleared;
    context->uri_mappings = (char**)rdfa_create_mapping(MAX_URI_MAPPINGS);
-   
+#endif   
+
    // the [list of incomplete triples] is cleared;
    context->incomplete_triples = rdfa_create_list(3);
    
@@ -218,11 +220,13 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rdfa_init_context(rval);
 
    // copy the URI mappings
+#ifndef LIBRDFA_IN_RAPTOR
    if(rval->uri_mappings != NULL)
    {
       rdfa_free_mapping(rval->uri_mappings);
    }
    rval->uri_mappings = rdfa_copy_mapping(parent_context->uri_mappings);
+#endif
 
    // inherit the parent context's language
    if(parent_context->language != NULL)
@@ -463,6 +467,7 @@ static void XMLCALL
          {
             xml_lang = value;
          }
+#ifdef LIBRDFA_IN_RAPTOR
          else if(strstr(attr, "xmlns") != NULL)
          {
             // 2. Next the [current element] is parsed for
@@ -472,6 +477,7 @@ static void XMLCALL
             //    mapping in the list that has the same name;
             rdfa_update_uri_mappings(context, attr, value);
          }
+#endif
       }
    }
 
@@ -895,10 +901,12 @@ void rdfa_free_context(rdfacontext* context)
       free(context->parent_object);
    }
 
+#ifdef LIBRDFA_IN_RAPTOR
    if(context->uri_mappings != NULL)
    {
       rdfa_free_mapping(context->uri_mappings);
    }
+#endif
 
    if(context->incomplete_triples != NULL)
    {
