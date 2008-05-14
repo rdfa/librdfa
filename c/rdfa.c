@@ -901,7 +901,7 @@ void rdfa_free_context(rdfacontext* context)
       free(context->parent_object);
    }
 
-#ifdef LIBRDFA_IN_RAPTOR
+#ifndef LIBRDFA_IN_RAPTOR
    if(context->uri_mappings != NULL)
    {
       rdfa_free_mapping(context->uri_mappings);
