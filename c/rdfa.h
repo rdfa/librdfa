@@ -174,6 +174,8 @@ typedef struct rdfacontext
    raptor_error_handlers error_handlers;
    raptor_uri* base_uri;
    raptor_sax2* sax2;
+   raptor_namespace_handler namespace_handler;
+   void* namespace_handler_user_data;
 #else
    XML_Parser parser;
 #endif

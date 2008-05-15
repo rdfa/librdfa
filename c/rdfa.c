@@ -328,8 +328,10 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    }
 
 #ifdef LIBRDFA_IN_RAPTOR
-   rval->sax2     = parent_context->sax2;
    rval->base_uri = parent_context->base_uri;
+   rval->sax2     = parent_context->sax2;
+   rval->namespace_handler = parent_context->namespace_handler;
+   rval->namespace_handler_user_data = parent_context->namespace_handler_user_data;
 #endif
    
    return rval;
@@ -808,8 +810,8 @@ static void XMLCALL
 
 
 #ifdef LIBRDFA_IN_RAPTOR
-static void raptor_start_element(void *user_data,
-                                 raptor_xml_element *xml_element) 
+static void raptor_rdfa_start_element(void *user_data,
+                                      raptor_xml_element *xml_element) 
 {
   raptor_qname* qname=raptor_xml_element_get_name(xml_element);
   int attr_count=raptor_xml_element_get_attributes_count(xml_element);
@@ -831,8 +833,8 @@ static void raptor_start_element(void *user_data,
     free(attr);
 }
 
-static void raptor_end_element(void *user_data,
-                               raptor_xml_element* xml_element) 
+static void raptor_rdfa_end_element(void *user_data,
+                                    raptor_xml_element* xml_element) 
 {
   raptor_qname* qname=raptor_xml_element_get_name(xml_element);
   const char* name=(const char*)raptor_qname_get_local_name(qname);
@@ -840,12 +842,27 @@ static void raptor_end_element(void *user_data,
   end_element(user_data, name);
 }
 
-static void raptor_character_data(void *user_data, 
-                                  raptor_xml_element* xml_element,
-                                  const unsigned char *s, int len) 
+static void raptor_rdfa_character_data(void *user_data, 
+                                       raptor_xml_element* xml_element,
+                                       const unsigned char *s, int len) 
 {
   character_data(user_data, (const char *)s, len);
 }
+
+static void raptor_rdfa_namespace_handler(void *user_data,
+                                          raptor_namespace* nspace)
+{
+  rdfalist* context_stack = user_data;
+  rdfacontext* context = (rdfacontext*)
+    context_stack->items[context_stack->num_items - 1]->data;
+
+  if(context->namespace_handler)
+    (*context->namespace_handler)(context->namespace_handler_user_data, 
+                                  nspace);
+}
+
+
+
 #endif
 
 
@@ -868,6 +885,8 @@ rdfacontext* rdfa_create_context(const char* base)
 #ifdef LIBRDFA_IN_RAPTOR
       rval->base_uri = NULL;
       rval->sax2 = NULL;
+      rval->namespace_handler = NULL;
+      rval->namespace_handler_user_data = NULL;
 #else
       rval->parser = NULL;
 #endif
@@ -1010,9 +1029,14 @@ int rdfa_parse_start(rdfacontext* context)
 
    // set up the context stack
 #ifdef LIBRDFA_IN_RAPTOR
-   raptor_sax2_set_start_element_handler(context->sax2, raptor_start_element);
-   raptor_sax2_set_end_element_handler(context->sax2, raptor_end_element);
-   raptor_sax2_set_characters_handler(context->sax2, raptor_character_data);
+   raptor_sax2_set_start_element_handler(context->sax2,
+                                         raptor_rdfa_start_element);
+   raptor_sax2_set_end_element_handler(context->sax2,
+                                       raptor_rdfa_end_element);
+   raptor_sax2_set_characters_handler(context->sax2,
+                                      raptor_rdfa_character_data);
+   raptor_sax2_set_namespace_handler(context->sax2,
+                                     raptor_rdfa_namespace_handler);
 #else
    XML_SetUserData(context->parser, context->context_stack);
    XML_SetElementHandler(context->parser, start_element, end_element);
