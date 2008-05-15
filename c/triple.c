@@ -160,6 +160,7 @@ void rdfa_free_triple(rdftriple* triple)
    free(triple->language);
 }
 
+#ifndef LIBRDFA_IN_RAPTOR
 /**
  * Generates a namespace prefix triple for any application that is
  * interested in processing namespace changes.
@@ -176,6 +177,7 @@ void rdfa_generate_namespace_triple(
          "@prefix", prefix, iri, RDF_TYPE_NAMESPACE_PREFIX, NULL, NULL);
    context->triple_callback(triple, context->callback_data);
 }
+#endif
 
 /**
  * Completes all incomplete triples that are part of the current
