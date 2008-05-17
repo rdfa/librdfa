@@ -59,9 +59,11 @@ void rdfa_init_context(rdfacontext* context);
 char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri);
 char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
 
+// typedef for 3 argument CURIE processing function pointer
+typedef char* (*curie_func_three_arg)(rdfacontext*, const char*, curieparse_t);
 
-// typedef for CURIE processing function pointer
-typedef char* (*curie_func)(rdfacontext*, const char*, curieparse_t);
+// typedef for 2 argument CURIE processing function pointer
+typedef char* (*curie_func_two_arg)(rdfacontext*, const char*);
 
 // typedef for CURIE list processing function pointer
 typedef rdfalist* (*curie_list_func)(rdfacontext*, const char*, curieparse_t);
@@ -86,7 +88,7 @@ int g_test_fails = 0;
  * @param iri the value of what the resulting IRI should be.
  */
 void run_test(rdfacontext* context, const char* name, const char* curie,
-   curie_func cb, const char* iri, curieparse_t mode)
+   curie_func_three_arg cb, const char* iri, curieparse_t mode)
 {
    char* result = cb(context, curie, mode);
    int compare = -1;
@@ -195,16 +197,50 @@ void run_list_test(rdfacontext* context, const char* name, const char* curies,
  *            value of each set member will be appended to the IRI.
  */
 void run_test_set(rdfacontext* context, const char* name, const char** curies,
-   size_t curies_size, curie_func cb, const char* iri, curieparse_t mode)
+   size_t curies_size, curie_func_two_arg cb, const char* iri, curieparse_t mode)
 {
    int i;
    for(i = 0; i < curies_size; i++)
    {
       char* full_iri = rdfa_join_string(iri, curies[i]);
-      
-      run_test(context, name, curies[i], cb, full_iri, mode);
+      char* result = cb(context, curies[i]);
+      int compare = -1;
 
-      free(full_iri);
+      // check to see if we should check for NULL or if the strings
+      // should match.
+      if(iri != NULL)
+      {
+         compare = strcmp(result, full_iri);
+      }
+      else if(iri == result)
+      {
+         compare = 0;
+      }
+
+      printf("UT#%02i/%s \"%s\" ...", ++g_test_num, name, full_iri);
+
+      // if the string compare shows identical values, pass the test,
+      // otherwise, fail the test.
+      if(compare == 0)
+      {
+         printf("PASS.\n");
+         g_test_passes++;
+      }
+      else
+      {
+         printf("FAIL. Got \"%s\", but should have been \"%s\".\n", result, iri);
+         g_test_fails++;
+      }
+
+      if(result != NULL)
+      {
+         free(result);
+      }
+   //      char* full_iri = rdfa_join_string(iri, curies[i]);
+      
+   //   run_test(context, name, curies[i], cb, full_iri, mode);
+
+   //   free(full_iri);
    }
 }
 
@@ -212,6 +248,7 @@ void run_curie_tests()
 {
    rdfacontext* context =
       rdfa_create_context("http://example.org/");
+
    rdfa_init_context(context);
    
    rdfa_update_mapping(

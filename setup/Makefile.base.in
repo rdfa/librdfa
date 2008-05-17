@@ -118,7 +118,7 @@ else
 #	# This is a fake target to override the default .a build
 $(ALL_EXECUTABLES): $(ALL_SOURCES) $(ALL_OBJECTS) 
 	@echo "Building $(@F)..."
-	@$(CC) $(CC_FLAGS) $(LDFLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
+	$(CC) $(CC_FLAGS) $(LDFLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
 endif
 endif
 
