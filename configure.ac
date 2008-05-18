@@ -18,7 +18,7 @@
 # 
 # Author: Manu Sporny
 
-AC_INIT(librdfa, 0.10.3, support@digitalbazaar.com)
+AC_INIT(librdfa, 0.11, support@digitalbazaar.com)
 AC_CONFIG_AUX_DIR(setup)
 
 # Setup standard build environment variables

@@ -387,6 +387,38 @@ static void XMLCALL
    }
    context->xml_literal = rdfa_append_string(context->xml_literal, name);
 
+   // append namespaces to XML Literal
+   char** umap = context->uri_mappings;
+   char* umap_key = NULL;
+   char* umap_value = NULL;
+   while(*umap != NULL)
+   {
+      // get the next mapping to process
+      rdfa_next_mapping(umap, &umap_key, &umap_value);
+
+      // append the namespace attribute to the XML Literal
+      context->xml_literal =
+         rdfa_append_string(context->xml_literal, " xmlns");
+
+      // check to see if we're dumping the standard XHTML namespace or
+      // a user-defined XML namespace
+      if(strcmp(umap_key, XMLNS_DEFAULT_MAPPING) != 0)
+      {
+         context->xml_literal = rdfa_append_string(context->xml_literal, ":");
+         context->xml_literal =
+            rdfa_append_string(context->xml_literal, umap_key);
+      }
+
+      // append the namespace value
+      context->xml_literal = rdfa_append_string(context->xml_literal, "=\"");
+      context->xml_literal =
+         rdfa_append_string(context->xml_literal, umap_value);
+      context->xml_literal = rdfa_append_string(context->xml_literal, "\"");
+
+      umap++;
+      umap++;
+   }
+
    // prepare all of the RDFa-specific attributes we are looking for.
 
    // scan all of the attributes for the RDFa-specific attributes
