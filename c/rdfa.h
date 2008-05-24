@@ -153,6 +153,7 @@ typedef struct rdfacontext
    buffer_filler_fp buffer_filler_callback;
 
    size_t bnode_count;
+   char* underscore_colon_bnode_name;
    unsigned char recurse;
    unsigned char skip_element;
    char* new_subject;

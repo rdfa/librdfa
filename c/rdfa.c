@@ -98,6 +98,7 @@ void rdfa_init_context(rdfacontext* context)
    // The next set of variables are initialized to make the C compiler
    // and valgrind happy - they are not a part of the RDFa spec.
    context->bnode_count = 0;
+   context->underscore_colon_bnode_name = NULL;
    context->content = NULL;
    context->datatype = NULL;
    context->property = NULL;
@@ -971,6 +972,11 @@ void rdfa_free_context(rdfacontext* context)
       free(context->language);
    }
 
+   if(context->underscore_colon_bnode_name != NULL)
+   {
+      free(context->underscore_colon_bnode_name);
+   }
+   
    if(context->new_subject != NULL)
    {
       free(context->new_subject);
@@ -1102,7 +1108,7 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       context->wb_preread = rdfa_init_base(context,
          &context->working_buffer, &context->wb_allocated, data, wblen);
       
-      // continue looking if in first 131072 bytes of data
+      // contisnue looking if in first 131072 bytes of data
       if(!context->base && context->wb_preread < (1<<17))
          return RDFA_PARSE_SUCCESS;
 
