@@ -218,6 +218,10 @@ char* rdfa_resolve_curie(
             // use the blank node prefix
             expanded_prefix = "_";
          }
+         //else if(strcmp(prefix, "rdf") == 0)
+         //{
+         //   expanded_prefix = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+         //}
          else
          {
             // if the prefix was defined, get it from the set of URI mappings.
