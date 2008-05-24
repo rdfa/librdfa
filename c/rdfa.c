@@ -405,38 +405,79 @@ static void XMLCALL
       char* umap_value = NULL;
       while(*umap != NULL)
       {
+         unsigned char namespace_already_defined = 0;
+         const char* predefined_namespace = NULL;
+         const char* predefined_namespace_value = NULL;
+
          // get the next mapping to process
-         rdfa_next_mapping(umap, &umap_key, &umap_value);
-
-         // append the namespace attribute to the XML Literal
-         context->xml_literal =
-            rdfa_append_string(context->xml_literal, " xmlns");
-
-         // check to see if we're dumping the standard XHTML namespace or
-         // a user-defined XML namespace
-         if(strcmp(umap_key, XMLNS_DEFAULT_MAPPING) != 0)
+         rdfa_next_mapping(umap++, &umap_key, &umap_value);
+         umap++;
+         
+         // check to make sure that the namespace isn't already
+         // defined in the current element.         
+         if(attributes != NULL)
          {
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, ":");
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, umap_key);
+            const char** attrs = attributes;
+            while((*attrs != NULL) && !namespace_already_defined)
+            {
+               predefined_namespace = *attrs++;
+               predefined_namespace_value = *attrs++;
+               
+               if((strcmp(predefined_namespace, umap_key) == 0) ||
+                  (strcmp(umap_key, XMLNS_DEFAULT_MAPPING) == 0))
+               {
+                  namespace_already_defined = 1;
+               }
+            }
          }
 
-         // append the namespace value
-         context->xml_literal =
-            rdfa_append_string(context->xml_literal, "=\"");
-         context->xml_literal =
-            rdfa_append_string(context->xml_literal, umap_value);
-         context->xml_literal = rdfa_append_string(context->xml_literal, "\"");
+         // if the namespace isn't already defined on the element,
+         // copy it to the XML Literal string.
+         if(!namespace_already_defined)
+         {
+            // append the namespace attribute to the XML Literal
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, " xmlns");
 
-         umap++;
-         umap++;
+            // check to see if we're dumping the standard XHTML namespace or
+            // a user-defined XML namespace
+            if(strcmp(umap_key, XMLNS_DEFAULT_MAPPING) != 0)
+            {
+               context->xml_literal =
+                  rdfa_append_string(context->xml_literal, ":");
+               context->xml_literal =
+                  rdfa_append_string(context->xml_literal, umap_key);
+            }
+
+            // append the namespace value
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, "=\"");
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, umap_value);
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, "\"");
+         }
+         else
+         {
+            // append the namespace value
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, " ");
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, predefined_namespace);
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, "=\"");
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal,
+                  predefined_namespace_value);
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, "\"");
+         }
+         namespace_already_defined = 0;         
       }
       context->xml_literal_namespaces_inserted = 1;
    }
    
    // prepare all of the RDFa-specific attributes we are looking for.
-
    // scan all of the attributes for the RDFa-specific attributes
    if(aptr != NULL)
    {
@@ -452,8 +493,11 @@ static void XMLCALL
          // append the attribute-value pair to the XML literal
          literal_text = malloc(strlen(attr) + strlen(value) + 5);
          sprintf(literal_text, " %s=\"%s\"", attr, value);
-         context->xml_literal =
-            rdfa_append_string(context->xml_literal, literal_text);
+         if(strstr("xmlns", attr) == NULL)
+         {
+            context->xml_literal =
+               rdfa_append_string(context->xml_literal, literal_text);
+         }
          free(literal_text);
          
          if(strcmp(attr, "about") == 0)
@@ -534,7 +578,7 @@ static void XMLCALL
    }
 
    // check to see if we should append an xml:lang to the XML Literal
-   // if one exists.
+   // if one is defined in the context and does not exist on the element.
    if((xml_lang == NULL) && (context->language != NULL) &&
       insert_xml_lang_in_xml_literal)
    {
