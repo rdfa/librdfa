@@ -198,7 +198,13 @@ char* rdfa_resolve_curie(
 
       // if a colon was found, but no prefix, use the context->base as
       // the prefix IRI
-      if(uri[0] == ':' || ((strlen(uri) > 2) && uri[1] == ':'))
+      if(uri[0] == ':')
+      {
+         expanded_prefix = "http://www.w3.org/1999/xhtml/vocab#";
+         curie_reference = prefix;
+         prefix = NULL;
+      }
+      else if((strlen(uri) > 2) && (uri[1] == ':'))
       {
          expanded_prefix = context->base;
          curie_reference = prefix;
@@ -348,6 +354,8 @@ char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
    
    // TODO: Is it clear that property has predefined values in the
    //       Syntax doc?
+   // TODO: THIS IS A BUG AND SHOULD BE REMOVED - there are no
+   //       predefined values for @property
    // search all of the XHTML @property reserved words for a match
    // against the given URI
    for(i = 0; i < XHTML_PROPERTY_RESERVED_WORDS_SIZE; i++)
