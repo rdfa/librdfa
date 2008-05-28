@@ -21,6 +21,8 @@
 import sys, os, urllib2
 sys.path += ("../python/dist",)
 import rdfa
+from StringIO import StringIO
+from rdflib.Graph import ConjunctiveGraph
 
 URL_TYPE_HTTP = 1
 URL_TYPE_FILE = 2
@@ -55,132 +57,55 @@ def fillBuffer(dataFile, bufferSize):
     return dataFile.read()
 
 ##
-# Applies the namespaces to the given string in an attempt to shorten the
-# string.
-#
-# @param namespaces the list of namespaces to use.
-# @param iri the IRI to prefix.
-#
-# @return the prefixed IRI if it is prefixable.
-def prefixNamespace(namespaces, iri):
-    rval = iri
-
-    for key, value in namespaces.items():
-        rval = rval.replace(value, key + ":")
-
-    return rval
-
-##
-# Gets a set of triples from a list given a subject.
-#
-# @param subject the subject to use when retrieving the list of triples.
-# @param triples the list of triples to search for the given subject.
-#
-# @return a list of triples based on the given subject.
-def getTriplesBySubject(subject, triples):
-    rval = []
-
-    for item in triples:
-        if(item[0] == subject):
-            rval.append(item)
-
-    return rval
-
-##
-# Deletes a set of triples from the given list given a subject.
-#
-# @param subject the subject to use when deleting the list of triples.
-# @param triples the list of triples to search when deleting triples.
-#
-# @return a list of triples that have the given subject removed from them
-def deleteTriplesBySubject(subject, triples):
-    rval = []
-
-    for item in triples:
-        if(item[0] != subject):
-            rval.append(item)
-
-    return rval
-
-##
-# Prints a set of triples, grouping them by subject.
-#
-# @param triples the list of triples that must all have the same subject.
-def printTriplesBySubject(namespaces, triples):
-    subject = triples[0][0]
-    subjectType = "rdf:Description"
-
-    # Figure out what the subject of the triple should be, and then 
-    for triple in triples:
-        if(triple[1] == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"):
-            subjectType = prefixNamespace(namespaces, triple[2])
-            break
-
-    print " <%s rdf:about=\"%s\">" % (subjectType, subject)
-
-    for triple in triples:
-        predicate = prefixNamespace(namespaces, triple[1])
-        obj = triple[2]
-        objectType = triple[3]
-        dataType = triple[4]
-        language = triple[5]
-        tripleText = ""
-        lang = ""
-        
-        if(language):
-            lang = " xml:lang=\"%s\"" % (language,)
-
-        if(predicate == "rdf:type"):
-            continue
-        elif(objectType == rdfa.RDF_TYPE_PLAIN_LITERAL):
-            tripleText += "  <%s%s>%s</%s>" % \
-                (predicate, lang, obj, predicate)
-        elif(objectType == rdfa.RDF_TYPE_IRI):
-            tripleText += "  <%s rdf:resource=\"%s\"%s/>" % \
-                (predicate, obj, lang)
-        elif(objectType == rdfa.RDF_TYPE_TYPED_LITERAL):
-            tripleText += "  <%s rdf:datatype=\"%s\"%s>%s</%s>" % \
-                (predicate, dataType, lang, obj, predicate)
-        elif(objectType == rdfa.RDF_TYPE_XML_LITERAL):
-            tripleText += \
-                "  <%s rdf:datatype=\"%s\"%s><![CDATA[%s]]></%s>" % \
-                (predicate,
-                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral",
-                 lang, obj, predicate)
-        else:
-            tripleText += " <%s>%s</%s>\n" % \
-                (predicate, "UNKNOWN LITERAL", predicate)
-        print tripleText
-
-    print " </%s>" % (subjectType)
-
-##
 # Prints RDF/XML given an object with pre-defined namespaces and triples.
 #
 # @param rdf the rdf dictionary object that contains namespaces and triples.
-def printRdf(rdf):
-    print '<?xml version="1.0" encoding="utf-8"?>'
-    print '<rdf:RDF'
-
+def printRdfXml(rdf):
+    n3 = ""
+    
     # Append the RDF namespace and print the prefix namespace mappings
     rdf['namespaces']['xh1'] = "http://www.w3.org/1999/xhtml/vocab#"
     rdf['namespaces']['rdf'] = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     for prefix, uri in rdf['namespaces'].items():
-        print " xmlns:%s=\"%s\"" % (prefix, uri)
-
-    print '>'
-
+        n3 += "@prefix %s: <%s> .\n" % (prefix, uri)
+        
     # Print each subject-based triple to the screen
     triples = rdf['triples']
-    while(len(triples) > 0):
-        # Get the subject and start printing triples by subject
-        subject = triples[0][0]
-        striples = getTriplesBySubject(subject, triples)
-        triples = deleteTriplesBySubject(subject, triples)
 
-        printTriplesBySubject(rdf['namespaces'], striples)
+    for triple in triples:
+        subject = triple[0]
+        predicate = triple[1]
+        obj = triple[2]
+        objectType = triple[3]
+        dataType = triple[4]
+        language = triple[5]
 
-    print '</rdf:RDF>'
+        n3 += "<%s> <%s> " % (subject, predicate)
+
+        if(objectType in (rdfa.RDF_TYPE_PLAIN_LITERAL,
+                          rdfa.RDF_TYPE_TYPED_LITERAL,
+                          rdfa.RDF_TYPE_XML_LITERAL)):
+            n3 += "\"%s\"" % (obj.replace("\"", "\\\"").replace("\n", "\\n"),)
+        elif(objectType == rdfa.RDF_TYPE_IRI):
+            n3 += "<%s>" % (obj,)
+
+        if(language and (objectType == rdfa.RDF_TYPE_PLAIN_LITERAL)):
+            n3 += "@%s" % (language,)
+
+        if(objectType == rdfa.RDF_TYPE_TYPED_LITERAL):
+            n3 += "^^<%s>" % (dataType,)
+        elif(objectType == rdfa.RDF_TYPE_XML_LITERAL):
+            n3 += "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral>"
+
+        n3 += " .\n"
+
+    #print n3
+
+    g = ConjunctiveGraph()
+    g.parse(StringIO(n3), format="n3")
+    rdfxml = g.serialize()
+
+    print rdfxml
 
 ##
 # The main entry point for the script.
@@ -235,8 +160,8 @@ def main(argv, stdout, environ):
     # Close the datafile
     dataFile.close()
 
-    # Print the RDF to stdout
-    printRdf(rdf)
+    # Print the RDF/XML to stdout
+    printRdfXml(rdf)
     
 ##
 # Run the rdfa2n3 python application.
