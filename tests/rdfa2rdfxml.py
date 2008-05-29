@@ -142,7 +142,7 @@ def tripleToN3(triples, processed, allTriples):
         dataType = triple[4]
         language = triple[5]
 
-        if(obj not in processed):
+        if(not (obj.startswith("_:") and (obj in processed))):
             rval += "<%s> <%s> " % (subject, predicate)
 
             #print "PROCESSED:", processed
