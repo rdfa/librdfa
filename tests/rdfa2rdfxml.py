@@ -115,7 +115,10 @@ def bnodeToN3(triples, processed, allTriples):
     
     rval += " ]"
 
-    processed.append(triples[0][0])
+    if(len(triples) < 1):
+        rval = "[ ]"
+    else:
+        processed.append(triples[0][0])
 
     return rval
 
