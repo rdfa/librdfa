@@ -890,7 +890,8 @@ static void XMLCALL
       }
    }
 
-
+   // preserve the bnode count by copying it to the parent_context
+   parent_context->bnode_count = context->bnode_count;
    
    // 11. If the [skip element] flag is 'false', and either: the
    // previous step resulted in a 'true' flag, or [new subject] was

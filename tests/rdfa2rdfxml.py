@@ -86,7 +86,7 @@ def objectToN3(obj, objectType, dataType, language):
 #
 # @return an N3 formatted string.
 def bnodeToN3(triples, processed, allTriples):
-    #print "bnodeToN3", triples
+    print "bnodeToN3", triples
     rval = "[ "
 
     # Print all subjects with URIs first
@@ -155,7 +155,6 @@ def tripleToN3(triples, processed, allTriples):
         rval += " .\n"
 
     return rval
-
 
 ##
 # Gets the non-bnode subjects that are in the triple store.
