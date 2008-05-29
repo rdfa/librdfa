@@ -86,7 +86,7 @@ def objectToN3(obj, objectType, dataType, language):
 #
 # @return an N3 formatted string.
 def bnodeToN3(triples, processed, allTriples):
-    print "bnodeToN3", triples
+    #print "bnodeToN3", triples
     rval = "[ "
 
     # Print all subjects with URIs first
@@ -141,18 +141,19 @@ def tripleToN3(triples, processed, allTriples):
         objectType = triple[3]
         dataType = triple[4]
         language = triple[5]
-        
-        rval += "<%s> <%s> " % (subject, predicate)
 
-        #print "PROCESSED:", processed
+        if(obj not in processed):
+            rval += "<%s> <%s> " % (subject, predicate)
 
-        if(obj.startswith("_:")):
-            bnodeTriples = getTriplesBySubject(obj, allTriples)
-            rval += bnodeToN3(bnodeTriples, processed, allTriples)
-        else:
-            rval += objectToN3(obj, objectType, dataType, language)
-            
-        rval += " .\n"
+            #print "PROCESSED:", processed
+
+            if(obj.startswith("_:")):
+                bnodeTriples = getTriplesBySubject(obj, allTriples)
+                rval += bnodeToN3(bnodeTriples, processed, allTriples)
+            else:
+                rval += objectToN3(obj, objectType, dataType, language)
+
+            rval += " .\n"
 
     return rval
 
