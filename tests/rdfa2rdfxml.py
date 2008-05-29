@@ -115,7 +115,10 @@ def bnodeToN3(triples, processed, allTriples):
     
     rval += " ]"
 
-    processed.append(triples[0][0])
+    if(len(triples) < 1):
+        rval = "[ ]"
+    else:
+        processed.append(triples[0][0])
 
     return rval
 
@@ -141,21 +144,21 @@ def tripleToN3(triples, processed, allTriples):
         objectType = triple[3]
         dataType = triple[4]
         language = triple[5]
-        
-        rval += "<%s> <%s> " % (subject, predicate)
 
-        #print "PROCESSED:", processed
+        if(not (obj.startswith("_:") and (obj in processed))):
+            rval += "<%s> <%s> " % (subject, predicate)
 
-        if(obj.startswith("_:")):
-            bnodeTriples = getTriplesBySubject(obj, allTriples)
-            rval += bnodeToN3(bnodeTriples, processed, allTriples)
-        else:
-            rval += objectToN3(obj, objectType, dataType, language)
-            
-        rval += " .\n"
+            #print "PROCESSED:", processed
+
+            if(obj.startswith("_:")):
+                bnodeTriples = getTriplesBySubject(obj, allTriples)
+                rval += bnodeToN3(bnodeTriples, processed, allTriples)
+            else:
+                rval += objectToN3(obj, objectType, dataType, language)
+
+            rval += " .\n"
 
     return rval
-
 
 ##
 # Gets the non-bnode subjects that are in the triple store.
