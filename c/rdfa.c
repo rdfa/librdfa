@@ -105,8 +105,8 @@ void rdfa_init_context(rdfacontext* context)
    context->property = NULL;
    context->plain_literal = NULL;
    context->xml_literal = NULL;
-   context->triples_generated = 0;
-   context->complete_incomplete_triples = 0;
+   // FIXME: completing incomplete triples always happens now, change
+   //        all of the code to reflect that.
    //context->callback_data = NULL;
 }
 
@@ -205,19 +205,10 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
       context_stack->items[context_stack->num_items - 1]->data;
    rdfacontext* rval = rdfa_create_context(parent_context->base);
 
-   // 10. If the [recurse] flag is 'true', all elements that are
-   // children of the [current element] are processed using the rules
-   // described here, using a new [evaluation context], initialized as follows:
-   //
-   // If the [skip element] flag is 'true' then the new
-   // [evaluation context] is a copy of the current context that was
-   // passed in to this level of processing, with the [language] and
-   // [list of URI mappings] values replaced with the local values;
-   //
-   // TODO: Don't know if this is quite correct... should probably
-   // check [skip element] later on in this function.
-   
-   // initialize the context
+   // * Otherwise, the values are:
+             
+   // * the [ base ] is set to the [ base ] value of the current
+   //   [ evaluation context ];
    rval->base = rdfa_replace_string(rval->base, parent_context->base);
    rdfa_init_context(rval);
 
@@ -263,9 +254,9 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    
    if(parent_context->skip_element == 0)
    {
-      // the [parent subject] is set to the value of [new subject], if
-      // non-null, or the value of the [parent subject] of the current
-      // [evaluation context];
+      // o the [ parent subject ] is set to the value of [ new subject ],
+      //   if non-null, or the value of the [ parent subject ] of the
+      //   current [ evaluation context ];
       if(parent_context->new_subject != NULL)
       {
          rval->parent_subject = rdfa_replace_string(
@@ -277,10 +268,10 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
             rval->parent_subject, parent_context->parent_subject);
       }
       
-      // the [parent object] is set to value of
-      // [current object resource], if non-null, or the value of
-      // [new subject], if non-null, or the value of the
-      // [parent subject] of the current [evaluation context];
+      // o the [ parent object ] is set to value of [ current object
+      //   resource ], if non-null, or the value of [ new subject ], if
+      //   non-null, or the value of the [ parent subject ] of the
+      //   current [ evaluation context ];
       if(parent_context->current_object_resource != NULL)
       {
          rval->parent_object =
@@ -306,6 +297,8 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rdfa_free_list(rval->incomplete_triples);
       }
    
+      // o the [ list of incomplete triples ] is set to the [ local list
+      //   of incomplete triples ];
       rval->incomplete_triples =
          rdfa_copy_list(parent_context->local_incomplete_triples);
    }
@@ -897,30 +890,12 @@ static void XMLCALL
       rdfa_replace_string(parent_context->underscore_colon_bnode_name,
                           context->underscore_colon_bnode_name);
 
-   // 11. If the [skip element] flag is 'false', and either: the
-   // previous step resulted in a 'true' flag, or [new subject] was
-   // set to a non-null value, then any [incomplete triple]s within
-   // the current context should be completed:
-   if((context->skip_element == 0) &&
-      (context->complete_incomplete_triples || (context->new_subject != NULL)))
+   // 10. If the [ skip element ] flag is 'false', and [ new subject ]
+   // was set to a non-null value, then any [ incomplete triple ]s
+   // within the current context should be completed:
+   if((context->skip_element == 0) && (context->new_subject != NULL))
    {
       rdfa_complete_incomplete_triples(context);
-   }
-
-   // 12.  If any triples were created during the current level of
-   // processing, or [new subject] was set to a non-null and non-bnode
-   // value, or a value of 'true' was returned from the recursion step
-   // (step 10, above), then a value of 'true' should be returned from
-   // this level of processing. Otherwise a value of false should be
-   // returned. This returned value is forwarded to step 10 and
-   // determines whether to complete any [incomplete triple]s after
-   // having recursed into the processing of descendants.
-   if(context->triples_generated ||
-      ((context->new_subject != NULL) && (context->new_subject[0] != '_') &&
-       (context->new_subject[1] != ':')) ||
-      context->complete_incomplete_triples == 1)
-   {
-      parent_context->complete_incomplete_triples = 1;
    }
    
    // free the context
