@@ -104,7 +104,9 @@ void rdfa_init_context(rdfacontext* context)
    context->datatype = NULL;
    context->property = NULL;
    context->plain_literal = NULL;
+   context->plain_literal_size = 0;
    context->xml_literal = NULL;
+   context->xml_literal_size = 0;
    // FIXME: completing incomplete triples always happens now, change
    //        all of the code to reflect that.
    //context->callback_data = NULL;
@@ -382,13 +384,17 @@ static void XMLCALL
    if(context->xml_literal == NULL)
    {
       context->xml_literal = rdfa_replace_string(context->xml_literal, "<");
+      context->xml_literal_size = 1;
    }
    else
    {
-      context->xml_literal = rdfa_append_string(context->xml_literal, "<");
+      context->xml_literal = rdfa_n_append_string(
+         context->xml_literal, &context->xml_literal_size, "<", 1);
    }
-   context->xml_literal = rdfa_append_string(context->xml_literal, name);
-
+   context->xml_literal = rdfa_n_append_string(
+      context->xml_literal, &context->xml_literal_size,
+      name, strlen(name));
+   
    if(!context->xml_literal_namespaces_inserted)
    {
       insert_xml_lang_in_xml_literal = 1;
@@ -430,41 +436,45 @@ static void XMLCALL
          if(!namespace_already_defined)
          {
             // append the namespace attribute to the XML Literal
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, " xmlns");
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size,
+               " xmlns", strlen(" xmlns"));
 
             // check to see if we're dumping the standard XHTML namespace or
             // a user-defined XML namespace
             if(strcmp(umap_key, XMLNS_DEFAULT_MAPPING) != 0)
             {
-               context->xml_literal =
-                  rdfa_append_string(context->xml_literal, ":");
-               context->xml_literal =
-                  rdfa_append_string(context->xml_literal, umap_key);
+               context->xml_literal = rdfa_n_append_string(
+                  context->xml_literal, &context->xml_literal_size, ":", 1);
+               context->xml_literal = rdfa_n_append_string(
+                  context->xml_literal, &context->xml_literal_size,
+                  umap_key, strlen(umap_key));
             }
 
             // append the namespace value
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, "=\"");
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, umap_value);
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, "\"");
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size, "=\"", 2);
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size,
+               umap_value, strlen(umap_value));
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size, "\"", 1);
          }
          else
          {
             // append the namespace value
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, " ");
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, predefined_namespace);
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, "=\"");
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal,
-                  predefined_namespace_value);
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, "\"");
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size, " ", 1);
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size,
+               predefined_namespace, strlen(predefined_namespace));
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size, "=\"", 2);
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size,
+               predefined_namespace_value, strlen(predefined_namespace_value));
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size, "\"", 1);
          }
          namespace_already_defined = 0;         
       }
@@ -489,8 +499,9 @@ static void XMLCALL
          sprintf(literal_text, " %s=\"%s\"", attr, value);
          if(strstr("xmlns", attr) == NULL)
          {
-            context->xml_literal =
-               rdfa_append_string(context->xml_literal, literal_text);
+            context->xml_literal = rdfa_n_append_string(
+               context->xml_literal, &context->xml_literal_size,
+               literal_text, strlen(literal_text));
          }
          free(literal_text);
          
@@ -576,16 +587,19 @@ static void XMLCALL
    if((xml_lang == NULL) && (context->language != NULL) &&
       insert_xml_lang_in_xml_literal)
    {
-      context->xml_literal =
-         rdfa_append_string(context->xml_literal, " xml:lang=\"");
-      context->xml_literal =
-         rdfa_append_string(context->xml_literal, context->language);
-      context->xml_literal =
-         rdfa_append_string(context->xml_literal, "\"");
+      context->xml_literal = rdfa_n_append_string(
+         context->xml_literal, &context->xml_literal_size,
+         " xml:lang=\"", strlen(" xml:lang=\""));
+      context->xml_literal = rdfa_n_append_string(
+         context->xml_literal, &context->xml_literal_size,
+         context->language, strlen(context->language));
+      context->xml_literal = rdfa_n_append_string(
+         context->xml_literal, &context->xml_literal_size, "\"", 1);
    }
    
    // close the XML Literal value
-   context->xml_literal = rdfa_append_string(context->xml_literal, ">");
+   context->xml_literal = rdfa_n_append_string(
+      context->xml_literal, &context->xml_literal_size, ">", 1);
    
    // 3. The [current element] is also parsed for any language
    //    information, and [language] is set in the [current
@@ -749,11 +763,12 @@ static void XMLCALL character_data(void *user_data, const char *s, int len)
    {
       context->plain_literal =
          rdfa_replace_string(context->plain_literal, buffer);
+      context->plain_literal_size = len;
    }
    else
    {
-      context->plain_literal =
-         rdfa_append_string(context->plain_literal, buffer);
+      context->plain_literal = rdfa_n_append_string(
+         context->plain_literal, &context->plain_literal_size, buffer, len);
    }
 
    // append the text to the current context's XML literal
@@ -761,12 +776,13 @@ static void XMLCALL character_data(void *user_data, const char *s, int len)
    {
       context->xml_literal =
          rdfa_replace_string(context->xml_literal, buffer);
+      context->xml_literal_size = len;
    }
    else
    {
-      context->xml_literal =
-         rdfa_append_string(context->xml_literal, buffer);
-   }
+      context->xml_literal = rdfa_n_append_string(
+         context->xml_literal, &context->xml_literal_size, buffer, len);
+  }
 
    //printf("plain_literal: %s\n", context->plain_literal);
    //printf("xml_literal: %s\n", context->xml_literal);
@@ -795,11 +811,13 @@ static void XMLCALL
    {
       context->xml_literal =
          rdfa_replace_string(context->xml_literal, buffer);
+      context->xml_literal_size = strlen(buffer);
    }
    else
    {
-      context->xml_literal =
-         rdfa_append_string(context->xml_literal, buffer);
+      context->xml_literal = rdfa_n_append_string(
+         context->xml_literal, &context->xml_literal_size,
+         buffer, strlen(buffer));
    }
    free(buffer);
    
@@ -809,40 +827,42 @@ static void XMLCALL
    // generate the complete object literal triples
    if(context->property != NULL)
    {
+      // save the current xml literal
       char* saved_xml_literal = context->xml_literal;
-      char* working_xml_literal = NULL;
 
       // ensure to mark only the inner-content of the XML node for
       // processing the object literal.
       buffer = NULL;
-
+      
+      char* content_start = NULL;
+      char* content_end = NULL;
       if(context->xml_literal != NULL)
       {
-         char* content_start = NULL;
-         char* content_end = NULL;
-      
-         saved_xml_literal = context->xml_literal;
-         context->xml_literal = NULL;
-
-         // mark the beginning and end of the enclosing XML element
-         context->xml_literal =
-            rdfa_replace_string(context->xml_literal, saved_xml_literal);
+         // get the data between the first tag and the last tag
          content_start = index(context->xml_literal, '>');
          content_end = rindex(context->xml_literal, '<');
-
+         
          if((content_start != NULL) && (content_end != NULL))
          {
-            working_xml_literal = context->xml_literal;
+            // set content end to null terminator
             context->xml_literal = ++content_start;
             *content_end = '\0';
          }
       }
 
+      // process data between first tag and last tag
+      // this needs the xml literal to be null terminated
       rdfa_complete_object_literal_triples(context);
-
+      
+      if(content_end != NULL)
+      {
+         // set content end back
+         *content_end = '<';
+      }
+      
       if(saved_xml_literal != NULL)
       {
-         free(working_xml_literal);
+         // restore xml literal
          context->xml_literal = saved_xml_literal;
       }
    }
@@ -858,12 +878,14 @@ static void XMLCALL
          parent_context->xml_literal =
             rdfa_replace_string(
                parent_context->xml_literal, context->xml_literal);
+         parent_context->xml_literal_size = context->xml_literal_size;
       }
       else
       {
          parent_context->xml_literal =
-            rdfa_append_string(
-               parent_context->xml_literal, context->xml_literal);
+            rdfa_n_append_string(
+               parent_context->xml_literal, &parent_context->xml_literal_size,
+               context->xml_literal, context->xml_literal_size);
       }      
 
       // if there is an XML literal, there is probably a plain literal
@@ -874,12 +896,16 @@ static void XMLCALL
             parent_context->plain_literal =
                rdfa_replace_string(
                   parent_context->plain_literal, context->plain_literal);
+            parent_context->plain_literal_size = context->plain_literal_size;
          }
          else
          {
             parent_context->plain_literal =
-               rdfa_append_string(
-                  parent_context->plain_literal, context->plain_literal);
+               rdfa_n_append_string(
+                  parent_context->plain_literal,
+                  &parent_context->plain_literal_size,
+                  context->plain_literal,
+                  context->plain_literal_size);
          }
       }
    }
@@ -1079,8 +1105,7 @@ void rdfa_free_context(rdfacontext* context)
 
    if(context->context_stack != NULL)
    {
-      // TODO: This leaks memory! Must be fixed!
-      //rdfa_free_list(context->context_stack);
+      rdfa_free_list(context->context_stack);
    }
 
    if(context->working_buffer != NULL)
@@ -1227,6 +1252,8 @@ void rdfa_parse_end(rdfacontext* context)
    raptor_free_sax2(context->sax2);
    context->sax2=NULL;
 #else
+   // deinitialize context stack and free parser
+   rdfa_pop_item(context->context_stack);
    XML_ParserFree(context->parser);
 #endif
 }
