@@ -18,7 +18,7 @@
 # 
 # Author: Manu Sporny
 
-AC_INIT(librdfa, 0.14, support@digitalbazaar.com)
+AC_INIT(librdfa, 0.15, support@digitalbazaar.com)
 AC_CONFIG_AUX_DIR(setup)
 
 # Setup standard build environment variables
@@ -26,6 +26,37 @@ RDFADIR=`pwd`
 RELEASE=`date +%Y%m%d`
 
 # Check for particular build options
+# Check for particular build options
+AC_ARG_ENABLE([linux],
+   AS_HELP_STRING([--enable-linux], [compile for linux [[yes]]]),
+   [
+      case "${enableval}" in
+         yes) BUILD_FOR_LINUX=yes ;;
+         no) BUILD_FOR_LINUX=no ;;
+         *) AC_MSG_ERROR(bad value ${enableval} for --enable-linux) ;;
+      esac
+   ], [BUILD_FOR_LINUX=yes])  dnl Default value
+
+AC_ARG_ENABLE([windows],
+   AS_HELP_STRING([--enable-windows], [compile for windows [[no]]]),
+   [
+      case "${enableval}" in
+         yes) BUILD_FOR_WINDOWS=yes ;;
+         no) BUILD_FOR_WINDOWS=no ;;
+         *) AC_MSG_ERROR(bad value ${enableval} for --enable-windows) ;;
+      esac
+   ], [BUILD_FOR_WINDOWS=no])  dnl Default value
+
+AC_ARG_ENABLE([macos],
+   AS_HELP_STRING([--enable-macos], [compile for MacOS [[no]]]),
+   [
+      case "${enableval}" in
+         yes) BUILD_FOR_MACOS=yes ;;
+         no) BUILD_FOR_MACOS=no ;;
+         *) AC_MSG_ERROR(bad value ${enableval} for --enable-macos) ;;
+      esac
+   ], [BUILD_FOR_MACOS=no])  dnl Default value
+
 AC_ARG_ENABLE([python],
                AC_HELP_STRING([--enable-python],
                               [compile extensions for Python (default is NO)]),
@@ -40,17 +71,36 @@ echo -e "\n--------- Configuring librdfa Build Environment -----------"
 
 # Check the system type
 AC_CANONICAL_BUILD()
+AC_CANONICAL_HOST()
+AC_CANONICAL_SYSTEM()
+OS="$build_os"
 
 # Checking for standard build tools
 #AC_LANG(C++)
 AC_PROG_INSTALL()
 
-# Get the C compiler for this system
-AC_PROG_CC()
-AC_CHECK_PROG(AR, ar, ar, not found)
-AC_CHECK_PROG(AS, as, as, not found)
+# Conditional setup for Linux build
+if test "$BUILD_FOR_LINUX" = "yes" ; then
+   AC_PROG_CC()
+   AC_CHECK_PROG(AR, ar, ar, not found)
+   AC_CHECK_PROG(AS, as, as, not found)
+fi
 
-AC_CHECK_PROG(DLLWRAP, dllwrap, dllwrap, not found)
+# Conditional setup for Windows build
+if test "$BUILD_FOR_WINDOWS" = "yes" ; then
+   AC_CHECK_PROGS(CC, i586-mingw32msvc-gcc gcc, not found)
+   AC_CHECK_PROGS(AR, i586-mingw32msvc-ar ar, not found)
+   AC_CHECK_PROGS(AS, i586-mingw32msvc-as as, not found)
+   AC_CHECK_PROGS(DLLWRAP, i586-mingw32msvc-dllwrap dllwrap, not found)
+   OS="mingw32"
+fi
+
+# Conditional setup for MacOS build
+if test "$BUILD_FOR_MACOS" = "yes" ; then
+   AC_PROG_CC()
+   AC_CHECK_PROG(AR, ar, ar, not found)
+   AC_CHECK_PROG(AS, as, as, not found)
+fi
 
 CC="$CC"
 
@@ -75,7 +125,7 @@ fi
 AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L/usr/lib -L/sw/lib)
 
 # Set the OS so that we can do certain build modifications if needed
-OS="$build_os"
+
 
 # Make all the proper substitutions
 AC_SUBST(RDFADIR)
@@ -108,9 +158,10 @@ AC_OUTPUT(Makefile \
 # Dump the build configuration for the developer
 echo -e "\n--------- librdfa Build Environment -----------"
 echo "Product        : $PACKAGE_STRING-$RELEASE"
-echo "Build system   : $build_cpu-$build_vendor-$build_os"
+echo "Build target   : $build_cpu-$build_vendor-$build_os"
 echo "C compiler     : $CC"
 echo "Archiver       : $AR"
+echo "Assembler      : $AS"
 if test "$DLLWRAP" != "not found"; then
    echo "DLL wrapper    : $DLLWRAP"
 fi
@@ -118,7 +169,7 @@ fi
 if test "$BUILD_FOR_PYTHON" = "yes"; then
    echo "Python modules : enabled"
 else
-   echo "Python modules : disabled"
+   echo "Python modules : disabled (use --enable-python to enable)"
 fi
 if test "$ac_enable_docs_build" = "yes"; then
    echo "Documentation  : enabled"
