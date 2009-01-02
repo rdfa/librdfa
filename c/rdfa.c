@@ -1288,7 +1288,11 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       if(XML_Parse(context->parser, context->working_buffer,
          context->wb_offset, 0) == XML_STATUS_ERROR)
       {
+#ifdef WIN32
+         printf(
+#else
          fprintf(stderr,
+#endif
                  "%s at line %d, column %d\n",
                  XML_ErrorString(XML_GetErrorCode(context->parser)),
                  XML_GetCurrentLineNumber(context->parser),
@@ -1311,7 +1315,11 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 #else
    if(XML_Parse(context->parser, data, wblen, done) == XML_STATUS_ERROR)
    {
-      fprintf(stderr,
+#ifdef WIN32
+         printf(
+#else
+         fprintf(stderr,
+#endif
               "%s at line %d, column %d.\n",
               XML_ErrorString(XML_GetErrorCode(context->parser)),
               XML_GetCurrentLineNumber(context->parser),

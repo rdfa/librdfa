@@ -1,38 +1,45 @@
 # This file contains basic Makefile includes that contain all building
 # instructions for all binaries and packages.
-AR_FLAGS = cr
+
+# Directories
 RDFA = @RDFADIR@
-INCLUDES = -I/usr/include -I/sw/include -I$(RDFA)/c -I$(RDFA)/tests
-
 CURRENT_DIR = $(shell pwd)
+BUILD_DIR = build
+DIST_DIR = dist
 
+# Base rules
 .PHONY: all build-directories build-objects build-libraries build-executables clean clean-objects clean-libraries $(ALL_EXECUTABLES)
 
 all: build-directories build-objects build-libraries build-executables
 
-# Variables
+# Programs
 CC = @CC@
-
-ifeq ($(OS),mingw32)
-CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
-else
-CC_FLAGS = -Wall -fPIC -g
-endif
-
-LIB_DIR = $(RDFA)/libs
-LDFLAGS = -L$(LIB_DIR) -L/usr/lib -L/sw/lib
 AR = @AR@
 OS = @OS@
 DLLWRAP = @DLLWRAP@
+
+# General flags
+LIB_DIR = $(RDFA)/libs
+LDFLAGS = -L$(LIB_DIR)
+CC_FLAGS = -Wall -fPIC -g
+INCLUDES = -I/usr/include -I$(RDFA)/c -I$(RDFA)/tests
+AR_FLAGS = cr
+
+# Windows flags
+ifeq ($(OS),mingw32)
+CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
+INCLUDES += -I$(RDFA)/3rdparty/expat/include
+LDFLAGS += -L$(RDFA)/3rdparty/expat
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
-BUILD_DIR = build
-DIST_DIR = dist
+endif
+
+# Dependencies and objects
 DEPENDENCIES := $(patsubst %.c,$(BUILD_DIR)/%.P, $(SOURCES))
 OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o, $(SOURCES))
 OBJECTS += $(patsubst %,$(BUILD_DIR)/%.o, $(EXECUTABLES))
 LIBDEPS := $(DYNAMIC_LINK_LIBRARIES)
 
-# All variables
+# All source, dependency and library variables
 ALL_SOURCES := $(patsubst %.c,$(BUILD_DIR)/%.c, $(SOURCES))
 ALL_SOURCES += $(patsubst %,$(BUILD_DIR)/%.c, $(EXECUTABLES))
 ALL_DEPENDENCIES += $(DEPENDENCIES)
@@ -92,7 +99,7 @@ $(ALL_SOURCES):
 	@echo "Building $@..."
 	@$(DLLWRAP) $(DLLWRAP_FLAGS) $(LDFLAGS) --output-def $(@:.dll=.def) --implib $(@:.dll=.lib) -o $@ $^ $(DYNAMIC_LINK_LIBRARIES:%=-l%) --exclude-symbols $(EXCLUDE_DLL_SYMBOLS)
 	@mkdir -p $(LIB_DIR)
-	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
+	echo ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
 %.lib: $(OBJECTS)
 	@echo "Building $@..."
@@ -138,6 +145,10 @@ clean-libraries:
 
 vars:
 	@echo OS: $(OS)
+	@echo CC_FLAGS: $(CC_FLAGS)
+	@echo INCLUDES: $(INCLUDES)
+	@echo LDFLAGS: $(LDFLAGS)
+	@echo DLLWRAP_FLAGS: $(DLLWRAP_FLAGS)
 	@echo ALL_SOURCES: $(ALL_SOURCES)
 	@echo ALL_DEPENDENCIES: $(ALL_DEPENDENCIES)
 	@echo ALL_OBJECTS: $(ALL_OBJECTS)
