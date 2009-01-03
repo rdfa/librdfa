@@ -78,7 +78,6 @@ install-windows:
 	cp c/rdfa_utils.h installers/librdfa-windows-@RELEASE@
 	cp libs/rdfa.dll installers/librdfa-windows-@RELEASE@
 	cp libs/rdfa.lib installers/librdfa-windows-@RELEASE@
-	cp c/dist/rdfa.def installers/librdfa-windows-@RELEASE@
 	cd installers && zip -r librdfa-@VERSION@-windows-@RELEASE@.zip \
 		librdfa-windows-@RELEASE@
 	rm -rf installers/librdfa-windows-@RELEASE@

@@ -79,15 +79,10 @@ OS="$build_os"
 #AC_LANG(C++)
 AC_PROG_INSTALL()
 
-# Conditional setup for Linux build
-if test "$BUILD_FOR_LINUX" = "yes" ; then
-   AC_PROG_CC()
-   AC_CHECK_PROG(AR, ar, ar, not found)
-   AC_CHECK_PROG(AS, as, as, not found)
-fi
-
 # Conditional setup for Windows build
 if test "$BUILD_FOR_WINDOWS" = "yes" ; then
+   BUILD_FOR_LINUX="no"
+   BUILD_FOR_MACOS="no"
    AC_CHECK_PROGS(CC, i586-mingw32msvc-gcc gcc, not found)
    AC_CHECK_PROGS(AR, i586-mingw32msvc-ar ar, not found)
    AC_CHECK_PROGS(AS, i586-mingw32msvc-as as, not found)
@@ -97,6 +92,16 @@ fi
 
 # Conditional setup for MacOS build
 if test "$BUILD_FOR_MACOS" = "yes" ; then
+   BUILD_FOR_LINUX="no"
+   BUILD_FOR_WINDOWS="no"
+   AC_PROG_CC()
+   AC_CHECK_PROG(AR, ar, ar, not found)
+   AC_CHECK_PROG(AS, as, as, not found)
+   OS="macos"
+fi
+
+# Conditional setup for Linux build
+if test "$BUILD_FOR_LINUX" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
@@ -122,10 +127,7 @@ fi
 #AC_CHECK_HEADERS(iostream)
 
 # Make sure the proper libraries exist
-AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L/usr/lib -L/sw/lib)
-
-# Set the OS so that we can do certain build modifications if needed
-
+AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L/usr/lib)
 
 # Make all the proper substitutions
 AC_SUBST(RDFADIR)
@@ -158,11 +160,12 @@ AC_OUTPUT(Makefile \
 # Dump the build configuration for the developer
 echo -e "\n--------- librdfa Build Environment -----------"
 echo "Product        : $PACKAGE_STRING-$RELEASE"
-echo "Build target   : $build_cpu-$build_vendor-$build_os"
+echo "Build host     : $build_cpu-$build_vendor-$build_os"
+echo "Build target   : $OS"
 echo "C compiler     : $CC"
 echo "Archiver       : $AR"
 echo "Assembler      : $AS"
-if test "$DLLWRAP" != "not found"; then
+if test "$DLLWRAP" != ""; then
    echo "DLL wrapper    : $DLLWRAP"
 fi
 
