@@ -16,7 +16,6 @@ all: build-directories build-objects build-libraries build-executables
 CC = @CC@
 AR = @AR@
 OS = @OS@
-DLLWRAP = @DLLWRAP@
 
 # General flags
 LIB_DIR = $(RDFA)/libs
@@ -30,7 +29,6 @@ ifeq ($(OS),mingw32)
 CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
 INCLUDES += -I$(RDFA)/3rdparty/expat/include
 LDFLAGS += -L$(RDFA)/3rdparty/expat
-DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 endif
 
 # Dependencies and objects
@@ -148,7 +146,6 @@ vars:
 	@echo CC_FLAGS: $(CC_FLAGS)
 	@echo INCLUDES: $(INCLUDES)
 	@echo LDFLAGS: $(LDFLAGS)
-	@echo DLLWRAP_FLAGS: $(DLLWRAP_FLAGS)
 	@echo ALL_SOURCES: $(ALL_SOURCES)
 	@echo ALL_DEPENDENCIES: $(ALL_DEPENDENCIES)
 	@echo ALL_OBJECTS: $(ALL_OBJECTS)

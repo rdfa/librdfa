@@ -86,7 +86,6 @@ if test "$BUILD_FOR_WINDOWS" = "yes" ; then
    AC_CHECK_PROGS(CC, i586-mingw32msvc-gcc gcc, not found)
    AC_CHECK_PROGS(AR, i586-mingw32msvc-ar ar, not found)
    AC_CHECK_PROGS(AS, i586-mingw32msvc-as as, not found)
-   AC_CHECK_PROGS(DLLWRAP, i586-mingw32msvc-dllwrap dllwrap, not found)
    OS="mingw32"
 fi
 
@@ -144,7 +143,6 @@ AC_SUBST(BUILD_FOR_PYTHON)
 AC_SUBST(CC)
 AC_SUBST(AR)
 AC_SUBST(AS)
-AC_SUBST(DLLWRAP)
 
 AC_SUBST(OS)
 
@@ -165,9 +163,6 @@ echo "Build target   : $OS"
 echo "C compiler     : $CC"
 echo "Archiver       : $AR"
 echo "Assembler      : $AS"
-if test "$DLLWRAP" != ""; then
-   echo "DLL wrapper    : $DLLWRAP"
-fi
 
 if test "$BUILD_FOR_PYTHON" = "yes"; then
    echo "Python modules : enabled"
