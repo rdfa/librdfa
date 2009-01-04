@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rdfa-dll", "librdfa.vcproj", "{906B1A38-B73C-45EC-B39F-D539ED7D564D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rdfa-lib", "..\rdfa-lib\rdfa-lib.vcproj", "{63593874-7C38-4D6C-8313-A03F360CACC2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rdfa-speed", "..\rdfa-speed\rdfa-speed.vcproj", "{2FC6BDA2-05A0-4E1B-87CE-614A1DBAC0EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{906B1A38-B73C-45EC-B39F-D539ED7D564D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{906B1A38-B73C-45EC-B39F-D539ED7D564D}.Debug|Win32.Build.0 = Debug|Win32
+		{906B1A38-B73C-45EC-B39F-D539ED7D564D}.Release|Win32.ActiveCfg = Release|Win32
+		{906B1A38-B73C-45EC-B39F-D539ED7D564D}.Release|Win32.Build.0 = Release|Win32
+		{63593874-7C38-4D6C-8313-A03F360CACC2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{63593874-7C38-4D6C-8313-A03F360CACC2}.Debug|Win32.Build.0 = Debug|Win32
+		{63593874-7C38-4D6C-8313-A03F360CACC2}.Release|Win32.ActiveCfg = Release|Win32
+		{63593874-7C38-4D6C-8313-A03F360CACC2}.Release|Win32.Build.0 = Release|Win32
+		{2FC6BDA2-05A0-4E1B-87CE-614A1DBAC0EF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2FC6BDA2-05A0-4E1B-87CE-614A1DBAC0EF}.Debug|Win32.Build.0 = Debug|Win32
+		{2FC6BDA2-05A0-4E1B-87CE-614A1DBAC0EF}.Release|Win32.ActiveCfg = Release|Win32
+		{2FC6BDA2-05A0-4E1B-87CE-614A1DBAC0EF}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
