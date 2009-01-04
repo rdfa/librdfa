@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="$(OutDir)\..\..\..\..\3rdparty\expat\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBRDFA_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -48,6 +49,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -60,7 +62,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libexpat.a"
+				OutputFile="$(OutDir)\..\..\..\..\libs\rdfa.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="$(OutDir)\..\..\..\..\3rdparty\expat"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
