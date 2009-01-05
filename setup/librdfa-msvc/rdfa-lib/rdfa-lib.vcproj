@@ -107,9 +107,9 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\expat\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="2"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Expat 2.0.1\Source\lib&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;XML_STATIC"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -127,7 +127,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="..\..\..\libs\rdfa.lib"
+				OutputFile="..\..\..\libs\rdfaMT.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
