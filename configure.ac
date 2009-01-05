@@ -98,8 +98,8 @@ if test "$BUILD_FOR_MACOS" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
-   EXPAT_INCLUDE_DIRECTORY="/opt/include"
-   EXPAT_LIB_DIRECTORY="/opt/lib"
+   EXPAT_INCLUDE_DIRECTORY="/opt/local/include"
+   EXPAT_LIB_DIRECTORY="/opt/local/lib"
    OS="macos"
 fi
 
