@@ -86,6 +86,8 @@ if test "$BUILD_FOR_WINDOWS" = "yes" ; then
    AC_CHECK_PROGS(CC, i586-mingw32msvc-gcc gcc, not found)
    AC_CHECK_PROGS(AR, i586-mingw32msvc-ar ar, not found)
    AC_CHECK_PROGS(AS, i586-mingw32msvc-as as, not found)
+   EXPAT_INCLUDE_DIRECTORY="$RDFADIR/3rdparty/expat/include"
+   EXPAT_LIB_DIRECTORY="$RDFADIR/3rdparty/expat"
    OS="mingw32"
 fi
 
@@ -96,6 +98,8 @@ if test "$BUILD_FOR_MACOS" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
+   EXPAT_INCLUDE_DIRECTORY="/opt/local/include"
+   EXPAT_LIB_DIRECTORY="/opt/local/lib"
    OS="macos"
 fi
 
@@ -104,6 +108,8 @@ if test "$BUILD_FOR_LINUX" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
+   EXPAT_INCLUDE_DIRECTORY="/usr/include"
+   EXPAT_LIB_DIRECTORY="/usr/lib"
 fi
 
 CC="$CC"
@@ -126,7 +132,9 @@ fi
 #AC_CHECK_HEADERS(iostream)
 
 # Make sure the proper libraries exist
-AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L/usr/lib)
+if test "$BUILD_FOR_WINDOWS" = "no" ; then
+   AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L$EXPAT_LIB_DIRECTORY)
+fi
 
 # Make all the proper substitutions
 AC_SUBST(RDFADIR)
@@ -145,6 +153,9 @@ AC_SUBST(AR)
 AC_SUBST(AS)
 
 AC_SUBST(OS)
+
+AC_SUBST(EXPAT_LIB_DIRECTORY)
+AC_SUBST(EXPAT_INCLUDE_DIRECTORY)
 
 # Generating files
 AC_OUTPUT(Makefile \

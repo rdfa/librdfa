@@ -31,6 +31,12 @@ INCLUDES += -I$(RDFA)/3rdparty/expat/include
 LDFLAGS += -L$(RDFA)/3rdparty/expat
 endif
 
+# Mac OS flags
+ifeq ($(OS),macos)
+INCLUDES += -I@EXPAT_INCLUDE_DIRECTORY@
+LDFLAGS += -L@EXPAT_LIB_DIRECTORY@
+endif
+
 # Dependencies and objects
 DEPENDENCIES := $(patsubst %.c,$(BUILD_DIR)/%.P, $(SOURCES))
 OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o, $(SOURCES))
@@ -49,7 +55,7 @@ ifeq ($(OS),mingw32)
 ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.lib, $(LIBRARIES))
 ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.dll, $(LIBRARIES))
 endif
-ifeq ($(OS),darwin8.9.1) 
+ifeq ($(OS),macos) 
 ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.dylib, $(LIBRARIES))
 ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/lib%.a, $(LIBRARIES))
 endif
@@ -89,7 +95,7 @@ $(ALL_SOURCES):
 
 %.dylib: $(OBJECTS)
 	@echo "Building $@..."
-	$(CC) $(LDFLAGS) -dynamiclib -o $@ $(OBJECTS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
+	$(CC) -dynamiclib -o $@ $(OBJECTS) $(LDFLAGS) $(DYNAMIC_LINK_LIBRARIES:%=-l%)
 	@mkdir -p $(LIB_DIR)
 	@ln -sf $(CURRENT_DIR)/$@ $(LIB_DIR)/$(@F)
 
@@ -123,7 +129,7 @@ else
 #	# This is a fake target to override the default .a build
 $(ALL_EXECUTABLES): $(ALL_SOURCES) $(ALL_OBJECTS) 
 	@echo "Building $(@F)..."
-	$(CC) $(CC_FLAGS) $(LDFLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
+	$(CC) $(CC_FLAGS) -o $@ $(BUILD_DIR)/$(@F).o $(LDFLAGS) $(DYNAMIC_LINK_LIBRARIES:%=-l%) $(DYNAMIC_UNIX_LIBRARIES:%=-l%)
 endif
 endif
 
