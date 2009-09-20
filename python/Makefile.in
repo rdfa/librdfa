@@ -37,6 +37,10 @@ build/SwigRdfaParser-python2.5.o: build/SwigRdfaParser.cpp
 	echo "Building $@..."
 	g++ -g -c -I../c -I. -I/usr/include/python2.5 build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python2.5.o
 
+build/SwigRdfaParser-python2.6.o: build/SwigRdfaParser.cpp
+	echo "Building $@..."
+	g++ -g -c -I../c -I. -I/usr/include/python2.6 build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python2.6.o
+
 build/RdfaParser.o:
 	echo "Building $@..."
 	cd build && ln -sf ../RdfaParser.cpp RdfaParser.cpp
