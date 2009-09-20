@@ -49,8 +49,10 @@ void rdfa_init_context(rdfacontext* context)
    context->parent_subject = NULL;
    if(context->base != NULL)
    {
+      char* cleaned_base = rdfa_iri_get_base(context->base);
       context->parent_subject =
-         rdfa_replace_string(context->parent_subject, context->base);
+         rdfa_replace_string(context->parent_subject, cleaned_base);
+      free(cleaned_base);
    }
    
    // the [parent object] is set to null;
@@ -178,13 +180,15 @@ static size_t rdfa_init_base(
                //       be? Setting current_object_resource will make
                //       sure that the BASE element is inherited by all
                //       subcontexts.
+	       char* cleaned_base = rdfa_iri_get_base(temp_uri);
                context->current_object_resource =
-                  rdfa_replace_string(context->current_object_resource,
-                                      temp_uri);
+                  rdfa_replace_string(
+                     context->current_object_resource, cleaned_base);
+
+	       // clean up the base context
                context->base =
-                  rdfa_replace_string(context->base,
-                                      temp_uri);
-               
+                  rdfa_replace_string(context->base, cleaned_base);
+               free(cleaned_base);
                free(temp_uri);
             }
          }         
@@ -1068,7 +1072,9 @@ rdfacontext* rdfa_create_context(const char* base)
    {
       rval = (rdfacontext*)malloc(sizeof(rdfacontext));
       rval->base = NULL;
-      rval->base = rdfa_replace_string(rval->base, base);
+      char* cleaned_base = rdfa_iri_get_base(base);
+      rval->base = rdfa_replace_string(rval->base, cleaned_base);
+      free(cleaned_base);
 
       /* parse state */
       rval->wb_allocated = 0;

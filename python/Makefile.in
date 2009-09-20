@@ -18,11 +18,11 @@ directories:
 dist/python2.4-rdfa.so: build/RdfaParser.o build/SwigRdfaParser-python2.4.o
 	echo "Building $@..."
 	g++ -shared -L ../libs -o dist/python2.4-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python2.4.o -lrdfa
-	ln -sf python2.4-rdfa.so dist/_rdfa.so
 
 dist/python2.5-rdfa.so: build/RdfaParser.o build/SwigRdfaParser-python2.5.o
 	echo "Building $@..."
 	g++ -shared -L ../libs -o dist/python2.5-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python2.5.o -lrdfa
+	ln -sf python2.5-rdfa.so dist/_rdfa.so
 
 build/SwigRdfaParser.cpp: rdfa.i
 	echo "Generating $@ (from rdfa.i)..."
