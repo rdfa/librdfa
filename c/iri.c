@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "rdfa.h"
+
 /**
  * Strips the iquery and ifragment part from an IRI. This leaves just the
  * scheme and the ihier-part, as defined in RFC 3987. This function will
