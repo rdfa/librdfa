@@ -173,6 +173,7 @@ static size_t rdfa_init_base(
             {
                size_t uri_size = uri_end - uri_start;
                char* temp_uri = (char*)malloc(sizeof(char) * uri_size + 1);
+	       char* cleaned_base;
                strncpy(temp_uri, uri_start, uri_size);
                temp_uri[uri_size] = '\0';
 
@@ -180,7 +181,7 @@ static size_t rdfa_init_base(
                //       be? Setting current_object_resource will make
                //       sure that the BASE element is inherited by all
                //       subcontexts.
-	       char* cleaned_base = rdfa_iri_get_base(temp_uri);
+	       cleaned_base = rdfa_iri_get_base(temp_uri);
                context->current_object_resource =
                   rdfa_replace_string(
                      context->current_object_resource, cleaned_base);
@@ -1057,9 +1058,10 @@ rdfacontext* rdfa_create_context(const char* base)
    // if the base isn't specified, don't create a context
    if(base_length > 0)
    {
+      char* cleaned_base;
       rval = (rdfacontext*)malloc(sizeof(rdfacontext));
       rval->base = NULL;
-      char* cleaned_base = rdfa_iri_get_base(base);
+      cleaned_base = rdfa_iri_get_base(base);
       rval->base = rdfa_replace_string(rval->base, cleaned_base);
       free(cleaned_base);
 
