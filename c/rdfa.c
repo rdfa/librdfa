@@ -613,8 +613,16 @@ static void XMLCALL
          else if(strcmp(attr, "datatype") == 0)
          {
             datatype_curie = value;
-            datatype = rdfa_resolve_curie(context, datatype_curie,
-               CURIE_PARSE_INSTANCEOF_DATATYPE);
+
+            if(strlen(datatype_curie) == 0)
+            {
+               datatype = rdfa_replace_string(datatype, "");
+            }
+            else
+            {
+               datatype = rdfa_resolve_curie(context, datatype_curie,
+                  CURIE_PARSE_INSTANCEOF_DATATYPE);
+            }
          }
 #ifndef LIBRDFA_IN_RAPTOR
          else if(strcmp(attr, "xml:lang") == 0)

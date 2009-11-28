@@ -38,14 +38,14 @@ void rdfa_update_language(rdfacontext* context, const char* lang)
    {
       if(strlen(lang) > 0)
       {
-	 // if a language was specified, set it
+         // if a language was specified, set it
          context->language = rdfa_replace_string(context->language, lang);
       }
       else
       {
-        // if a blank language was specified, clear the language context
-	free(context->language);
-	context->language = NULL;
+         // if a blank language was specified, clear the language context
+         free(context->language);
+         context->language = NULL;
       }
    }
 }
