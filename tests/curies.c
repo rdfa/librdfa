@@ -27,14 +27,6 @@
 #include <rdfa_utils.h>
 
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
-// These are all of the @property reserved words in XHTML 1.1 that
-// should generate triples.
-#define XHTML_PROPERTY_RESERVED_WORDS_SIZE 6
-static const char*
-   my_g_property_reserved_words[XHTML_PROPERTY_RESERVED_WORDS_SIZE] =
-{
-   "description", "generator", "keywords", "reference", "robots", "title"
-};
 
 // These are all of the @rel/@rev reserved words in XHTML 1.1 that
 // should generate triples.
@@ -312,9 +304,6 @@ void run_curie_tests()
    run_test_set(context, "XHTML @rel/@rev reserved",
       my_g_relrev_reserved_words, XHTML_RELREV_RESERVED_WORDS_SIZE,
       rdfa_resolve_relrev_curie, XHTML_VOCAB_URI, CURIE_PARSE_RELREV);
-   run_test_set(context, "XHTML @property reserved",
-      my_g_property_reserved_words, XHTML_PROPERTY_RESERVED_WORDS_SIZE,
-      rdfa_resolve_property_curie, XHTML_VOCAB_URI, CURIE_PARSE_PROPERTY);
 
    printf("---------------------- CURIE test results ---------------------\n"
           "%i passed, %i failed\n",
