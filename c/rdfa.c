@@ -643,8 +643,11 @@ static void XMLCALL
    }
 
 #ifdef LIBRDFA_IN_RAPTOR
-   if(context->sax2)
-      xml_lang=(const char*)raptor_sax2_inscope_xml_language(context->sax2);
+   if(context->sax2) {
+      xml_lang = (const char*)raptor_sax2_inscope_xml_language(context->sax2);
+      if(!xml_lang)
+        xml_lang = "";
+   }
 #endif
    // check to see if we should append an xml:lang to the XML Literal
    // if one is defined in the context and does not exist on the element.
