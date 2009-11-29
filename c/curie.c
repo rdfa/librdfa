@@ -366,15 +366,15 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
       resource++;
    }
 
-   // search all of the XHTML @rel/@rev reserved words for a match
-   // against the given URI
+   // search all of the XHTML @rel/@rev reserved words for a
+   // case-insensitive match against the given URI
    for(i = 0; i < XHTML_RELREV_RESERVED_WORDS_SIZE; i++)
    {
-      if(strcmp(g_relrev_reserved_words[i], resource) == 0)
+      if(strcasecmp(g_relrev_reserved_words[i], resource) == 0)
       {
          // since the URI is a reserved word for @rel/@rev, generate
          // the full IRI and stop the loop.
-         rval = rdfa_join_string(XHTML_VOCAB_URI, resource);         
+         rval = rdfa_join_string(XHTML_VOCAB_URI, g_relrev_reserved_words[i]);
          i = XHTML_RELREV_RESERVED_WORDS_SIZE;
       }
    }
