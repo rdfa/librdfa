@@ -391,7 +391,7 @@ static void XMLCALL
    const char* content = NULL;
    const char* datatype_curie = NULL;
    char* datatype = NULL;
-   unsigned char insert_xml_lang_in_xml_literal = 0;
+   unsigned char xml_lang_defined = 0;
 
    rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
 
@@ -414,7 +414,7 @@ static void XMLCALL
    context->xml_literal = rdfa_n_append_string(
       context->xml_literal, &context->xml_literal_size,
       name, strlen(name));
-   
+
    if(!context->xml_literal_namespaces_inserted)
    {
       // append namespaces to XML Literal
@@ -428,8 +428,6 @@ static void XMLCALL
 #endif
       char* umap_key = NULL;
       char* umap_value = NULL;
-
-      insert_xml_lang_in_xml_literal = 1;
       
 #ifdef LIBRDFA_IN_RAPTOR
       ns_size = 0;
@@ -442,9 +440,9 @@ static void XMLCALL
       while(*umap != NULL)
 #endif
       {
-         unsigned char namespace_already_defined = 0;
-         const char* predefined_namespace = NULL;
-         const char* predefined_namespace_value = NULL;
+         unsigned char insert_xmlns_definition = 1;
+         const char* attribute = NULL;
+         const char* value = NULL;
 
          // get the next mapping to process
 #ifdef LIBRDFA_IN_RAPTOR
@@ -464,22 +462,24 @@ static void XMLCALL
          if(attributes != NULL)
          {
             const char** attrs = attributes;
-            while((*attrs != NULL) && !namespace_already_defined)
+            while((*attrs != NULL) && insert_xmlns_definition)
             {
-               predefined_namespace = *attrs++;
-               predefined_namespace_value = *attrs++;
-               
-               if((strcmp(predefined_namespace, umap_key) == 0) ||
+               attribute = *attrs++;
+               value = *attrs++;
+
+               // if the attribute is a umap_key, skip the definition
+               // of the attribute.
+               if((strcmp(attribute, umap_key) == 0) ||
                   (strcmp(umap_key, XMLNS_DEFAULT_MAPPING) == 0))
                {
-                  namespace_already_defined = 1;
+                  insert_xmlns_definition = 0;
                }
             }
          }
 
          // if the namespace isn't already defined on the element,
          // copy it to the XML Literal string.
-         if(!namespace_already_defined)
+         if(insert_xmlns_definition)
          {
             // append the namespace attribute to the XML Literal
             context->xml_literal = rdfa_n_append_string(
@@ -506,23 +506,8 @@ static void XMLCALL
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size, "\"", 1);
          }
-         else
-         {
-            // append the namespace value
-            context->xml_literal = rdfa_n_append_string(
-               context->xml_literal, &context->xml_literal_size, " ", 1);
-            context->xml_literal = rdfa_n_append_string(
-               context->xml_literal, &context->xml_literal_size,
-               predefined_namespace, strlen(predefined_namespace));
-            context->xml_literal = rdfa_n_append_string(
-               context->xml_literal, &context->xml_literal_size, "=\"", 2);
-            context->xml_literal = rdfa_n_append_string(
-               context->xml_literal, &context->xml_literal_size,
-               predefined_namespace_value, strlen(predefined_namespace_value));
-            context->xml_literal = rdfa_n_append_string(
-               context->xml_literal, &context->xml_literal_size, "\"", 1);
-         }
-         namespace_already_defined = 0;         
+         
+         insert_xmlns_definition = 1;
       } /* end while umap not NULL */
       context->xml_literal_namespaces_inserted = 1;
 
@@ -554,6 +539,12 @@ static void XMLCALL
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size,
                literal_text, strlen(literal_text));
+
+            // if xml:lang is defined, ensure that it is not overwritten
+            if(strcmp(attr, "xml:lang") == 0)
+            {
+               xml_lang_defined = 1;
+            }
          }
          free(literal_text);
          
@@ -647,9 +638,9 @@ static void XMLCALL
       xml_lang=(const char*)raptor_sax2_inscope_xml_language(context->sax2);
 #endif
    // check to see if we should append an xml:lang to the XML Literal
-   // if one is defined in the context and does not exist on the element.
-   if((xml_lang == NULL) && (context->language != NULL) &&
-      insert_xml_lang_in_xml_literal)
+   // if one is defined in the context and does not exist on the
+   // element.
+   if((xml_lang == NULL) && (context->language != NULL) && !xml_lang_defined)
    {
       context->xml_literal = rdfa_n_append_string(
          context->xml_literal, &context->xml_literal_size,
@@ -1298,8 +1289,8 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 #endif
                  "%s at line %d, column %d\n",
                  XML_ErrorString(XML_GetErrorCode(context->parser)),
-                 XML_GetCurrentLineNumber(context->parser),
-                 XML_GetCurrentColumnNumber(context->parser));
+                 (int)XML_GetCurrentLineNumber(context->parser),
+                 (int)XML_GetCurrentColumnNumber(context->parser));
          return RDFA_PARSE_FAILED;
       }
 #endif
@@ -1325,8 +1316,8 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 #endif
               "%s at line %d, column %d.\n",
               XML_ErrorString(XML_GetErrorCode(context->parser)),
-              XML_GetCurrentLineNumber(context->parser),
-              XML_GetCurrentColumnNumber(context->parser));
+              (int)XML_GetCurrentLineNumber(context->parser),
+              (int)XML_GetCurrentColumnNumber(context->parser));
       return RDFA_PARSE_FAILED;
    }
 #endif   
