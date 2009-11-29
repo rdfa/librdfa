@@ -101,7 +101,8 @@ void rdfa_init_context(rdfacontext* context)
    // and valgrind happy - they are not a part of the RDFa spec.
    context->bnode_count = 0;
    context->underscore_colon_bnode_name = NULL;
-   context->xml_literal_namespaces_inserted = 0;
+   context->xml_literal_namespaces_defined = 0;
+   context->xml_literal_xml_lang_defined = 0;
    context->content = NULL;
    context->datatype = NULL;
    context->property = NULL;
@@ -248,8 +249,10 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->recurse = parent_context->recurse;
    rval->skip_element = 0;
    rval->callback_data = parent_context->callback_data;
-   rval->xml_literal_namespaces_inserted =
-      parent_context->xml_literal_namespaces_inserted;
+   rval->xml_literal_namespaces_defined =
+      parent_context->xml_literal_namespaces_defined;
+   rval->xml_literal_xml_lang_defined =
+      parent_context->xml_literal_xml_lang_defined;
 
    // inherit the parent context's new_subject
    // TODO: This is not anywhere in the syntax processing document
@@ -415,7 +418,7 @@ static void XMLCALL
       context->xml_literal, &context->xml_literal_size,
       name, strlen(name));
 
-   if(!context->xml_literal_namespaces_inserted)
+   if(!context->xml_literal_namespaces_defined)
    {
       // append namespaces to XML Literal
 #ifdef LIBRDFA_IN_RAPTOR
@@ -509,7 +512,7 @@ static void XMLCALL
          
          insert_xmlns_definition = 1;
       } /* end while umap not NULL */
-      context->xml_literal_namespaces_inserted = 1;
+      context->xml_literal_namespaces_defined = 1;
 
 #ifdef LIBRDFA_IN_RAPTOR
       if(ns_list)
@@ -543,7 +546,7 @@ static void XMLCALL
             // if xml:lang is defined, ensure that it is not overwritten
             if(strcmp(attr, "xml:lang") == 0)
             {
-               xml_lang_defined = 1;
+               context->xml_literal_xml_lang_defined;
             }
          }
          free(literal_text);
@@ -643,7 +646,8 @@ static void XMLCALL
    // check to see if we should append an xml:lang to the XML Literal
    // if one is defined in the context and does not exist on the
    // element.
-   if((xml_lang == NULL) && (context->language != NULL) && !xml_lang_defined)
+   if((xml_lang == NULL) && (context->language != NULL) &&
+      !xml_lang_defined && !context->xml_literal_xml_lang_defined)
    {
       context->xml_literal = rdfa_n_append_string(
          context->xml_literal, &context->xml_literal_size,
@@ -653,6 +657,9 @@ static void XMLCALL
          context->language, strlen(context->language));
       context->xml_literal = rdfa_n_append_string(
          context->xml_literal, &context->xml_literal_size, "\"", 1);
+
+      // ensure that the lang isn't set in a subtree (unless it's overwritten)
+      context->xml_literal_xml_lang_defined = 1;
    }
    
    // close the XML Literal value
@@ -782,7 +789,7 @@ static void XMLCALL
    // point on...
    if(property != NULL)
    {
-      context->xml_literal_namespaces_inserted = 0;
+      context->xml_literal_namespaces_defined = 0;
    }
    
    // save these for processing steps #9 and #10

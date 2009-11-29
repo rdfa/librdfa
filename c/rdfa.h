@@ -170,7 +170,8 @@ typedef struct rdfacontext
    /* parse state */
    size_t bnode_count;
    char* underscore_colon_bnode_name;
-   unsigned char xml_literal_namespaces_inserted;
+   unsigned char xml_literal_namespaces_defined;
+   unsigned char xml_literal_xml_lang_defined;
    size_t wb_allocated;
    char* working_buffer;
    size_t wb_offset;
