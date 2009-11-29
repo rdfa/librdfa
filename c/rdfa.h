@@ -67,6 +67,8 @@ extern "C"
 
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
 
+#define RDFA_WHITESPACE " \t\n\v\f\r"
+   
 /**
  * An RDF resource type is used to denote the content of a triple's
  * object value.

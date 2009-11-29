@@ -399,7 +399,8 @@ rdfalist* rdfa_resolve_curie_list(
    working_uris = rdfa_replace_string(working_uris, uris);
 
    // go through each item in the list of CURIEs and resolve each
-   ctoken = strtok_r(working_uris, " ", &uptr);
+   ctoken = strtok_r(working_uris, RDFA_WHITESPACE, &uptr);
+   
    while(ctoken != NULL)
    {
       char* resolved_curie = NULL;
@@ -424,7 +425,7 @@ rdfalist* rdfa_resolve_curie_list(
          free(resolved_curie);
       }
       
-      ctoken = strtok_r(NULL, " ", &uptr);
+      ctoken = strtok_r(NULL, RDFA_WHITESPACE, &uptr);
    }
    
    free(working_uris);
