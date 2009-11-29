@@ -394,7 +394,6 @@ static void XMLCALL
    const char* content = NULL;
    const char* datatype_curie = NULL;
    char* datatype = NULL;
-   unsigned char xml_lang_defined = 0;
 
    rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
 
@@ -420,6 +419,9 @@ static void XMLCALL
 
    if(!context->xml_literal_namespaces_defined)
    {
+      // if the namespaces are not defined, then neither is the xml:lang
+      context->xml_literal_xml_lang_defined = 0;
+      
       // append namespaces to XML Literal
 #ifdef LIBRDFA_IN_RAPTOR
       raptor_namespace_stack* nstack = &context->sax2->namespaces;
@@ -537,20 +539,18 @@ static void XMLCALL
          // append the attribute-value pair to the XML literal
          literal_text = (char*)malloc(strlen(attr) + strlen(value) + 5);
          sprintf(literal_text, " %s=\"%s\"", attr, value);
-         if(strstr("xmlns", attr) == NULL)
-         {
-            context->xml_literal = rdfa_n_append_string(
-               context->xml_literal, &context->xml_literal_size,
-               literal_text, strlen(literal_text));
-
-            // if xml:lang is defined, ensure that it is not overwritten
-            if(strcmp(attr, "xml:lang") == 0)
-            {
-               context->xml_literal_xml_lang_defined;
-            }
-         }
+         context->xml_literal = rdfa_n_append_string(
+            context->xml_literal, &context->xml_literal_size,
+            literal_text, strlen(literal_text));
          free(literal_text);
          
+         // if xml:lang is defined, ensure that it is not overwritten
+         if(strcmp(attr, "xml:lang") == 0)
+         {
+            context->xml_literal_xml_lang_defined = 1;
+         }
+
+         // process all of the RDFa attributes
          if(strcmp(attr, "about") == 0)
          {
             about_curie = value;
@@ -647,7 +647,7 @@ static void XMLCALL
    // if one is defined in the context and does not exist on the
    // element.
    if((xml_lang == NULL) && (context->language != NULL) &&
-      !xml_lang_defined && !context->xml_literal_xml_lang_defined)
+      !context->xml_literal_xml_lang_defined)
    {
       context->xml_literal = rdfa_n_append_string(
          context->xml_literal, &context->xml_literal_size,
