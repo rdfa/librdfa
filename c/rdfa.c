@@ -634,8 +634,11 @@ static void XMLCALL
    }
 
 #ifdef LIBRDFA_IN_RAPTOR
-   if(context->sax2)
-      xml_lang=(const char*)raptor_sax2_inscope_xml_language(context->sax2);
+   if(context->sax2) {
+      xml_lang = (const char*)raptor_sax2_inscope_xml_language(context->sax2);
+      if(!xml_lang)
+        xml_lang = "";
+   }
 #endif
    // check to see if we should append an xml:lang to the XML Literal
    // if one is defined in the context and does not exist on the
@@ -1178,7 +1181,7 @@ void rdfa_free_context(rdfacontext* context)
       do {
         rval=rdfa_pop_item(context->context_stack);
         if(rval && rval != context)
-          rdfa_free_context(rval);
+          rdfa_free_context((rdfacontext*)rval);
       } while(rval);
       free(context->context_stack->items);
       free(context->context_stack);
