@@ -30,13 +30,13 @@
 
 // These are all of the @rel/@rev reserved words in XHTML 1.1 that
 // should generate triples.
-#define XHTML_RELREV_RESERVED_WORDS_SIZE 23
+#define XHTML_RELREV_RESERVED_WORDS_SIZE 24
 static const char* const g_relrev_reserved_words[XHTML_RELREV_RESERVED_WORDS_SIZE] =
 {
    "alternate", "appendix", "bookmark", "chapter", "cite", "contents",
-   "copyright", "glossary", "help", "icon", "index", "meta", "next", "p3pv1",
-   "prev", "role",  "section",  "stylesheet", "subsection",  "start",
-   "license", "up", "last"
+   "copyright", "first", "glossary", "help", "icon", "index",
+   "meta", "next", "p3pv1", "prev", "role",  "section",  "stylesheet",
+   "subsection",  "start", "license", "up", "last"
 };
 
 // The base XHTML vocab URL is used to resolve URIs that are reserved
