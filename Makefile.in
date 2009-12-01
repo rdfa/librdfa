@@ -94,6 +94,20 @@ install-windows:
 	@rm -rf installers/librdfa-windows-@RELEASE@
 endif
 
+ifeq (@OS@,macos)
+install-macos:
+	@echo "Generating Mac OS X ZIP release..."
+	@mkdir -p installers/librdfa-macos-@RELEASE@
+	@cp c/rdfa.h installers/librdfa-macos-@RELEASE@
+	@cp c/rdfa_utils.h installers/librdfa-macos-@RELEASE@
+	@cp libs/librdfa.dylib installers/librdfa-macos-@RELEASE@
+	@cp libs/librdfa.a installers/librdfa-macos-@RELEASE@
+	@cd installers && zip -r librdfa-@VERSION@-macos-@RELEASE@.zip \
+		librdfa-macos-@RELEASE@
+	@rm -rf installers/librdfa-macos-@RELEASE@
+endif
+
+
 install: install-librdfa install-librdfa-dev install-python
 
 verbose:
