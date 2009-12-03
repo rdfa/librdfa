@@ -165,7 +165,7 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       {
          // if we have a relative URI, chop off the name of the file
          // and replace it with the relative pathname
-         char* end_index = rindex(context->base, '/');
+         char* end_index = strrchr(context->base, '/');
 
          if(end_index != NULL)
          {
@@ -173,7 +173,7 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
             char* end_index2;
 
             tmpstr = rdfa_replace_string(tmpstr, context->base);
-            end_index2= rindex(tmpstr, '/');
+            end_index2= strrchr(tmpstr, '/');
             end_index2++;
             *end_index2 = '\0';
 

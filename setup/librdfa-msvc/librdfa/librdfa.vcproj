@@ -119,13 +119,11 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\expat\include"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Expat 2.0.1\Source\lib&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRDFA_EXPORTS"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -138,12 +136,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\..\..\3rdparty\expat\libexpat.a"
+				RegisterOutput="false"
+				AdditionalDependencies="libexpat.lib"
 				OutputFile="..\..\..\libs\rdfa.dll"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\expat"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\Expat 2.0.1\Bin&quot;"
 				DelayLoadDLLs=""
-				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -182,6 +179,10 @@
 			>
 			<File
 				RelativePath="..\..\..\c\curie.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\c\iri.c"
 				>
 			</File>
 			<File

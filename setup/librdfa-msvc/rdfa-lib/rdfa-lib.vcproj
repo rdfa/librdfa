@@ -128,6 +128,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="..\..\..\libs\rdfaMT.lib"
+				ModuleDefinitionFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -156,6 +157,10 @@
 			>
 			<File
 				RelativePath="..\..\..\c\curie.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\c\iri.c"
 				>
 			</File>
 			<File

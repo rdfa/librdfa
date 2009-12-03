@@ -166,7 +166,7 @@ static size_t rdfa_init_base(
       {
          char* href_start = strstr(base_start, "href=");
          char* uri_start = href_start + 6;
-         char* uri_end = index(uri_start, '"');
+         char* uri_end = strchr(uri_start, '"');
 
          if((uri_start != NULL) && (uri_end != NULL))
          {
@@ -419,9 +419,6 @@ static void XMLCALL
 
    if(!context->xml_literal_namespaces_defined)
    {
-      // if the namespaces are not defined, then neither is the xml:lang
-      context->xml_literal_xml_lang_defined = 0;
-      
       // append namespaces to XML Literal
 #ifdef LIBRDFA_IN_RAPTOR
       raptor_namespace_stack* nstack = &context->sax2->namespaces;
@@ -433,7 +430,10 @@ static void XMLCALL
 #endif
       char* umap_key = NULL;
       char* umap_value = NULL;
-      
+
+      // if the namespaces are not defined, then neither is the xml:lang
+      context->xml_literal_xml_lang_defined = 0;
+
 #ifdef LIBRDFA_IN_RAPTOR
       ns_size = 0;
       ns_list = raptor_namespace_stack_to_array(nstack, &ns_size);
@@ -900,8 +900,8 @@ static void XMLCALL
       if(context->xml_literal != NULL)
       {
          // get the data between the first tag and the last tag
-         content_start = index(context->xml_literal, '>');
-         content_end = rindex(context->xml_literal, '<');
+         content_start = strchr(context->xml_literal, '>');
+         content_end = strrchr(context->xml_literal, '<');
          
          if((content_start != NULL) && (content_end != NULL))
          {
