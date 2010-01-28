@@ -140,7 +140,7 @@ static size_t rdfa_init_base(
    if(needed_size > 0)
    {
       size_t temp_buffer_size = sizeof(char) * READ_BUFFER_SIZE;
-      if(needed_size > temp_buffer_size)
+      if((size_t)needed_size > temp_buffer_size)
          temp_buffer_size += needed_size;
 
       *working_buffer_size += temp_buffer_size;
