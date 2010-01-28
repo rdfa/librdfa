@@ -139,11 +139,14 @@ static size_t rdfa_init_base(
    if((offset + bytes_read) > *working_buffer_size)
    {
       *working_buffer_size += temp_buffer_size;
-      *working_buffer = (char*)realloc(*working_buffer, *working_buffer_size);
+      // +1 for NUL at end, to allow strstr() etc. to work
+      *working_buffer = (char*)realloc(*working_buffer, *working_buffer_size + 1);
    }
    
    // append to the working buffer
    memmove(*working_buffer + offset, temp_buffer, bytes_read);
+   // ensure the buffer is a NUL-terminated string
+   *(*working_buffer + offset + bytes_read) = '\0';
  
    // search for the end of </head> in 
    head_end = strstr(*working_buffer, "</head>");
@@ -1218,7 +1221,10 @@ int rdfa_parse_start(rdfacontext* context)
    int rval = RDFA_PARSE_SUCCESS;
    
    context->wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
-   context->working_buffer = (char*)calloc(context->wb_allocated, sizeof(char));
+   // +1 for NUL at end, to allow strstr() etc. to work
+   // malloc - only the first char needs to be NUL
+   context->working_buffer = (char*)malloc(context->wb_allocated + 1);
+   *context->working_buffer = '\0';
 
 #ifndef LIBRDFA_IN_RAPTOR
    context->parser = XML_ParserCreate(NULL);
