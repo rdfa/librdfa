@@ -139,7 +139,7 @@ static size_t rdfa_init_base(
    if((offset + bytes_read) > *working_buffer_size)
    {
       *working_buffer_size += temp_buffer_size;
-      *working_buffer = (char*)realloc(working_buffer, *working_buffer_size);
+      *working_buffer = (char*)realloc(*working_buffer, *working_buffer_size);
    }
    
    // append to the working buffer
