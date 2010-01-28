@@ -130,14 +130,19 @@ static size_t rdfa_init_base(
    rdfacontext* context, char** working_buffer, size_t* working_buffer_size,
    char* temp_buffer, size_t bytes_read)
 {
-   size_t temp_buffer_size = sizeof(char) * READ_BUFFER_SIZE;
    char* head_end = NULL;
    size_t offset = context->wb_offset;
+   int needed_size = (offset + bytes_read) - *working_buffer_size;
 
    // search for the end of <head>, stop if <head> was found
+
    // extend the working buffer size
-   if((offset + bytes_read) > *working_buffer_size)
+   if(needed_size > 0)
    {
+      size_t temp_buffer_size = sizeof(char) * READ_BUFFER_SIZE;
+      if(needed_size > temp_buffer_size)
+         temp_buffer_size += needed_size;
+
       *working_buffer_size += temp_buffer_size;
       // +1 for NUL at end, to allow strstr() etc. to work
       *working_buffer = (char*)realloc(*working_buffer, *working_buffer_size + 1);
