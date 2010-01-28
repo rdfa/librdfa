@@ -131,25 +131,31 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       // end of the host part.
       if(end_index != NULL)
       {
+         char* rval_copy;
+
 	 *end_index = '\0';
 	 
 	 // if the '/' character after the host part was found, copy the host
 	 // part and append the given URI to the URI.
-	 rval = rdfa_replace_string(rval, tmp);
-	 rval = rdfa_join_string(rval, uri);
+	 rval_copy = rdfa_replace_string(rval, tmp);
+	 rval = rdfa_join_string(rval_copy, uri);
+         free(rval_copy);
       }
       else
       {
          // append the host part and the URI part as-is, ensuring that a 
 	 // '/' exists at the end of the host part.
  	 unsigned int tlen = strlen(tmp) - 1;
-	 rval = rdfa_replace_string(rval, tmp);
+         char* rval_copy;
+
+	 rval_copy = rdfa_replace_string(rval, tmp);
 
 	 if(rval[tlen] == '/')
 	 {
 	    rval[tlen] = '\0';
 	 }
-	 rval = rdfa_join_string(rval, uri);
+	 rval = rdfa_join_string(rval_copy, uri);
+         free(rval_copy);
       }
 
       free(tmp);
