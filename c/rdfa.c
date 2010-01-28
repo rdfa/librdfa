@@ -454,7 +454,7 @@ static void XMLCALL
 #endif
       {
          unsigned char insert_xmlns_definition = 1;
-         const char* attribute = NULL;
+         const char* attr = NULL;
          const char* value = NULL;
 
          // get the next mapping to process
@@ -477,12 +477,12 @@ static void XMLCALL
             const char** attrs = attributes;
             while((*attrs != NULL) && insert_xmlns_definition)
             {
-               attribute = *attrs++;
+               attr = *attrs++;
                value = *attrs++;
 
                // if the attribute is a umap_key, skip the definition
                // of the attribute.
-               if((strcmp(attribute, umap_key) == 0) ||
+               if((strcmp(attr, umap_key) == 0) ||
                   (strcmp(umap_key, XMLNS_DEFAULT_MAPPING) == 0))
                {
                   insert_xmlns_definition = 0;
