@@ -1,0 +1,11 @@
+# setup for an uninstalled copy
+prefix=
+exec_prefix=
+libdir=
+includedir=@abs_top_srcdir@/c
+
+Name: librdfa (uninstalled)
+Description: The Fastest RDFa Parser on the Internet (uninstalled)
+Version: @VERSION@
+Libs: -L@abs_top_builddir@/libs -lrdfa
+Cflags: -I${includedir}

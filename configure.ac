@@ -158,13 +158,19 @@ AC_SUBST(EXPAT_LIB_DIRECTORY)
 AC_SUBST(EXPAT_INCLUDE_DIRECTORY)
 
 # Generating files
-AC_OUTPUT(Makefile \
-          setup/Makefile.base \
-          c/Makefile \
-          python/Makefile \
-          docs/Makefile \
-          tests/Makefile \
-          installers/debian/changelog)
+AC_CONFIG_FILES([
+   Makefile
+   setup/Makefile.base
+   c/Makefile
+   python/Makefile
+   docs/Makefile
+   tests/Makefile
+   installers/debian/changelog
+   librdfa.pc
+   librdfa-uninstalled.pc
+])
+
+AC_OUTPUT
 
 # Dump the build configuration for the developer
 echo -e "\n--------- librdfa Build Environment -----------"
