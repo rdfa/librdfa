@@ -159,6 +159,7 @@ AC_SUBST(EXPAT_INCLUDE_DIRECTORY)
 
 # Generating files
 AC_CONFIG_FILES([
+   .gitignore
    Makefile
    setup/Makefile.base
    c/Makefile
@@ -169,6 +170,10 @@ AC_CONFIG_FILES([
    librdfa.pc
    librdfa-uninstalled.pc
 ])
+
+# add newlines to internal output file list
+CONFIGURE_GENERATED_FILES="`echo $ac_config_files | tr ' ' '\n'`"
+AC_SUBST(CONFIGURE_GENERATED_FILES)
 
 AC_OUTPUT
 
