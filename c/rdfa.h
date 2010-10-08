@@ -1,5 +1,5 @@
 /**
- * Copyright 2008 Digital Bazaar, Inc.
+ * Copyright 2008-2010 Digital Bazaar, Inc.
  *
  * This file is part of librdfa.
  *
@@ -46,7 +46,7 @@
  *    do
  *    {
  *       char* buf = rdfa_get_buffer(context, &buf_len);
- *       if(size > 0)
+ *       if(buf_len > 0)
  *       {
  *          // fill buffer here up to buf_len bytes from your input stream
  *          read = fread(buf, sizeof(char), buf_len, myfile);
