@@ -104,8 +104,8 @@ typedef struct rdftriple
 typedef void (*triple_handler_fp)(rdftriple*, void*);
 
 /**
- * The specification for a callback that is capable of handling
- * triples.
+ * The specification for a callback that is used to fill the input buffer
+ * with data to parse.
  */
 typedef size_t (*buffer_filler_fp)(char*, size_t, void*);
 
@@ -126,7 +126,7 @@ typedef struct rdfalistitem
  * cannot be shrunk.
  */
 typedef struct rdfalist
-{   
+{
    rdfalistitem** items;
    size_t num_items;
    size_t max_items;
@@ -134,8 +134,8 @@ typedef struct rdfalist
 
 /**
  * The RDFa Parser structure is responsible for keeping track of the state of
- * the current RDFa parser. Things such as the default namespace, 
- * CURIE mappings, and other context-specific 
+ * the current RDFa parser. Things such as the default namespace,
+ * CURIE mappings, and other context-specific
  */
 typedef struct rdfacontext
 {
