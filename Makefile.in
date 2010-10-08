@@ -1,5 +1,14 @@
 # The top-level Makefile that is used to build 
 
+# setup variables from configure
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+# pkg-config dirs
+pkgconfigdir = @libdir@/pkgconfig
+
 # State the platforms for which we are building
 BUILD_FOR_PYTHON=@BUILD_FOR_PYTHON@
 
@@ -41,27 +50,27 @@ docs:
 	@$(MAKE_DIR) docs
 
 install-librdfa:
-	@echo "Installing librdfa.so.$(VERSION) to $(PREFIX)/usr/lib ..."
-	@install -d $(PREFIX)/usr/lib/
-	@install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
-	@ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
+	@echo "Installing librdfa libraries to $(PREFIX)$(libdir) ..."
+	@install -d $(PREFIX)$(libdir)
+	@install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)$(libdir)/librdfa.so.$(VERSION)
+	@ln -sf librdfa.so.$(VERSION) $(PREFIX)$(libdir)/librdfa.so
 
 install-librdfa-dev:
-	@echo "Installing librdfa headers and debug libraries to $(PREFIX)/usr ..."
-	@install -d $(PREFIX)/usr/lib/
-	@install -d $(PREFIX)/usr/include/
-	@install -m 644 $(LIBS_DIR)/librdfa.a $(PREFIX)/usr/lib/librdfa.a
-	@install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
-	@ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
-	@install -m 644 c/rdfa.h $(PREFIX)/usr/include/
-	@install -m 644 c/rdfa_utils.h $(PREFIX)/usr/include/
+	@echo "Installing librdfa development support to $(PREFIX)$(libdir) ..."
+	@install -d $(PREFIX)$(libdir)
+	@install -d $(PREFIX)$(includedir)
+	@install -d $(PREFIX)$(pkgconfigdir)
+	@install -m 644 $(LIBS_DIR)/librdfa.a $(PREFIX)$(libdir)/librdfa.a
+	@install -m 644 c/rdfa.h $(PREFIX)$(includedir)
+	@install -m 644 c/rdfa_utils.h $(PREFIX)$(includedir)
+	@install -m 644 librdfa.pc $(PREFIX)$(pkgconfigdir)
 
 ifeq ($(BUILD_FOR_PYTHON),yes)
 install-python:
-	@echo "Installing python extensions to $(PREFIX)/usr/lib/python$(PYVER)/site-packages ..."
-	@install -d $(PREFIX)/usr/lib/python$(PYVER)/site-packages
-	@install -m 644 python/dist/rdfa.py $(PREFIX)/usr/lib/python$(PYVER)/site-packages
-	@install -m 644 python/dist/python$(PYVER)-rdfa.so $(PREFIX)/usr/lib/python$(PYVER)/site-packages/_rdfa.so
+	@echo "Installing python extensions to $(PREFIX)$(libdir)/python$(PYVER)/site-packages ..."
+	@install -d $(PREFIX)$(libdir)/python$(PYVER)/site-packages
+	@install -m 644 python/dist/rdfa.py $(PREFIX)$(libdir)/python$(PYVER)/site-packages
+	@install -m 644 python/dist/python$(PYVER)-rdfa.so $(PREFIX)$(libdir)/python$(PYVER)/site-packages/_rdfa.so
 else
 install-python:
 endif
