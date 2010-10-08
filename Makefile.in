@@ -30,6 +30,7 @@ all: docs
 clean:
 	@$(foreach dir,$(SUBDIRS),MAKE_CLEAN_ACTIVE=true $(MAKE_DIR) clean &&) true
 	@rm -rf libs/*
+	@rm -rf installers/packages
 	@echo "Removed all objects and libraries."
 
 tests: all
@@ -40,48 +41,72 @@ docs:
 	@$(MAKE_DIR) docs
 
 install-librdfa:
-	install -d $(PREFIX)/usr/lib/
-	install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
-	ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
+	@echo "Installing librdfa.so.$(VERSION) to $(PREFIX)/usr/lib ..."
+	@install -d $(PREFIX)/usr/lib/
+	@install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
+	@ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
 
 install-librdfa-dev:
-	install -d $(PREFIX)/usr/lib/
-	install -d $(PREFIX)/usr/include/
-	install -m 644 $(LIBS_DIR)/librdfa.a $(PREFIX)/usr/lib/librdfa.a
-	install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
-	ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
-	install -m 644 c/rdfa.h $(PREFIX)/usr/include/
-	install -m 644 c/rdfa_utils.h $(PREFIX)/usr/include/
+	@echo "Installing librdfa headers and debug libraries to $(PREFIX)/usr ..."
+	@install -d $(PREFIX)/usr/lib/
+	@install -d $(PREFIX)/usr/include/
+	@install -m 644 $(LIBS_DIR)/librdfa.a $(PREFIX)/usr/lib/librdfa.a
+	@install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)/usr/lib/librdfa.so.$(VERSION)
+	@ln -s librdfa.so.$(VERSION) $(PREFIX)/usr/lib/librdfa.so
+	@install -m 644 c/rdfa.h $(PREFIX)/usr/include/
+	@install -m 644 c/rdfa_utils.h $(PREFIX)/usr/include/
 
 ifeq ($(BUILD_FOR_PYTHON),yes)
 install-python:
-	install -d $(PREFIX)/usr/lib/python$(PYVER)/site-packages
-	install -m 644 python/dist/rdfa.py $(PREFIX)/usr/lib/python$(PYVER)/site-packages
-	install -m 644 python/dist/python$(PYVER)-rdfa.so $(PREFIX)/usr/lib/python$(PYVER)/site-packages/_rdfa.so
+	@echo "Installing python extensions to $(PREFIX)/usr/lib/python$(PYVER)/site-packages ..."
+	@install -d $(PREFIX)/usr/lib/python$(PYVER)/site-packages
+	@install -m 644 python/dist/rdfa.py $(PREFIX)/usr/lib/python$(PYVER)/site-packages
+	@install -m 644 python/dist/python$(PYVER)-rdfa.so $(PREFIX)/usr/lib/python$(PYVER)/site-packages/_rdfa.so
 else
 install-python:
 endif
 
 packages: all
-	mkdir -p installers/packages
-	dpkg-buildpackage -us -uc -rfakeroot
-	mv ../*rdfa*@RELEASE@*deb installers/packages
-	cd installers/packages && fakeroot alien --to-rpm -k *deb
-	cd installers/packages && fakeroot alien --to-tgz -k *deb
-	cd installers/packages && fakeroot alien --to-pkg -k *deb
-	cd installers/packages && fakeroot alien --to-slp -k *deb
+	@echo "Generating Debian packages..."
+	@mkdir -p installers/packages
+	@ln -sf installers/debian debian
+	@dpkg-buildpackage -us -uc -rfakeroot
+	@mv ../*rdfa*@RELEASE@*deb installers/packages
+	@echo "Generating RPM packages..."
+	@cd installers/packages && fakeroot alien --to-rpm -k --scripts *deb
+	@echo "Generating TGZ packages..."
+	@cd installers/packages && fakeroot alien --to-tgz -k --scripts *deb
+	@echo "Generating Solaris packages..."
+	@cd installers/packages && fakeroot alien --to-pkg -k --scripts *deb
+	@echo "Generating Stampede packages..."
+	@cd installers/packages && fakeroot alien --to-slp -k --scripts *deb
 
 ifeq (@OS@,mingw32)
 install-windows:
-	mkdir -p installers/librdfa-windows-@RELEASE@
-	cp c/rdfa.h installers/librdfa-windows-@RELEASE@
-	cp c/rdfa_utils.h installers/librdfa-windows-@RELEASE@
-	cp libs/rdfa.dll installers/librdfa-windows-@RELEASE@
-	cp libs/rdfa.lib installers/librdfa-windows-@RELEASE@
-	cd installers && zip -r librdfa-@VERSION@-windows-@RELEASE@.zip \
+	@echo "Generating Windows ZIP release..."
+	@mkdir -p installers/librdfa-windows-@RELEASE@
+	@cp c/rdfa.h installers/librdfa-windows-@RELEASE@
+	@cp c/rdfa_utils.h installers/librdfa-windows-@RELEASE@
+	@cp libs/rdfa.dll installers/librdfa-windows-@RELEASE@
+	@cp libs/rdfa.lib installers/librdfa-windows-@RELEASE@
+	@cd installers && zip -r librdfa-@VERSION@-windows-@RELEASE@.zip \
 		librdfa-windows-@RELEASE@
-	rm -rf installers/librdfa-windows-@RELEASE@
+	@rm -rf installers/librdfa-windows-@RELEASE@
 endif
+
+ifeq (@OS@,macos)
+install-macos:
+	@echo "Generating Mac OS X ZIP release..."
+	@mkdir -p installers/librdfa-macos-@RELEASE@
+	@cp c/rdfa.h installers/librdfa-macos-@RELEASE@
+	@cp c/rdfa_utils.h installers/librdfa-macos-@RELEASE@
+	@cp libs/librdfa.dylib installers/librdfa-macos-@RELEASE@
+	@cp libs/librdfa.a installers/librdfa-macos-@RELEASE@
+	@cd installers && zip -r librdfa-@VERSION@-macos-@RELEASE@.zip \
+		librdfa-macos-@RELEASE@
+	@rm -rf installers/librdfa-macos-@RELEASE@
+endif
+
 
 install: install-librdfa install-librdfa-dev install-python
 

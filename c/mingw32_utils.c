@@ -80,12 +80,7 @@ cont:
 	/* NOTREACHED */
 }
 
-char* index(const char *s, int c)
+int strcasecmp(const char* s1, const char* s2)
 {
-  return strchr (s, c);
-}
-
-char* rindex(const char *s, int c)
-{
-  return strrchr (s, c);
+	return _stricmp(s1, s2);
 }

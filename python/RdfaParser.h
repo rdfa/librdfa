@@ -21,7 +21,7 @@
 
 #include <string>
 
-typedef struct rdfacontext;
+struct rdfacontext;
 
 /**
  * The RdfaParser class is a wrapper class for Python to provide a

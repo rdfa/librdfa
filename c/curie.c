@@ -28,24 +28,15 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
-// These are all of the @property reserved words in XHTML 1.1 that
-// should generate triples.
-#define XHTML_PROPERTY_RESERVED_WORDS_SIZE 6
-static
-   const char* g_property_reserved_words[XHTML_PROPERTY_RESERVED_WORDS_SIZE] =
-{
-   "description", "generator", "keywords", "reference", "robots", "title"
-};
-
 // These are all of the @rel/@rev reserved words in XHTML 1.1 that
 // should generate triples.
-#define XHTML_RELREV_RESERVED_WORDS_SIZE 23
-static const char* g_relrev_reserved_words[XHTML_RELREV_RESERVED_WORDS_SIZE] =
+#define XHTML_RELREV_RESERVED_WORDS_SIZE 24
+static const char* const g_relrev_reserved_words[XHTML_RELREV_RESERVED_WORDS_SIZE] =
 {
    "alternate", "appendix", "bookmark", "chapter", "cite", "contents",
-   "copyright", "glossary", "help", "icon", "index", "meta", "next", "p3pv1",
-   "prev", "role",  "section",  "stylesheet", "subsection",  "start",
-   "license", "up", "last"
+   "copyright", "first", "glossary", "help", "icon", "index",
+   "meta", "next", "p3pv1", "prev", "role",  "section",  "stylesheet",
+   "subsection",  "start", "license", "up", "last"
 };
 
 // The base XHTML vocab URL is used to resolve URIs that are reserved
@@ -140,25 +131,31 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       // end of the host part.
       if(end_index != NULL)
       {
+         char* rval_copy;
+
 	 *end_index = '\0';
 	 
 	 // if the '/' character after the host part was found, copy the host
 	 // part and append the given URI to the URI.
-	 rval = rdfa_replace_string(rval, tmp);
-	 rval = rdfa_join_string(rval, uri);
+	 rval_copy = rdfa_replace_string(rval, tmp);
+	 rval = rdfa_join_string(rval_copy, uri);
+         free(rval_copy);
       }
       else
       {
          // append the host part and the URI part as-is, ensuring that a 
 	 // '/' exists at the end of the host part.
  	 unsigned int tlen = strlen(tmp) - 1;
-	 rval = rdfa_replace_string(rval, tmp);
+         char* rval_copy;
+
+	 rval_copy = rdfa_replace_string(rval, tmp);
 
 	 if(rval[tlen] == '/')
 	 {
 	    rval[tlen] = '\0';
 	 }
-	 rval = rdfa_join_string(rval, uri);
+	 rval = rdfa_join_string(rval_copy, uri);
+         free(rval_copy);
       }
 
       free(tmp);
@@ -174,7 +171,7 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       {
          // if we have a relative URI, chop off the name of the file
          // and replace it with the relative pathname
-         char* end_index = rindex(context->base, '/');
+         char* end_index = strrchr(context->base, '/');
 
          if(end_index != NULL)
          {
@@ -182,7 +179,7 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
             char* end_index2;
 
             tmpstr = rdfa_replace_string(tmpstr, context->base);
-            end_index2= rindex(tmpstr, '/');
+            end_index2= strrchr(tmpstr, '/');
             end_index2++;
             *end_index2 = '\0';
 
@@ -251,16 +248,19 @@ char* rdfa_resolve_curie(
 
       // fully resolve the prefix and get it's length
 
-      // if a colon was found, but no prefix, use the context->base as
-      // the prefix IRI
-      if(uri[0] == ':')
+      // if a colon was found, but no prefix, use the XHTML vocabulary URI
+      // as the expanded prefix 
+      if((uri[0] == ':') || (strcmp(uri, "[:]") == 0))
       {
-         expanded_prefix = "http://www.w3.org/1999/xhtml/vocab#";
+         expanded_prefix = XHTML_VOCAB_URI;
          curie_reference = prefix;
          prefix = NULL;
       }
-      else if((strlen(uri) > 2) && (uri[1] == ':'))
+      else if(uri[0] == ':')
       {
+         // FIXME: This looks like a bug - don't know why this code is
+         // in here. I think it's for the case where ":next" is
+         // specified, but the code's not checking that -- manu
          expanded_prefix = context->base;
          curie_reference = prefix;
          prefix = NULL;
@@ -288,7 +288,7 @@ char* rdfa_resolve_curie(
             if(nspace) {
                ns_uri = raptor_namespace_get_uri(nspace);
                if(ns_uri)
-                  expanded_prefix = (const char*)raptor_uri_as_string(ns_uri);
+                  expanded_prefix = (const char*)raptor_uri_as_string_v2(context->sax2->world, ns_uri);
             }
 #else
             expanded_prefix =
@@ -303,10 +303,10 @@ char* rdfa_resolve_curie(
          expanded_prefix_length = strlen(expanded_prefix);
       }
       
-      // if the expanded prefix and the reference exist, generate the
-      // full IRI.
       if((expanded_prefix != NULL) && (curie_reference != NULL))
       {
+         // if the expanded prefix and the reference exist, generate the
+         // full IRI.
          if(strcmp(expanded_prefix, "_") == 0)
          {
             rval = rdfa_join_string("_:", curie_reference);
@@ -315,6 +315,14 @@ char* rdfa_resolve_curie(
          {
             rval = rdfa_join_string(expanded_prefix, curie_reference);
          }
+      }
+      else if((expanded_prefix != NULL) && (expanded_prefix[0] != '_') && 
+         (curie_reference == NULL))
+      {
+         // if the expanded prefix exists, but the reference is null, 
+	 // generate the CURIE because a reference-less CURIE is still
+         // valid
+ 	 rval = rdfa_join_string(expanded_prefix, "");
       }
 
       free(working_copy);
@@ -364,15 +372,15 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
       resource++;
    }
 
-   // search all of the XHTML @rel/@rev reserved words for a match
-   // against the given URI
+   // search all of the XHTML @rel/@rev reserved words for a
+   // case-insensitive match against the given URI
    for(i = 0; i < XHTML_RELREV_RESERVED_WORDS_SIZE; i++)
    {
-      if(strcmp(g_relrev_reserved_words[i], resource) == 0)
+      if(strcasecmp(g_relrev_reserved_words[i], resource) == 0)
       {
          // since the URI is a reserved word for @rel/@rev, generate
          // the full IRI and stop the loop.
-         rval = rdfa_join_string(XHTML_VOCAB_URI, resource);         
+         rval = rdfa_join_string(XHTML_VOCAB_URI, g_relrev_reserved_words[i]);
          i = XHTML_RELREV_RESERVED_WORDS_SIZE;
       }
    }
@@ -382,57 +390,6 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
    if(rval == NULL)
    {
       rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_RELREV);
-   }
-   
-   return rval;
-}
-
-/**
- * Resolves a given uri depending on whether or not it is a fully
- * qualified IRI, a CURIE, or a short-form XHTML reserved word for
- * @property as defined in the XHTML+RDFa Syntax Document.
- *
- * @param context the current processing context.
- * @param uri the URI part to process.
- *
- * @return the fully qualified IRI, or NULL if the conversion failed
- *         due to the given URI not being a short-form XHTML reserved
- *         word. The memory returned from this function MUST be freed.
- */
-char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri)
-{
-   char* rval = NULL;
-   int i = 0;
-   const char* resource = uri;
-
-   // check to make sure the URI doesn't have an empty prefix
-   if(uri[0] == ':')
-   {
-      resource++;
-   }
-   
-   // TODO: Is it clear that property has predefined values in the
-   //       Syntax doc?
-   // TODO: THIS IS A BUG AND SHOULD BE REMOVED - there are no
-   //       predefined values for @property
-   // search all of the XHTML @property reserved words for a match
-   // against the given URI
-   for(i = 0; i < XHTML_PROPERTY_RESERVED_WORDS_SIZE; i++)
-   {
-      if(strcmp(g_property_reserved_words[i], resource) == 0)
-      {
-         // since the URI is a reserved word, generate the full IRI
-         // and stop the loop.
-         rval = rdfa_join_string(XHTML_VOCAB_URI, resource);
-         i = XHTML_PROPERTY_RESERVED_WORDS_SIZE;
-      }
-   }
-
-   // if none of the XHTML @property reserved words were found,
-   // attempt to resolve the value as a standard CURIE
-   if(rval == NULL)
-   {
-      rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_PROPERTY);
    }
    
    return rval;
@@ -448,13 +405,15 @@ rdfalist* rdfa_resolve_curie_list(
    working_uris = rdfa_replace_string(working_uris, uris);
 
    // go through each item in the list of CURIEs and resolve each
-   ctoken = strtok_r(working_uris, " ", &uptr);
+   ctoken = strtok_r(working_uris, RDFA_WHITESPACE, &uptr);
+   
    while(ctoken != NULL)
    {
       char* resolved_curie = NULL;
 
       if((mode == CURIE_PARSE_INSTANCEOF_DATATYPE) ||
-         (mode == CURIE_PARSE_ABOUT_RESOURCE))
+         (mode == CURIE_PARSE_ABOUT_RESOURCE) ||
+         (mode == CURIE_PARSE_PROPERTY))
       {
          resolved_curie =
             rdfa_resolve_curie(rdfa_context, ctoken, mode);
@@ -464,11 +423,6 @@ rdfalist* rdfa_resolve_curie_list(
          resolved_curie =
             rdfa_resolve_relrev_curie(rdfa_context, ctoken);
       }
-      else if(mode == CURIE_PARSE_PROPERTY)
-      {
-         resolved_curie =
-            rdfa_resolve_property_curie(rdfa_context, ctoken);
-      }
 
       // add the CURIE if it was a valid one
       if(resolved_curie != NULL)
@@ -477,7 +431,7 @@ rdfalist* rdfa_resolve_curie_list(
          free(resolved_curie);
       }
       
-      ctoken = strtok_r(NULL, " ", &uptr);
+      ctoken = strtok_r(NULL, RDFA_WHITESPACE, &uptr);
    }
    
    free(working_uris);
