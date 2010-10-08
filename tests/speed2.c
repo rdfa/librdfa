@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Digital Bazaar, Inc.
+ * Copyright 2010 Digital Bazaar, Inc.
  *
  * This file is part of librdfa.
  *
@@ -19,6 +19,9 @@
  *
  * This test checks to see how quickly we can process triples and is a
  * very basic performance test for the librdfa library.
+ *
+ * Note: This speed test is different from the other speed test in that it uses
+ * the alternate parsing API.
  */
 #include <stdio.h>
 #include <string.h>
@@ -28,7 +31,6 @@
 
 #define MAX_ITERATIONS 20000
 int g_iteration = 0;
-rdfacontext* g_context = NULL;
 unsigned long long g_bytes_processed = 0;
 
 void process_triple(rdftriple* triple, void* callback_data)
@@ -36,16 +38,16 @@ void process_triple(rdftriple* triple, void* callback_data)
    rdfa_free_triple(triple);
 }
 
-size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
+size_t fill_buffer(rdfacontext* context)
 {
-   // short-circuit last iteration
-   if(g_iteration == MAX_ITERATIONS + 1)
-   {
-      return 0;
-   }
+   char* buffer = NULL;
+   size_t buffer_length = 0;
+   const char* data = NULL;
+   size_t data_length = 0;
 
-   char* data = NULL;
-   size_t data_length = buffer_length;
+   // get buffer to fill
+   buffer = rdfa_get_buffer(context, &buffer_length);
+   data_length = buffer_length;
    memset(buffer, ' ', buffer_length);
 
    // Note: code assumes data length < buffer length
@@ -88,13 +90,20 @@ int main(int argc, char** argv)
 {
    printf("Speed test...\n");
 
+   size_t bytes;
    clock_t stime = clock();
 
-   rdfacontext* g_context = rdfa_create_context("http://example.org/speed");
-   rdfa_set_triple_handler(g_context, &process_triple);
-   rdfa_set_buffer_filler(g_context, &fill_buffer);
-   rdfa_parse(g_context);
-   rdfa_free_context(g_context);
+   rdfacontext* context = rdfa_create_context("http://example.org/speed");
+   rdfa_set_triple_handler(context, &process_triple);
+   rdfa_parse_start(context);
+   while(g_iteration <= MAX_ITERATIONS)
+   {
+      bytes = fill_buffer(context);
+      rdfa_parse_buffer(context, bytes);
+   }
+   rdfa_parse_buffer(context, 0);
+   rdfa_parse_end(context);
+   rdfa_free_context(context);
 
    clock_t etime = clock();
 
