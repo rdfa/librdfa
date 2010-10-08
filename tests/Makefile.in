@@ -1,6 +1,6 @@
 # Makefile to compile the binaries in this directory
 
-EXECUTABLES = rdfa2n3 rdfastring2n3 curies speed
+EXECUTABLES = rdfa2n3 rdfastring2n3 curies speed speed2
 
 DYNAMIC_LINK_LIBRARIES = rdfa
 DYNAMIC_UNIX_LIBRARIES = expat
