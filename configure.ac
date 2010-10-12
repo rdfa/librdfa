@@ -116,8 +116,8 @@ CC="$CC"
 
 # Check to see if we need to build the Python modules
 if test "$ac_enable_python_build" = "yes" ; then
-   AC_CHECK_FILE(/usr/include/python2.4/Python.h, [], AC_MSG_ERROR("no"))
    AC_CHECK_FILE(/usr/include/python2.5/Python.h, [], AC_MSG_ERROR("no"))
+   AC_CHECK_FILE(/usr/include/python2.6/Python.h, [], AC_MSG_ERROR("no"))
 
    BUILD_FOR_PYTHON="yes"
 fi

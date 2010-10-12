@@ -15,40 +15,36 @@ directories:
 	mkdir -p build
 	mkdir -p dist
 
-dist/python2.4-rdfa.so: build/RdfaParser.o build/SwigRdfaParser-python2.4.o
+dist/python%-rdfa.so: build/RdfaParser.o build/SwigRdfaParser-python%.o
 	echo "Building $@..."
-	g++ -shared -L ../libs -o dist/python2.4-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python2.4.o -lrdfa
+	g++ -shared -L ../libs -o dist/python$*-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python$*.o -lrdfa
 
-dist/python2.5-rdfa.so: build/RdfaParser.o build/SwigRdfaParser-python2.5.o
-	echo "Building $@..."
-	g++ -shared -L ../libs -o dist/python2.5-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python2.5.o -lrdfa
-	ln -sf python2.5-rdfa.so dist/_rdfa.so
+dist/_rdfa.so: dist/python$(PY_DEFAULT)-rdfa.so
+	ln -sf $(notdir $<) $@
 
 build/SwigRdfaParser.cpp: rdfa.i
 	echo "Generating $@ (from rdfa.i)..."
 	swig -c++ -I. -python -o build/SwigRdfaParser.cpp rdfa.i
 	cp build/rdfa.py dist
 
-build/SwigRdfaParser-python2.4.o: build/SwigRdfaParser.cpp
+build/SwigRdfaParser-python%.o: build/SwigRdfaParser.cpp
 	echo "Building $@..."
-	g++ -g -c -I../c -I. -I/usr/include/python2.4 build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python2.4.o
-
-build/SwigRdfaParser-python2.5.o: build/SwigRdfaParser.cpp
-	echo "Building $@..."
-	g++ -g -c -I../c -I. -I/usr/include/python2.5 build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python2.5.o
-
-build/SwigRdfaParser-python2.6.o: build/SwigRdfaParser.cpp
-	echo "Building $@..."
-	g++ -g -c -I../c -I. -I/usr/include/python2.6 build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python2.6.o
+	g++ -g -c -I../c -I. -I/usr/include/python$* build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python$*.o
 
 build/RdfaParser.o:
 	echo "Building $@..."
 	cd build && ln -sf ../RdfaParser.cpp RdfaParser.cpp
 	g++ -g -c -I../c -I. build/RdfaParser.cpp -o build/RdfaParser.o
 
-build-objects: directories build/SwigRdfaParser-python2.4.o build/SwigRdfaParser-python2.5.o build/RdfaParser.o
+build-objects: \
+	directories \
+	$(PY_VERSIONS:%=build/SwigRdfaParser-python%.o) \
+	build/RdfaParser.o
 
-build-libraries: directories dist/python2.4-rdfa.so dist/python2.5-rdfa.so
+build-libraries: \
+	directories \
+	$(PY_VERSIONS:%=dist/python%-rdfa.so) \
+	dist/_rdfa.so
 
 build-executables:
 

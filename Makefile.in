@@ -9,8 +9,10 @@ includedir = @includedir@
 # pkg-config dirs
 pkgconfigdir = @libdir@/pkgconfig
 
-# State the platforms for which we are building
+# Python build control
 BUILD_FOR_PYTHON=@BUILD_FOR_PYTHON@
+PY_DEFAULT := 2.6
+PY_VERSIONS := $(sort 2.5 2.6 $(PY_DEFAULT))
 
 VERSION = @VERSION@
 
@@ -30,11 +32,15 @@ endif
 
 LIBS_DIR = @RDFADIR@/libs
 
-.PHONY: all verbose clean test docs
+.PHONY: all verbose clean test docs install-python
 
 all: docs
-	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) build-objects build-libraries &&) true
-	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) build-executables &&) true
+	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) \
+		build-objects build-libraries \
+		PY_VERSIONS="$(PY_VERSIONS)" \
+		PY_DEFAULT="$(PY_DEFAULT)" &&) true
+	@$(foreach dir,$(SUBDIRS),$(MAKE_DIR) \
+		build-executables &&) true
 
 clean:
 	@$(foreach dir,$(SUBDIRS),MAKE_CLEAN_ACTIVE=true $(MAKE_DIR) clean &&) true
@@ -50,27 +56,28 @@ docs:
 	@$(MAKE_DIR) docs
 
 install-librdfa:
-	@echo "Installing librdfa libraries to $(PREFIX)$(libdir) ..."
-	@install -d $(PREFIX)$(libdir)
-	@install -m 644 $(LIBS_DIR)/librdfa.so $(PREFIX)$(libdir)/librdfa.so.$(VERSION)
-	@ln -sf librdfa.so.$(VERSION) $(PREFIX)$(libdir)/librdfa.so
+	@echo "Installing librdfa libraries to $(DESTDIR)$(libdir) ..."
+	@install -d $(DESTDIR)$(libdir)
+	@install -m 644 $(LIBS_DIR)/librdfa.so $(DESTDIR)$(libdir)/librdfa.so.$(VERSION)
+	@ln -sf librdfa.so.$(VERSION) $(DESTDIR)$(libdir)/librdfa.so
 
 install-librdfa-dev:
-	@echo "Installing librdfa development support to $(PREFIX)$(libdir) ..."
-	@install -d $(PREFIX)$(libdir)
-	@install -d $(PREFIX)$(includedir)
-	@install -d $(PREFIX)$(pkgconfigdir)
-	@install -m 644 $(LIBS_DIR)/librdfa.a $(PREFIX)$(libdir)/librdfa.a
-	@install -m 644 c/rdfa.h $(PREFIX)$(includedir)
-	@install -m 644 c/rdfa_utils.h $(PREFIX)$(includedir)
-	@install -m 644 librdfa.pc $(PREFIX)$(pkgconfigdir)
+	@echo "Installing librdfa development support to $(DESTDIR)$(libdir) ..."
+	@install -d $(DESTDIR)$(libdir)
+	@install -d $(DESTDIR)$(includedir)
+	@install -d $(DESTDIR)$(pkgconfigdir)
+	@install -m 644 $(LIBS_DIR)/librdfa.a $(DESTDIR)$(libdir)/librdfa.a
+	@install -m 644 c/rdfa.h $(DESTDIR)$(includedir)
+	@install -m 644 c/rdfa_utils.h $(DESTDIR)$(includedir)
+	@install -m 644 librdfa.pc $(DESTDIR)$(pkgconfigdir)
 
 ifeq ($(BUILD_FOR_PYTHON),yes)
-install-python:
-	@echo "Installing python extensions to $(PREFIX)$(libdir)/python$(PYVER)/site-packages ..."
-	@install -d $(PREFIX)$(libdir)/python$(PYVER)/site-packages
-	@install -m 644 python/dist/rdfa.py $(PREFIX)$(libdir)/python$(PYVER)/site-packages
-	@install -m 644 python/dist/python$(PYVER)-rdfa.so $(PREFIX)$(libdir)/python$(PYVER)/site-packages/_rdfa.so
+install-python%:
+	echo "Installing python extensions to $(DESTDIR)$(libdir)/python$*/site-packages ..."
+	install -d $(DESTDIR)$(libdir)/python$*/site-packages
+	install -m 644 python/dist/rdfa.py $(DESTDIR)$(libdir)/python$*/site-packages
+	install -m 644 python/dist/python$*-rdfa.so $(DESTDIR)$(libdir)/python$*/site-packages/_rdfa.so
+install-python: $(PY_VERSIONS:%=install-python%)
 else
 install-python:
 endif

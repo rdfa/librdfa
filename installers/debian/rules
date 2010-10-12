@@ -2,34 +2,31 @@
 export DH_PYCENTRAL=nomove
 DEB_PYTHON_SYSTEM=pycentral
 
+include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
+
+PY_VERSIONS = $(shell pyversions --requested -vs)
 
 LIBRDFA_DIR          := $(CURDIR)/debian/librdfa1
 LIBRDFA_DEV_DIR      := $(CURDIR)/debian/librdfa1-dev
-PY24_LIBRDFA_DIR     := $(CURDIR)/debian/python2.4-rdfa
-PY25_LIBRDFA_DIR     := $(CURDIR)/debian/python2.5-rdfa
+PY_LIBRDFA_DIR       := $(CURDIR)/debian/python-rdfa
 DEB_COMPRESS_EXCLUDE := .py
+DEB_CONFIGURE_EXTRA_FLAGS += --enable-python
 
 install/librdfa1::
 	mkdir -pm755 $(LIBRDFA_DIR)
-	make install-librdfa PREFIX=$(LIBRDFA_DIR)
+	make install-librdfa DESTDIR=$(LIBRDFA_DIR)
 
 install/librdfa1-dev::
 	mkdir -pm755 $(LIBRDFA_DEV_DIR)
-	make install-librdfa-dev PREFIX=$(LIBRDFA_DEV_DIR)
+	make install-librdfa-dev DESTDIR=$(LIBRDFA_DEV_DIR)
 
-install/python2.4-rdfa::
-	mkdir -pm755 $(PY24_LIBRDFA_DIR)
-	make install-python PREFIX=$(PY24_LIBRDFA_DIR) PYVER=2.4
-	dh_pycentral
-
-install/python2.5-rdfa::
-	mkdir -pm755 $(PY25_LIBRDFA_DIR)
-	make install-python PREFIX=$(PY25_LIBRDFA_DIR) PYVER=2.5
-	dh_pycentral
+install/python-rdfa::
+	mkdir -pm755 $(PY_LIBRDFA_DIR)
+	make install-python DESTDIR=$(PY_LIBRDFA_DIR) PY_VERSIONS="$(PY_VERSIONS)"
+	dh_pycentral -p python-rdfa
 
 clean:: 
 	rm -rf $(LIBRDFA_DIR)
 	rm -rf $(LIBRDFA_DEV_DIR)
-	rm -rf $(PY24_LIBRDFA_DIR)
-	rm -rf $(PY25_LIBRDFA_DIR)
+	rm -rf $(PY_LIBRDFA_DIR)
