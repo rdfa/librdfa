@@ -8,7 +8,7 @@ Standards-Version: 3.7.2
 
 Package: librdfa1
 Architecture: any
-Depends: libexpat1
+Depends: ${shlibs:Depends}
 Description: RDFa parsing C library - runtime library
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
  It uses expat for the underlying XML parser, is very small in size (19KB),
@@ -20,8 +20,7 @@ Description: RDFa parsing C library - runtime library
 Package: librdfa1-dev
 Architecture: any
 Section: libdevel
-Conflicts: librdfa1
-Provides: librdfa1
+Depends: librdfa1 (= ${binary:Version})
 Description: RDFa parsing C library - development kit
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
  It uses expat for the underlying XML parser, is very small in size (19KB),
@@ -34,7 +33,7 @@ Description: RDFa parsing C library - development kit
 Package: python-rdfa
 Architecture: any
 Section: python
-Depends: ${shlibs:Depends}, ${python:Depends}, librdfa1
+Depends: ${shlibs:Depends}, ${python:Depends}, librdfa1 (= ${binary:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: RDFa parsing Python library (Python bindings)
