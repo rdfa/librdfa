@@ -84,9 +84,9 @@ endif
 
 packages: all
 	@echo "Generating Debian packages..."
-	@mkdir -p installers/packages
 	@ln -sf installers/debian debian
 	@dpkg-buildpackage -us -uc -rfakeroot
+	@mkdir -p installers/packages
 	@mv ../*rdfa*@RELEASE@*deb installers/packages
 	@echo "Generating RPM packages..."
 	@cd installers/packages && fakeroot alien --to-rpm -k --scripts *deb
