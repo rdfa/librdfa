@@ -83,7 +83,7 @@ else
 install-python:
 endif
 
-packages: all
+packages:
 	@echo "Generating Debian packages..."
 	@ln -sf installers/debian debian
 	@dpkg-buildpackage -us -uc -rfakeroot
