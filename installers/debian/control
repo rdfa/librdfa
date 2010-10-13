@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Manu Sporny <msporny@digitalbazaar.com>
 Homepage: http://rdfa.digitalbazaar.com/librdfa/
-Build-Depends: python-all-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 7.0.0)
+Build-Depends: python-all-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 7.0.0), swig
 XS-Python-Version: all
 Standards-Version: 3.9.1
 
