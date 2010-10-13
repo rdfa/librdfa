@@ -2,9 +2,10 @@ Source: librdfa
 Section: libs
 Priority: optional
 Maintainer: Manu Sporny <msporny@digitalbazaar.com>
-Build-Depends: python-all-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 5.0.37.1), cdbs (>= 0.4.41)
+Homepage: http://rdfa.digitalbazaar.com/librdfa/
+Build-Depends: python-all-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 7.0.0)
 XS-Python-Version: all
-Standards-Version: 3.7.2
+Standards-Version: 3.9.1
 
 Package: librdfa1
 Architecture: any
