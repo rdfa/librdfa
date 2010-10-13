@@ -11,8 +11,8 @@ pkgconfigdir = @libdir@/pkgconfig
 
 # Python build control
 BUILD_FOR_PYTHON=@BUILD_FOR_PYTHON@
-PY_DEFAULT := 2.6
-PY_VERSIONS := $(sort 2.5 2.6 $(PY_DEFAULT))
+PY_DEFAULT := @PY_DEFAULT@
+PY_VERSIONS := $(sort @PY_VERSIONS@ $(PY_DEFAULT))
 
 VERSION = @VERSION@
 
@@ -71,6 +71,7 @@ install-librdfa-dev:
 	@install -m 644 c/rdfa_utils.h $(DESTDIR)$(includedir)
 	@install -m 644 librdfa.pc $(DESTDIR)$(pkgconfigdir)
 
+# FIXME: this should install to site-packages for 2.5 and dist-packages for 2.6
 ifeq ($(BUILD_FOR_PYTHON),yes)
 install-python%:
 	echo "Installing python extensions to $(DESTDIR)$(libdir)/python$*/site-packages ..."

@@ -116,8 +116,25 @@ CC="$CC"
 
 # Check to see if we need to build the Python modules
 if test "$ac_enable_python_build" = "yes" ; then
-   AC_CHECK_FILE(/usr/include/python2.5/Python.h, [], AC_MSG_ERROR("no"))
-   AC_CHECK_FILE(/usr/include/python2.6/Python.h, [], AC_MSG_ERROR("no"))
+   # guess default python version
+   PY_DEFAULT=["`python -c \"import platform; print '.'.join(platform.python_version_tuple()[:2])\"`"]
+   if test "x$PY_DEFAULT" = "x"; then
+      AC_MSG_ERROR([No default Python found])
+   fi
+
+   # check all versions
+   PY_POTENTIAL_VERSIONS="2.4 2.5 2.6 2.7"
+   PY_VERSIONS=""
+   for v in $PY_POTENTIAL_VERSIONS; do
+      AC_CHECK_FILE(/usr/include/python$v/Python.h, [PY_VERSIONS="$PY_VERSIONS $v"])
+   done
+   # error if no verions found
+   if test "x$PY_VERSIONS" = "x"; then
+      AC_MSG_ERROR([No Python headers found (checked $PY_POTENTIAL_VERSIONS)])
+   fi
+
+   AC_SUBST(PY_DEFAULT)
+   AC_SUBST(PY_VERSIONS)
 
    BUILD_FOR_PYTHON="yes"
 fi
@@ -187,7 +204,7 @@ echo "Archiver       : $AR"
 echo "Assembler      : $AS"
 
 if test "$BUILD_FOR_PYTHON" = "yes"; then
-   echo "Python modules : enabled"
+   echo "Python modules : enabled (versions: $PY_VERSIONS, default: $PY_DEFAULT)"
 else
    echo "Python modules : disabled (use --enable-python to enable)"
 fi
