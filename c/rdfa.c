@@ -42,6 +42,7 @@
 #include "rdfa.h"
 
 #define READ_BUFFER_SIZE 4096
+#define RDFA_DOCTYPE_STRING_LENGTH 103
 
 void rdfa_init_context(rdfacontext* context)
 {
@@ -1286,7 +1287,7 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       context->wb_preread = rdfa_init_base(context,
          &context->working_buffer, &context->wb_allocated, data, wblen);
 
-      // contisnue looking if in first 131072 bytes of data
+      // continue looking if in first 131072 bytes of data
       if(!context->base && context->wb_preread < (1<<17))
          return RDFA_PARSE_SUCCESS;
 
@@ -1368,6 +1369,74 @@ char* rdfa_get_buffer(rdfacontext* context, size_t* blen)
    return context->working_buffer;
 }
 
+int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
+{
+   int rval = 0;
+   char* doctype_position = 0;
+   char* doctype_buffer;
+
+   // Create a working buffer for finding the DOCTYPE
+   doctype_buffer = malloc(*bytes + 1);
+   memcpy(doctype_buffer, context->working_buffer, *bytes);
+   doctype_buffer[*bytes + 1] = '\0';
+   doctype_position = strstr(doctype_buffer, "<!DOCTYPE");
+
+   // if a doctype declaration was found, attempt to replace it
+   if(doctype_position != NULL)
+   {
+      char* new_doctype_buffer = NULL;
+      size_t new_doctype_buffer_length = 0;
+      char* doctype_end = index(doctype_buffer, '>');
+
+      // make sure that the end of the doctype declaration can be found
+      if(doctype_end != NULL)
+      {
+         int bytes_to_copy = 0;
+         int total_bytes = 0;
+         const char* new_doctype = 
+            "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML+RDFa 1.0//EN\" "
+            "\"http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd\">";
+
+         // create the new doctype buffer
+         bytes_to_copy = doctype_position - doctype_buffer;
+         new_doctype_buffer = rdfa_n_append_string(new_doctype_buffer, 
+            &new_doctype_buffer_length, doctype_buffer, 
+            bytes_to_copy);
+         total_bytes += bytes_to_copy;
+
+         bytes_to_copy = RDFA_DOCTYPE_STRING_LENGTH;
+         new_doctype_buffer = rdfa_n_append_string(new_doctype_buffer, 
+            &new_doctype_buffer_length, new_doctype,
+            bytes_to_copy);
+         total_bytes += bytes_to_copy;
+
+         bytes_to_copy = *bytes - ((doctype_end + 1) - doctype_buffer);
+         new_doctype_buffer = rdfa_n_append_string(new_doctype_buffer, 
+            &new_doctype_buffer_length, doctype_end + 1, 
+            bytes_to_copy);
+         total_bytes += bytes_to_copy;
+
+         // replace the old working buffer with the new doctype buffer
+         free(context->working_buffer);
+         context->working_buffer = new_doctype_buffer;
+         context->wb_allocated = total_bytes;
+         *bytes = context->wb_allocated;
+
+         rval = 1;
+      }
+   }
+   else
+   {
+      //int html_position = 0;
+      // FIXME: Implement the case where no DOCTYPE is specified
+      rval = 0;
+   }
+
+   free(doctype_buffer);
+
+   return rval;
+}
+
 int rdfa_parse_buffer(rdfacontext* context, size_t bytes)
 {
    int rval;
@@ -1381,6 +1450,7 @@ int rdfa_parse_buffer(rdfacontext* context, size_t bytes)
 int rdfa_parse(rdfacontext* context)
 {
   int rval;
+  int doctype_processed = 0;
 
   rval = rdfa_parse_start(context);
   if(rval != RDFA_PARSE_SUCCESS)
@@ -1398,6 +1468,12 @@ int rdfa_parse(rdfacontext* context)
         context->working_buffer, context->wb_allocated,
         context->callback_data);
      done = (wblen == 0);
+
+     // process the document's DOCTYPE if it hasn't already been processed
+     if(!doctype_processed && !done)
+     {
+        doctype_processed = rdfa_process_doctype(context, &wblen);
+     }
 
      rval = rdfa_parse_chunk(
         context, context->working_buffer, wblen, done);
