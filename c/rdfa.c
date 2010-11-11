@@ -132,7 +132,7 @@ static size_t rdfa_init_base(
    char* temp_buffer, size_t bytes_read)
 {
    char* head_end = NULL;
-   size_t offset = context->wb_offset;
+   size_t offset = context->wb_position;
    int needed_size = (offset + bytes_read) - *working_buffer_size;
 
    // search for the end of <head>, stop if <head> was found
@@ -159,7 +159,7 @@ static size_t rdfa_init_base(
    if(head_end == NULL)
       head_end = strstr(*working_buffer, "</HEAD>");
 
-   context->wb_offset += bytes_read;
+   context->wb_position += bytes_read;
 
    if(head_end == NULL)
       return bytes_read;
@@ -245,8 +245,9 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rdfa_replace_string(rval->language, parent_context->language);
    }
 
-   // set the triple callback
+   // set the callbacks callback
    rval->triple_callback = parent_context->triple_callback;
+   rval->issue_callback = parent_context->issue_callback;
    rval->buffer_filler_callback = parent_context->buffer_filler_callback;
 
    // inherit the bnode count, _: bnode name, recurse flag, and state
@@ -1085,7 +1086,7 @@ rdfacontext* rdfa_create_context(const char* base)
       /* parse state */
       rval->wb_allocated = 0;
       rval->working_buffer = NULL;
-      rval->wb_offset = 0;
+      rval->wb_position = 0;
 #ifdef LIBRDFA_IN_RAPTOR
       rval->base_uri = NULL;
       rval->sax2 = NULL;
@@ -1101,7 +1102,8 @@ rdfacontext* rdfa_create_context(const char* base)
    }
    else
    {
-      printf("OMG!\n");
+      printf("librdfa error: Failed to create a parsing context, "
+         "base IRI was not specified!\n");
    }
 
    return rval;
@@ -1215,6 +1217,11 @@ void rdfa_set_triple_handler(rdfacontext* context, triple_handler_fp th)
    context->triple_callback = th;
 }
 
+void rdfa_set_issue_handler(rdfacontext* context, triple_handler_fp th)
+{
+   context->issue_callback = th;
+}
+
 void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
 {
    context->buffer_filler_callback = bf;
@@ -1272,103 +1279,6 @@ int rdfa_parse_start(rdfacontext* context)
    return rval;
 }
 
-int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
-{
-   // it is an error to call this before rdfa_parse_start()
-   if(context->done)
-   {
-      return RDFA_PARSE_FAILED;
-   }
-
-   if(!context->preread)
-   {
-      // search for the <base> tag and use the href contained therein to
-      // set the parsing context.
-      context->wb_preread = rdfa_init_base(context,
-         &context->working_buffer, &context->wb_allocated, data, wblen);
-
-      // continue looking if in first 131072 bytes of data
-      if(!context->base && context->wb_preread < (1<<17))
-         return RDFA_PARSE_SUCCESS;
-
-#ifdef LIBRDFA_IN_RAPTOR
-
-      if(raptor_sax2_parse_chunk(context->sax2,
-                                 (const unsigned char*)context->working_buffer,
-                                 context->wb_offset, done))
-      {
-         return RDFA_PARSE_FAILED;
-      }
-#else
-      if(XML_Parse(context->parser, context->working_buffer,
-         context->wb_offset, 0) == XML_STATUS_ERROR)
-      {
-#ifdef WIN32
-         printf(
-#else
-         fprintf(stderr,
-#endif
-                 "%s at line %d, column %d\n",
-                 XML_ErrorString(XML_GetErrorCode(context->parser)),
-                 (int)XML_GetCurrentLineNumber(context->parser),
-                 (int)XML_GetCurrentColumnNumber(context->parser));
-         return RDFA_PARSE_FAILED;
-      }
-#endif
-
-      context->preread = 1;
-
-      return RDFA_PARSE_SUCCESS;
-   }
-
-   // otherwise just parse the block passed in
-#ifdef LIBRDFA_IN_RAPTOR
-   if(raptor_sax2_parse_chunk(context->sax2, (const unsigned char*)data, wblen, done))
-   {
-      return RDFA_PARSE_FAILED;
-   }
-#else
-   if(XML_Parse(context->parser, data, wblen, done) == XML_STATUS_ERROR)
-   {
-#ifdef WIN32
-         printf(
-#else
-         fprintf(stderr,
-#endif
-              "%s at line %d, column %d.\n",
-              XML_ErrorString(XML_GetErrorCode(context->parser)),
-              (int)XML_GetCurrentLineNumber(context->parser),
-              (int)XML_GetCurrentColumnNumber(context->parser));
-      return RDFA_PARSE_FAILED;
-   }
-#endif
-
-   return RDFA_PARSE_SUCCESS;
-}
-
-void rdfa_parse_end(rdfacontext* context)
-{
-   // deinitialize context stack
-   rdfa_pop_item(context->context_stack);
-
-   // Free the expat parser and the like
-#ifdef LIBRDFA_IN_RAPTOR
-   if(context->base_uri)
-      raptor_free_uri(context->base_uri);
-   raptor_free_sax2(context->sax2);
-   context->sax2=NULL;
-#else
-   // free parser
-   XML_ParserFree(context->parser);
-#endif
-}
-
-char* rdfa_get_buffer(rdfacontext* context, size_t* blen)
-{
-   *blen = context->wb_allocated;
-   return context->working_buffer;
-}
-
 int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
 {
    int rval = 0;
@@ -1419,6 +1329,7 @@ int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
          // replace the old working buffer with the new doctype buffer
          free(context->working_buffer);
          context->working_buffer = new_doctype_buffer;
+         context->wb_position = total_bytes;
          context->wb_allocated = total_bytes;
          *bytes = context->wb_allocated;
 
@@ -1427,7 +1338,8 @@ int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
    }
    else
    {
-      //int html_position = 0;
+      //int html_position = strcasestr(doctype_buffer, "<html>");
+
       // FIXME: Implement the case where no DOCTYPE is specified
       rval = 0;
    }
@@ -1435,6 +1347,104 @@ int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
    free(doctype_buffer);
 
    return rval;
+}
+
+void rdfa_report_error(rdfacontext* context, char* data, size_t length)
+{
+   data[length-1] = '\0';
+#ifdef WIN32
+   printf(
+#else
+   fprintf(stderr,
+#endif
+      "%s at line %d, column %d.\n",
+      XML_ErrorString(XML_GetErrorCode(context->parser)),
+      (int)XML_GetCurrentLineNumber(context->parser),
+      (int)XML_GetCurrentColumnNumber(context->parser));
+}
+
+int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
+{
+   // it is an error to call this before rdfa_parse_start()
+   if(context->done)
+   {
+      return RDFA_PARSE_FAILED;
+   }
+
+   if(!context->preread)
+   {
+      // search for the <base> tag and use the href contained therein to
+      // set the parsing context.
+      context->wb_preread = rdfa_init_base(context,
+         &context->working_buffer, &context->wb_allocated, data, wblen);
+
+      // continue looking if in first 131072 bytes of data
+      if(!context->base && context->wb_preread < (1<<17))
+         return RDFA_PARSE_SUCCESS;
+
+     // process the document's DOCTYPE
+     rdfa_process_doctype(context, &wblen);
+
+#ifdef LIBRDFA_IN_RAPTOR
+
+      if(raptor_sax2_parse_chunk(context->sax2,
+                                 (const unsigned char*)context->working_buffer,
+                                 context->wb_position, done))
+      {
+         return RDFA_PARSE_FAILED;
+      }
+#else
+      if(XML_Parse(context->parser, context->working_buffer,
+         context->wb_position, 0) == XML_STATUS_ERROR)
+      {
+         rdfa_report_error(context, data, wblen);
+         return RDFA_PARSE_FAILED;
+      }
+#endif
+
+      context->preread = 1;
+
+      return RDFA_PARSE_SUCCESS;
+   }
+
+   // otherwise just parse the block passed in
+#ifdef LIBRDFA_IN_RAPTOR
+   if(raptor_sax2_parse_chunk(context->sax2, (const unsigned char*)data, wblen, done))
+   {
+      return RDFA_PARSE_FAILED;
+   }
+#else
+   if(XML_Parse(context->parser, data, wblen, done) == XML_STATUS_ERROR)
+   {
+      rdfa_report_error(context, data, wblen);
+      return RDFA_PARSE_FAILED;
+   }
+#endif
+
+   return RDFA_PARSE_SUCCESS;
+}
+
+void rdfa_parse_end(rdfacontext* context)
+{
+   // deinitialize context stack
+   rdfa_pop_item(context->context_stack);
+
+   // Free the expat parser and the like
+#ifdef LIBRDFA_IN_RAPTOR
+   if(context->base_uri)
+      raptor_free_uri(context->base_uri);
+   raptor_free_sax2(context->sax2);
+   context->sax2=NULL;
+#else
+   // free parser
+   XML_ParserFree(context->parser);
+#endif
+}
+
+char* rdfa_get_buffer(rdfacontext* context, size_t* blen)
+{
+   *blen = context->wb_allocated;
+   return context->working_buffer;
 }
 
 int rdfa_parse_buffer(rdfacontext* context, size_t bytes)
@@ -1450,7 +1460,6 @@ int rdfa_parse_buffer(rdfacontext* context, size_t bytes)
 int rdfa_parse(rdfacontext* context)
 {
   int rval;
-  int doctype_processed = 0;
 
   rval = rdfa_parse_start(context);
   if(rval != RDFA_PARSE_SUCCESS)
@@ -1468,12 +1477,6 @@ int rdfa_parse(rdfacontext* context)
         context->working_buffer, context->wb_allocated,
         context->callback_data);
      done = (wblen == 0);
-
-     // process the document's DOCTYPE if it hasn't already been processed
-     if(!doctype_processed && !done)
-     {
-        doctype_processed = rdfa_process_doctype(context, &wblen);
-     }
 
      rval = rdfa_parse_chunk(
         context, context->working_buffer, wblen, done);

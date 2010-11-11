@@ -36,6 +36,10 @@
  * rdfa_parse(context);
  * rdfa_free_context(context);
  *
+ * If you would like to get warnings/error triples from the processor graph:
+ *
+ * rdfa_set_issue_handler(context, triple_function);
+ *
  * Usage if you need more control over when to fill rdfa's buffer:
  *
  * rdfacontext* context = rdfa_create_context(base_uri);
@@ -195,6 +199,7 @@ typedef struct rdfacontext
 
    triple_handler_fp triple_callback;
    buffer_filler_fp buffer_filler_callback;
+   triple_handler_fp issue_callback;
 
    unsigned char recurse;
    unsigned char skip_element;
@@ -218,7 +223,7 @@ typedef struct rdfacontext
    unsigned char xml_literal_xml_lang_defined;
    size_t wb_allocated;
    char* working_buffer;
-   size_t wb_offset;
+   size_t wb_position;
 #ifdef LIBRDFA_IN_RAPTOR
    raptor_world *world;
    raptor_locator *locator;
