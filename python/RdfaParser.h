@@ -53,9 +53,16 @@ public:
    void* mBufferFillerData;
 
    /**
-    * The language-specific callback for handling newly created triples.
+    * The language-specific callback for handling newly created triples
+    * from the default graph.
     */
-   void* mTripleHandlerCallback;
+   void* mDefaultGraphTripleHandlerCallback;
+
+   /**
+    * The language-specific callback for handling processor graph created 
+    * triples.
+    */
+   void* mProcessorGraphTripleHandlerCallback;
 
    /**
     * The language-specific callback data needed to handle the triple.

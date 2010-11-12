@@ -60,7 +60,7 @@ int main(int argc, char** argv)
          rdfacontext* context = rdfa_create_context(base_uri);
          context->callback_data = xhtml_file;
 
-         rdfa_set_triple_handler(context, &process_triple);
+         rdfa_set_default_graph_triple_handler(context, &process_triple);
          rdfa_set_buffer_filler(context, &fill_buffer);
          rdfa_parse(context);
          rdfa_free_context(context);

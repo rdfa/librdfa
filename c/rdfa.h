@@ -197,9 +197,9 @@ typedef struct rdfacontext
    rdfalist* local_incomplete_triples;
    char* language;
 
-   triple_handler_fp triple_callback;
+   triple_handler_fp default_graph_triple_callback;
    buffer_filler_fp buffer_filler_callback;
-   triple_handler_fp issue_callback;
+   triple_handler_fp processor_graph_triple_callback;
 
    unsigned char recurse;
    unsigned char skip_element;
@@ -253,12 +253,21 @@ typedef struct rdfacontext
 DLLEXPORT rdfacontext* rdfa_create_context(const char* base);
 
 /**
- * Sets the triple handler for the application.
+ * Sets the default graph triple handler for the application.
  *
  * @param context the base rdfa context for the application.
  * @param th the triple handler function.
  */
-DLLEXPORT void rdfa_set_triple_handler(
+DLLEXPORT void rdfa_set_default_graph_triple_handler(
+   rdfacontext* context, triple_handler_fp th);
+
+/**
+ * Sets the processor graph triple handler for the application.
+ *
+ * @param context the base rdfa context for the application.
+ * @param th the triple handler function.
+ */
+DLLEXPORT void rdfa_set_processor_graph_triple_handler(
    rdfacontext* context, triple_handler_fp th);
 
 /**

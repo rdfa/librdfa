@@ -94,7 +94,7 @@ int main(int argc, char** argv)
    clock_t stime = clock();
 
    rdfacontext* context = rdfa_create_context("http://example.org/speed");
-   rdfa_set_triple_handler(context, &process_triple);
+   rdfa_set_default_graph_triple_handler(context, &process_triple);
    rdfa_parse_start(context);
    while(g_iteration <= MAX_ITERATIONS)
    {

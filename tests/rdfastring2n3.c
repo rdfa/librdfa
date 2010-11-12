@@ -42,8 +42,15 @@ typedef struct buffer_status
    unsigned int total_length;
 } buffer_status;
 
-static void process_triple(rdftriple* triple, void* callback_data)
+static void default_graph_triple(rdftriple* triple, void* callback_data)
 {
+   rdfa_print_triple(triple);
+   rdfa_free_triple(triple);
+}
+
+static void processor_graph_triple(rdftriple* triple, void* callback_data)
+{
+   printf("Processor Graph Triple:\n");
    rdfa_print_triple(triple);
    rdfa_free_triple(triple);
 }
@@ -116,7 +123,10 @@ int main(int argc, char** argv)
          context->callback_data = status;
 
          // setup the parser
-         rdfa_set_triple_handler(context, &process_triple);
+         rdfa_set_default_graph_triple_handler(
+            context, &default_graph_triple);
+         rdfa_set_processor_graph_triple_handler(
+            context, &processor_graph_triple);
          rdfa_set_buffer_filler(context, &fill_buffer);
          rdfa_parse(context);
          rdfa_free_context(context);
