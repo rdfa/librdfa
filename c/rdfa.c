@@ -1284,7 +1284,7 @@ int rdfa_parse_start(rdfacontext* context)
    return rval;
 }
 
-int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
+static int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
 {
    int rval = 0;
    char* doctype_position = 0;
@@ -1392,10 +1392,11 @@ int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
    return rval;
 }
 
-void rdfa_report_error(rdfacontext* context, char* data, size_t length)
+#ifndef LIBRDFA_IN_RAPTOR
+static void rdfa_report_error(rdfacontext* context, char* data, size_t length)
 {
-   data[length - 1] = '\0';
    char* buffer = malloc(2<<12);
+   data[length - 1] = '\0';
    snprintf(buffer, 2<<12, "XML parsing error: %s at line %d, column %d.",
       XML_ErrorString(XML_GetErrorCode(context->parser)),
       (int)XML_GetCurrentLineNumber(context->parser),
@@ -1460,6 +1461,7 @@ void rdfa_report_error(rdfacontext* context, char* data, size_t length)
 
    free(buffer);
 }
+#endif
 
 int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 {
