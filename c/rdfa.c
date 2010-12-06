@@ -1296,7 +1296,7 @@ static int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
    // Create a working buffer for finding the DOCTYPE
    doctype_buffer = malloc(*bytes + 1);
    memcpy(doctype_buffer, context->working_buffer, *bytes);
-   doctype_buffer[*bytes + 1] = '\0';
+   doctype_buffer[*bytes] = '\0';
    doctype_position = strstr(doctype_buffer, "<!DOCTYPE");
 
    // if a doctype declaration was found, attempt to replace it
