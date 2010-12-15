@@ -175,7 +175,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
       gRdfaParser->mProcessorGraphTripleHandlerCallback = pyfunc;
       gRdfaParser->mTripleHandlerData = data;
       rdfa_set_processor_graph_triple_handler(
-         gRdfaParser->mBaseContext, process_default_graph_triple);
+         gRdfaParser->mBaseContext, process_processor_graph_triple);
       Py_INCREF(pyfunc);
       Py_INCREF(data);
       PyGILState_Release(state);
