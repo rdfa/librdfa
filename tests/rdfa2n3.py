@@ -93,7 +93,7 @@ def processor_triple( \
 #                   than bufferSize will halt execution after the returned
 #                   buffer has been processed.
 def handle_buffer(dataFile, bufferSize):
-    return dataFile.read()
+    return dataFile.read(bufferSize)
 
 ##
 # The main entry point for the script.
