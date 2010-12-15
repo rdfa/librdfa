@@ -19,10 +19,11 @@
 #include "rdfa.h"
 #include "RdfaParser.h"
 
-RdfaParser::RdfaParser(const char* baseUri)
+RdfaParser::RdfaParser(const char* baseUri, bool useGil)
 {
    mBaseUri = baseUri;
    mBaseContext = rdfa_create_context(baseUri);
+   mUseGil = useGil;
 }
 
 RdfaParser::~RdfaParser()
@@ -34,3 +35,4 @@ int RdfaParser::parse()
 {
    return rdfa_parse(mBaseContext);
 }
+

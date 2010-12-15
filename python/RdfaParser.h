@@ -23,6 +23,9 @@
 
 struct rdfacontext;
 
+#define ACQUIRE_GIL PyGILState_STATE state; if(gRdfaParser->mUseGil) state = PyGILState_Ensure()
+#define RELEASE_GIL if(gRdfaParser->mUseGil) PyGILState_Release(state)
+
 /**
  * The RdfaParser class is a wrapper class for Python to provide a
  * simple API for using librdfa in Python.
@@ -70,13 +73,21 @@ public:
    void* mTripleHandlerData;
    
    /**
+    * Flag to specify whether or not to use the Global Interpreter Lock.
+    */
+   bool mUseGil;
+
+   /**
     * Standard constructor for the RDFa parser.
     *
     * @param baseUri the base URI to use when resolving relative
     *                pathnames in the document. This value should be
     *                the fully qualified URI to the document.
+    * @param useGil uses the Python Global Interpreter Lock. Turned on by
+    *               default, but there may be some places where you don't want
+    *               to use this, like from within Apache.
     */
-   RdfaParser(const char* baseUri);
+   RdfaParser(const char* baseUri, bool useGil = 1);
 
    /**
     * Standard destructor.

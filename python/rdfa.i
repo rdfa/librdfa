@@ -51,7 +51,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data);
 %{
 void process_default_graph_triple(rdftriple* triple, void* callback_data)
 {
-   PyGILState_STATE state = PyGILState_Ensure();
+   ACQUIRE_GIL;
    PyObject* func;
    PyObject* data = (PyObject*)gRdfaParser->mTripleHandlerData;
    PyObject* arglist;
@@ -67,13 +67,12 @@ void process_default_graph_triple(rdftriple* triple, void* callback_data)
    Py_DECREF(arglist);
 
    rdfa_free_triple(triple);
-
-   PyGILState_Release(state);
+   RELEASE_GIL;
 }
 
 void process_processor_graph_triple(rdftriple* triple, void* callback_data)
 {
-   PyGILState_STATE state = PyGILState_Ensure();
+   ACQUIRE_GIL;
    PyObject* func;
    PyObject* data = (PyObject*)gRdfaParser->mTripleHandlerData;
    PyObject* arglist;
@@ -89,14 +88,12 @@ void process_processor_graph_triple(rdftriple* triple, void* callback_data)
    Py_DECREF(arglist);
 
    rdfa_free_triple(triple);
-
-   PyGILState_Release(state);
+   RELEASE_GIL;
 }
 
 size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
 {
-   PyGILState_STATE state = PyGILState_Ensure();
-
+   ACQUIRE_GIL;
    size_t rval = 0;
    PyObject* func;
    PyObject* dataFile = (PyObject*)gRdfaParser->mBufferFillerData;
@@ -134,7 +131,7 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
    }
    Py_XDECREF(pyresult);
 
-   PyGILState_Release(state);
+   RELEASE_GIL;
 
    return rval;
 }
@@ -152,15 +149,15 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
     */
    void setDefaultGraphTripleHandler(PyObject *pyfunc, PyObject* data) 
    {
-      PyGILState_STATE state = PyGILState_Ensure();
       gRdfaParser = self;
+      ACQUIRE_GIL;
       gRdfaParser->mDefaultGraphTripleHandlerCallback = pyfunc;
       gRdfaParser->mTripleHandlerData = data;
       rdfa_set_default_graph_triple_handler(
          gRdfaParser->mBaseContext, process_default_graph_triple);
       Py_INCREF(pyfunc);
       Py_INCREF(data);
-      PyGILState_Release(state);
+      RELEASE_GIL;
    }
 
    /**
@@ -170,15 +167,15 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
     */
    void setProcessorGraphTripleHandler(PyObject *pyfunc, PyObject* data) 
    {
-      PyGILState_STATE state = PyGILState_Ensure();
       gRdfaParser = self;
+      ACQUIRE_GIL;
       gRdfaParser->mProcessorGraphTripleHandlerCallback = pyfunc;
       gRdfaParser->mTripleHandlerData = data;
       rdfa_set_processor_graph_triple_handler(
          gRdfaParser->mBaseContext, process_processor_graph_triple);
       Py_INCREF(pyfunc);
       Py_INCREF(data);
-      PyGILState_Release(state);
+      RELEASE_GIL;
    }
 
    /**
@@ -188,14 +185,14 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
     */
    void setBufferHandler(PyObject *pyfunc, PyObject* data) 
    {
-      PyGILState_STATE state = PyGILState_Ensure();
       gRdfaParser = self;
+      ACQUIRE_GIL;
       gRdfaParser->mBufferFillerCallback = pyfunc;
       gRdfaParser->mBufferFillerData = data;
       rdfa_set_buffer_filler(gRdfaParser->mBaseContext, &fill_buffer);
       Py_INCREF(pyfunc);
       Py_INCREF(data);
-      PyGILState_Release(state);
+      RELEASE_GIL;
    }
 }
 #endif
