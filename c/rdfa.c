@@ -175,13 +175,12 @@ static size_t rdfa_init_base(
       if(base_start != NULL)
       {
          char* href_start = strstr(base_start, "href=");
-         char sep = href_start[5];
          char* uri_start = href_start + 6;
-         char* uri_end = strchr(uri_start, sep);
+         char* uri_end = strchr(uri_start, '"');
 
          if((uri_start != NULL) && (uri_end != NULL))
          {
-            if(*uri_start != sep)
+            if(*uri_start != '"')
             {
                size_t uri_size = uri_end - uri_start;
                char* temp_uri = (char*)malloc(sizeof(char) * uri_size + 1);
