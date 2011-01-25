@@ -1,5 +1,5 @@
 /**
- * Copyright 2008 Digital Bazaar, Inc.
+ * Copyright 2008-2011 Digital Bazaar, Inc.
  *
  * This file is part of librdfa.
  *
@@ -233,10 +233,7 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
 
    // copy the URI mappings
 #ifndef LIBRDFA_IN_RAPTOR
-   if(rval->uri_mappings != NULL)
-   {
-      rdfa_free_mapping(rval->uri_mappings);
-   }
+   rdfa_free_mapping(rval->uri_mappings);
    rval->uri_mappings = rdfa_copy_mapping(parent_context->uri_mappings);
 #endif
 
@@ -334,20 +331,12 @@ static rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rval->parent_object, parent_context->parent_object);
 
       // copy the incomplete triples
-      if(rval->incomplete_triples != NULL)
-      {
-         rdfa_free_list(rval->incomplete_triples);
-      }
-
+      rdfa_free_list(rval->incomplete_triples);
       rval->incomplete_triples =
          rdfa_copy_list(parent_context->incomplete_triples);
 
       // copy the local list of incomplete triples
-      if(rval->local_incomplete_triples != NULL)
-      {
-         rdfa_free_list(rval->local_incomplete_triples);
-      }
-
+      rdfa_free_list(rval->local_incomplete_triples);
       rval->local_incomplete_triples =
          rdfa_copy_list(parent_context->local_incomplete_triples);
    }
@@ -909,7 +898,6 @@ static void XMLCALL
       // processing the object literal.
       buffer = NULL;
 
-
       if(context->xml_literal != NULL)
       {
          // get the data between the first tag and the last tag
@@ -1122,83 +1110,27 @@ rdfacontext* rdfa_create_context(const char* base)
 
 void rdfa_free_context(rdfacontext* context)
 {
-   if(context->base)
-   {
-      free(context->base);
-   }
-
-   if(context->parent_subject != NULL)
-   {
-      free(context->parent_subject);
-   }
-
-   if(context->parent_object != NULL)
-   {
-      free(context->parent_object);
-   }
+   free(context->base);
+   free(context->parent_subject);
+   free(context->parent_object);
 
 #ifndef LIBRDFA_IN_RAPTOR
-   if(context->uri_mappings != NULL)
-   {
-      rdfa_free_mapping(context->uri_mappings);
-   }
+   rdfa_free_mapping(context->uri_mappings);
 #endif
 
-   if(context->incomplete_triples != NULL)
-   {
-      rdfa_free_list(context->incomplete_triples);
-   }
-
-   if(context->language != NULL)
-   {
-      free(context->language);
-   }
-
-   if(context->underscore_colon_bnode_name != NULL)
-   {
-      free(context->underscore_colon_bnode_name);
-   }
-
-   if(context->new_subject != NULL)
-   {
-      free(context->new_subject);
-   }
-
-   if(context->current_object_resource != NULL)
-   {
-      free(context->current_object_resource);
-   }
-
-   if(context->content != NULL)
-   {
-      free(context->content);
-   }
-
-   if(context->datatype != NULL)
-   {
-      free(context->datatype);
-   }
-
-   if(context->property != NULL)
-   {
-      rdfa_free_list(context->property);
-   }
-
-   if(context->plain_literal != NULL)
-   {
-      free(context->plain_literal);
-   }
-
-   if(context->xml_literal != NULL)
-   {
-      free(context->xml_literal);
-   }
+   rdfa_free_list(context->incomplete_triples);
+   free(context->language);
+   free(context->underscore_colon_bnode_name);
+   free(context->new_subject);
+   free(context->current_object_resource);
+   free(context->content);
+   free(context->datatype);
+   rdfa_free_list(context->property);
+   free(context->plain_literal);
+   free(context->xml_literal);
 
    // TODO: These should be moved into their own data structure
-   if(context->local_incomplete_triples != NULL)
-   {
-      rdfa_free_list(context->local_incomplete_triples);
-   }
+   rdfa_free_list(context->local_incomplete_triples);
 
    // this field is not NULL only on the rdfacontext* at the top of the stack
    if(context->context_stack != NULL)
@@ -1206,20 +1138,20 @@ void rdfa_free_context(rdfacontext* context)
       void* rval;
       // free the stack ensuring that we do not delete this context if
       // it is in the list (which it may be, if parsing ended on error)
-      do {
-        rval=rdfa_pop_item(context->context_stack);
-        if(rval && rval != context)
-          rdfa_free_context((rdfacontext*)rval);
-      } while(rval);
+      do
+      {
+         rval = rdfa_pop_item(context->context_stack);
+         if(rval && rval != context)
+         {
+            rdfa_free_context((rdfacontext*)rval);
+         }
+      }
+      while(rval);
       free(context->context_stack->items);
       free(context->context_stack);
    }
 
-   if(context->working_buffer != NULL)
-   {
-      free(context->working_buffer);
-   }
-
+   free(context->working_buffer);
    free(context);
 }
 
@@ -1404,7 +1336,10 @@ static int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
 static void rdfa_report_error(rdfacontext* context, char* data, size_t length)
 {
    char* buffer = malloc(2<<12);
-   data[length - 1] = '\0';
+   if(length > 0)
+   {
+      data[length - 1] = '\0';
+   }
    snprintf(buffer, 2<<12, "XML parsing error: %s at line %d, column %d.",
       XML_ErrorString(XML_GetErrorCode(context->parser)),
       (int)XML_GetCurrentLineNumber(context->parser),
