@@ -1340,10 +1340,6 @@ static int rdfa_process_doctype(rdfacontext* context, size_t* bytes)
 static void rdfa_report_error(rdfacontext* context, char* data, size_t length)
 {
    char* buffer = malloc(2<<12);
-   if(length > 0)
-   {
-      data[length - 1] = '\0';
-   }
    snprintf(buffer, 2<<12, "XML parsing error: %s at line %d, column %d.",
       XML_ErrorString(XML_GetErrorCode(context->parser)),
       (int)XML_GetCurrentLineNumber(context->parser),
@@ -1525,8 +1521,7 @@ int rdfa_parse(rdfacontext* context)
         context->callback_data);
      done = (wblen == 0);
 
-     rval = rdfa_parse_chunk(
-        context, context->working_buffer, wblen, done);
+     rval = rdfa_parse_chunk(context, context->working_buffer, wblen, done);
      context->done=done;
   }
   while(!context->done && rval == RDFA_PARSE_SUCCESS);
