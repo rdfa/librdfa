@@ -2,18 +2,18 @@
  * Copyright 2008 Digital Bazaar, Inc.
  *
  * This file is part of librdfa.
- * 
+ *
  * librdfa is Free Software, and can be licensed under any of the
  * following three licenses:
- * 
- *   1. GNU Lesser General Public License (LGPL) V2.1 or any 
+ *
+ *   1. GNU Lesser General Public License (LGPL) V2.1 or any
  *      newer version
  *   2. GNU General Public License (GPL) V2 or any newer version
  *   3. Apache License, V2.0 or any newer version
- * 
+ *
  * You may not use this file except in compliance with at least one of
  * the above three licenses.
- * 
+ *
  * See LICENSE-* at the top of this software distribution for more
  * information regarding the details of each license.
  *
@@ -144,7 +144,7 @@ void run_list_test(rdfacontext* context, const char* name, const char* curies,
          compare = 0;
          char* icurie = (*iptr)->data;
          char* rcurie = (*rptr)->data;
-         
+
          //printf("curie list: %s == %s\n", icurie, rcurie);
          if(strcmp(icurie, rcurie) != 0)
          {
@@ -153,7 +153,7 @@ void run_list_test(rdfacontext* context, const char* name, const char* curies,
          iptr++;
          rptr++;
       }
-   }   
+   }
 
    printf("UT#%02i/%s \"%s\" ...", ++g_test_num, name, curies);
 
@@ -167,7 +167,7 @@ void run_list_test(rdfacontext* context, const char* name, const char* curies,
    else
    {
       printf("FAIL.");
-      
+
       g_test_fails++;
    }
 
@@ -224,12 +224,10 @@ void run_test_set(rdfacontext* context, const char* name, const char** curies,
          g_test_fails++;
       }
 
-      if(result != NULL)
-      {
-         free(result);
-      }
+      free(result);
+      free(full_iri);
    //      char* full_iri = rdfa_join_string(iri, curies[i]);
-      
+
    //   run_test(context, name, curies[i], cb, full_iri, mode);
 
    //   free(full_iri);
@@ -242,14 +240,14 @@ void run_curie_tests()
       rdfa_create_context("http://example.org/");
 
    rdfa_init_context(context);
-   
+
    rdfa_update_mapping(
       context->uri_mappings, "dc", "http://purl.org/dc/elements/1.1/");
    rdfa_update_mapping(
       context->uri_mappings, "dctv", "http://purl.org/dc/dcmitype/");
-   
+
    printf("------------------------ CURIE tests ---------------------\n");
-   
+
    run_test(context, "IRI", "http://www.example.org/iri",
             rdfa_resolve_curie, "http://www.example.org/iri",
             CURIE_PARSE_HREF_SRC);
@@ -290,12 +288,12 @@ void run_curie_tests()
       context, "XHTML multiple @rel/@rev", "next license",
       rdfa_resolve_curie_list, nllist, CURIE_PARSE_RELREV);
    rdfa_free_list(nllist);
-   
+
    rdfalist* dtlist = rdfa_create_list(2);
    rdfa_add_item(
       dtlist, XHTML_VOCAB_URI "description", RDFALIST_FLAG_NONE);
    rdfa_add_item(
-      dtlist, XHTML_VOCAB_URI "title", RDFALIST_FLAG_NONE);   
+      dtlist, XHTML_VOCAB_URI "title", RDFALIST_FLAG_NONE);
    run_list_test(
       context, "XHTML multiple @property", "description title",
       rdfa_resolve_curie_list, dtlist, CURIE_PARSE_PROPERTY);
@@ -316,6 +314,6 @@ int main(int argc, char** argv)
 {
    printf("Running CURIE tests\n");
    run_curie_tests();
-   
+
    return 0;
 }
