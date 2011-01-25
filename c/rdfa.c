@@ -1059,7 +1059,6 @@ static void raptor_rdfa_namespace_handler(void *user_data,
 
 #endif
 
-
 rdfacontext* rdfa_create_context(const char* base)
 {
    rdfacontext* rval = NULL;
@@ -1108,6 +1107,29 @@ rdfacontext* rdfa_create_context(const char* base)
    return rval;
 }
 
+static void rdfa_free_context_stack(rdfacontext* context)
+{
+   // this field is not NULL only on the rdfacontext* at the top of the stack
+   if(context->context_stack != NULL)
+   {
+      void* rval;
+      // free the stack ensuring that we do not delete this context if
+      // it is in the list (which it may be, if parsing ended on error)
+      do
+      {
+         rval = rdfa_pop_item(context->context_stack);
+         if(rval && rval != context)
+         {
+            rdfa_free_context((rdfacontext*)rval);
+         }
+      }
+      while(rval);
+      free(context->context_stack->items);
+      free(context->context_stack);
+      context->context_stack = NULL;
+   }
+}
+
 void rdfa_free_context(rdfacontext* context)
 {
    free(context->base);
@@ -1132,25 +1154,7 @@ void rdfa_free_context(rdfacontext* context)
    // TODO: These should be moved into their own data structure
    rdfa_free_list(context->local_incomplete_triples);
 
-   // this field is not NULL only on the rdfacontext* at the top of the stack
-   if(context->context_stack != NULL)
-   {
-      void* rval;
-      // free the stack ensuring that we do not delete this context if
-      // it is in the list (which it may be, if parsing ended on error)
-      do
-      {
-         rval = rdfa_pop_item(context->context_stack);
-         if(rval && rval != context)
-         {
-            rdfa_free_context((rdfacontext*)rval);
-         }
-      }
-      while(rval);
-      free(context->context_stack->items);
-      free(context->context_stack);
-   }
-
+   rdfa_free_context_stack(context);
    free(context->working_buffer);
    free(context);
 }
@@ -1469,8 +1473,8 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 
 void rdfa_parse_end(rdfacontext* context)
 {
-   // deinitialize context stack
-   rdfa_pop_item(context->context_stack);
+   // free context stack
+   rdfa_free_context_stack(context);
 
    // Free the expat parser and the like
 #ifdef LIBRDFA_IN_RAPTOR

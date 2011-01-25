@@ -59,11 +59,8 @@ char* rdfa_replace_string(char* old_string, const char* new_string)
 
    if(new_string != NULL)
    {
-      // free the memory associated with the old string if it exists.
-      if(old_string != NULL)
-      {
-         free(old_string);
-      }
+      // free the memory associated with the old string
+      free(old_string);
 
       // copy the new string
       rval = strdup(new_string);
@@ -125,26 +122,29 @@ rdfalist* rdfa_copy_list(rdfalist* list)
    // copy the base list variables over
    rval->max_items = list->max_items;
    rval->num_items = list->num_items;
-   rval->items = NULL;
-   rval->items = (rdfalistitem**)realloc(
-      rval->items, sizeof(void*) * rval->max_items);
+   rval->items = (rdfalistitem**)malloc(sizeof(void*) * rval->max_items);
 
    // copy the data of every list member along with all of the flags
    // for each list member.
-   //
-   // TODO: Implement the copy for context, if it is needed.
    for(i = 0; i < list->max_items; i++)
    {
-      if(i < rval->num_items)
+      if(i < list->num_items)
       {
+         rval->items[i] = (rdfalistitem*)malloc(sizeof(rdfalistitem));
+         rval->items[i]->data = NULL;
+         rval->items[i]->flags = list->items[i]->flags;
+
+         // copy specific data type
          if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
          {
-            rval->items[i] = (rdfalistitem*)malloc(sizeof(rdfalistitem));
-            rval->items[i]->data = NULL;
             rval->items[i]->data = (char*)rdfa_replace_string(
-               (char*)rval->items[i]->data, (const char*)list->items[i]->data);
-            rval->items[i]->flags = list->items[i]->flags;
+               NULL, (const char*)list->items[i]->data);
          }
+         /*
+         else if(flags & RDFALIST_FLAG_CONTEXT)
+         {
+            // TODO: Implement the copy for context, if it is needed.
+         }*/
       }
       else
       {
@@ -201,10 +201,10 @@ void* rdfa_pop_item(rdfalist* stack)
 
    if(stack->num_items > 0)
    {
-      rval = stack->items[stack->num_items - 1]->data;
-      free(stack->items[stack->num_items - 1]);
-      stack->items[stack->num_items - 1] = NULL;
-      stack->num_items--;
+      --stack->num_items;
+      rval = stack->items[stack->num_items]->data;
+      free(stack->items[stack->num_items]);
+      stack->items[stack->num_items] = NULL;
    }
 
    return rval;
@@ -222,7 +222,8 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
    }
    else
    {
-      item->data = (char*)rdfa_replace_string((char*)item->data, (const char*)data);
+      item->data = (char*)rdfa_replace_string(
+         (char*)item->data, (const char*)data);
    }
 
    item->flags = flags;
@@ -230,12 +231,12 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
    if(list->num_items == list->max_items)
    {
       list->max_items = 1 + (list->max_items * 2);
-      list->items = (rdfalistitem**)
-         realloc(list->items, sizeof(rdfalistitem) * list->max_items);
+      list->items = (rdfalistitem**)realloc(
+         list->items, sizeof(rdfalistitem) * list->max_items);
    }
 
    list->items[list->num_items] = item;
-   list->num_items++;
+   ++list->num_items;
 }
 
 #ifndef LIBRDFA_IN_RAPTOR
