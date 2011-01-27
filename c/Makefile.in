@@ -9,7 +9,7 @@ endif
 LIBRARIES = rdfa
 DYNAMIC_LINK_LIBRARIES = expat 
 DYNAMIC_WINDOWS_LIBRARIES = 
-EXCLUDE_DLL_SYMBOLS = strtok_r,index,rindex,get_curie_type
+EXCLUDE_DLL_SYMBOLS = strtok_r,index,rindex
 
 # ----------- Standard Makefile
 include @RDFADIR@/setup/Makefile.base
