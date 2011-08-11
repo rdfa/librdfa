@@ -17,7 +17,7 @@ directories:
 
 dist/python%-rdfa.so: build/RdfaParser.o build/SwigRdfaParser-python%.o
 	echo "Building $@..."
-	g++ -shared -L ../libs -o dist/python$*-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python$*.o -lrdfa
+	g++ -shared -L ../libs -fPIC -o dist/python$*-rdfa.so build/RdfaParser.o build/SwigRdfaParser-python$*.o -lrdfa
 
 dist/_rdfa.so: dist/python$(PY_DEFAULT)-rdfa.so
 	ln -sf $(notdir $<) $@
@@ -29,12 +29,12 @@ build/SwigRdfaParser.cpp: rdfa.i
 
 build/SwigRdfaParser-python%.o: build/SwigRdfaParser.cpp
 	echo "Building $@..."
-	g++ -g -c -I../c -I. -I/usr/include/python$* build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python$*.o
+	g++ -g -c -I../c -I. -I/usr/include/python$* -fPIC build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python$*.o
 
 build/RdfaParser.o:
 	echo "Building $@..."
 	cd build && ln -sf ../RdfaParser.cpp RdfaParser.cpp
-	g++ -g -c -I../c -I. build/RdfaParser.cpp -o build/RdfaParser.o
+	g++ -g -c -I../c -I. -fPIC build/RdfaParser.cpp -o build/RdfaParser.o
 
 build-objects: \
 	directories \
