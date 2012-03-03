@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name: librdfa
-Description: The Fastest RDFa Parser on the Internet
+Description: The Fastest RDFa Parser Ever
 Version: @VERSION@
 Libs: -L${libdir} -lrdfa
 Cflags: -I${includedir}

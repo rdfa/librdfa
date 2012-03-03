@@ -18,7 +18,7 @@
 # 
 # Author: Manu Sporny
 
-AC_INIT(librdfa, 0.18, support@digitalbazaar.com)
+AC_INIT(librdfa, 1.1, support@digitalbazaar.com)
 AC_CONFIG_AUX_DIR(setup)
 
 # Setup standard build environment variables
@@ -86,8 +86,8 @@ if test "$BUILD_FOR_WINDOWS" = "yes" ; then
    AC_CHECK_PROGS(CC, i586-mingw32msvc-gcc gcc, not found)
    AC_CHECK_PROGS(AR, i586-mingw32msvc-ar ar, not found)
    AC_CHECK_PROGS(AS, i586-mingw32msvc-as as, not found)
-   EXPAT_INCLUDE_DIRECTORY="$RDFADIR/3rdparty/expat/include"
-   EXPAT_LIB_DIRECTORY="$RDFADIR/3rdparty/expat"
+   LIBXML2_INCLUDE_DIRECTORY="$RDFADIR/3rdparty/libxml2/include"
+   LIBXML2_LIB_DIRECTORY="$RDFADIR/3rdparty/libxml2"
    OS="mingw32"
 fi
 
@@ -98,8 +98,8 @@ if test "$BUILD_FOR_MACOS" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
-   EXPAT_INCLUDE_DIRECTORY="/opt/local/include"
-   EXPAT_LIB_DIRECTORY="/opt/local/lib"
+   LIBXML2_INCLUDE_DIRECTORY="/opt/local/include"
+   LIBXML2_LIB_DIRECTORY="/opt/local/lib"
    OS="macos"
 fi
 
@@ -108,8 +108,8 @@ if test "$BUILD_FOR_LINUX" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
-   EXPAT_INCLUDE_DIRECTORY="/usr/include"
-   EXPAT_LIB_DIRECTORY="/usr/lib"
+   LIBXML2_INCLUDE_DIRECTORY="/usr/include"
+   LIBXML2_LIB_DIRECTORY="/usr/lib"
 fi
 
 CC="$CC"
@@ -150,7 +150,7 @@ fi
 
 # Make sure the proper libraries exist
 if test "$BUILD_FOR_WINDOWS" = "no" ; then
-   AC_CHECK_LIB(expat, main, [], AC_MSG_ERROR(could not find expat library), -L$EXPAT_LIB_DIRECTORY)
+   AC_CHECK_LIB(xml2, main, [], AC_MSG_ERROR(could not find libxml2 library), -L$LIBXML2_LIB_DIRECTORY)
 fi
 
 # Make all the proper substitutions
@@ -171,8 +171,8 @@ AC_SUBST(AS)
 
 AC_SUBST(OS)
 
-AC_SUBST(EXPAT_LIB_DIRECTORY)
-AC_SUBST(EXPAT_INCLUDE_DIRECTORY)
+AC_SUBST(LIBXML2_LIB_DIRECTORY)
+AC_SUBST(LIBXML2_INCLUDE_DIRECTORY)
 
 # Generating files
 AC_CONFIG_FILES([

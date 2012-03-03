@@ -3,8 +3,8 @@
 EXECUTABLES = rdfa2n3 rdfastring2n3 curies speed speed2
 
 DYNAMIC_LINK_LIBRARIES = rdfa
-DYNAMIC_UNIX_LIBRARIES = expat
-DYNAMIC_WINDOWS_LIBRARIES = expat
+DYNAMIC_UNIX_LIBRARIES = xml2
+DYNAMIC_WINDOWS_LIBRARIES = xml2
 
 # ----------- Standard Makefile
 include @RDFADIR@/setup/Makefile.base

@@ -7,7 +7,7 @@ SOURCES += mingw32_utils.c
 endif
 
 LIBRARIES = rdfa
-DYNAMIC_LINK_LIBRARIES = expat 
+DYNAMIC_LINK_LIBRARIES = xml2 
 DYNAMIC_WINDOWS_LIBRARIES = 
 EXCLUDE_DLL_SYMBOLS = strtok_r,index,rindex
 
