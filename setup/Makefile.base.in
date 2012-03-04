@@ -27,14 +27,20 @@ AR_FLAGS = cr
 # Windows flags
 ifeq ($(OS),mingw32)
 CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
-INCLUDES += -I$(RDFA)/3rdparty/expat/include
-LDFLAGS += -L$(RDFA)/3rdparty/expat
+INCLUDES += -I$(RDFA)/3rdparty/libxml2/include
+LDFLAGS += -L$(RDFA)/3rdparty/libxml2
 endif
 
 # Mac OS flags
 ifeq ($(OS),macos)
-INCLUDES += -I@EXPAT_INCLUDE_DIRECTORY@
-LDFLAGS += -L@EXPAT_LIB_DIRECTORY@
+INCLUDES += -I@LIBXML2_INCLUDE_DIRECTORY@
+LDFLAGS += -L@LIBXML2_LIB_DIRECTORY@
+endif
+
+# Linux flags
+ifeq ($(OS),linux-gnu)
+INCLUDES += -I@LIBXML2_INCLUDE_DIRECTORY@
+LDFLAGS += -L@LIBXML2_LIB_DIRECTORY@
 endif
 
 # Dependencies and objects

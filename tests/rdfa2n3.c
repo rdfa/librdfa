@@ -26,7 +26,7 @@
 #include <rdfa_utils.h>
 
 #define BASE_URI \
-   "http://rdfa.digitalbazaar.com/test-suite/tests-cases/"
+   "http://rdfa.info/test-suite/tests-cases/"
 
 void process_triple(rdftriple* triple, void* callback_data)
 {

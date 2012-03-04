@@ -74,6 +74,7 @@
 #ifndef _LIBRDFA_RDFA_H_
 #define _LIBRDFA_RDFA_H_
 #include <stdlib.h>
+#include <libxml/SAX2.h>
 
 // Activate the stupid Windows DLL exporting mechanism if we're building for Windows
 #ifdef WIN32
@@ -234,7 +235,7 @@ typedef struct rdfacontext
    raptor_namespace_handler namespace_handler;
    void* namespace_handler_user_data;
 #else
-   XML_Parser parser;
+   xmlParserCtxtPtr parser;
 #endif
    int done;
    rdfalist* context_stack;

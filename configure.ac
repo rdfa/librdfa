@@ -108,7 +108,7 @@ if test "$BUILD_FOR_LINUX" = "yes" ; then
    AC_PROG_CC()
    AC_CHECK_PROG(AR, ar, ar, not found)
    AC_CHECK_PROG(AS, as, as, not found)
-   LIBXML2_INCLUDE_DIRECTORY="/usr/include"
+   LIBXML2_INCLUDE_DIRECTORY="/usr/include/libxml2"
    LIBXML2_LIB_DIRECTORY="/usr/lib"
 fi
 

@@ -52,16 +52,14 @@ void rdfa_update_uri_mappings(
    // follow best practice for using namespaces, which includes not
    // using relative paths.
 
-   if(strcmp(attr, "xmlns") == 0)
+   if(attr == NULL)
    {
       rdfa_update_mapping(context->uri_mappings, XMLNS_DEFAULT_MAPPING, value);
    }
-   // check to make sure we're actually dealing with an
-   // xmlns: namespace attribute
-   else if(strncmp(attr, "xmlns:", 6) == 0 && attr[6] != '\0')
+   else
    {
-      rdfa_generate_namespace_triple(context, attr + 6, value);
-      rdfa_update_mapping(context->uri_mappings, attr + 6, value);
+      rdfa_generate_namespace_triple(context, attr, value);
+      rdfa_update_mapping(context->uri_mappings, attr, value);
    }
 }
 #endif
