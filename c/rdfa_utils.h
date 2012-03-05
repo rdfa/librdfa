@@ -351,6 +351,13 @@ void rdfa_complete_object_literal_triples(rdfacontext* context);
 void rdfa_generate_namespace_triple(
    rdfacontext* context, const char* prefix, const char* iri);
 
+/* context.c - needed by rdfa.c */
+rdfacontext* rdfa_create_context(const char* base);
+void rdfa_init_context(rdfacontext* context);
+rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack);
+void rdfa_free_context_stack(rdfacontext* context);
+void rdfa_free_context(rdfacontext* context);
+
 #ifdef __cplusplus
 }
 #endif

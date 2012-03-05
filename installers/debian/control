@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Manu Sporny <msporny@digitalbazaar.com>
 Homepage: http://rdfa.digitalbazaar.com/librdfa/
-Build-Depends: python-all-dev, libexpat1-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 7.0.0), swig
+Build-Depends: python-all-dev, libxml2-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 7.0.0), swig
 XS-Python-Version: all
 Standards-Version: 3.9.1
 
@@ -12,7 +12,7 @@ Architecture: any
 Depends: ${shlibs:Depends}
 Description: RDFa parsing C library - runtime library
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
- It uses expat for the underlying XML parser, is very small in size (19KB),
+ It uses libxml2 for the underlying XML parser, is very small in size (19KB),
  cross-platform, stream-based, has a very small execution footprint, and
  has bindings to other languages, such as Python.
  .
@@ -24,7 +24,7 @@ Section: libdevel
 Depends: librdfa1 (= ${binary:Version})
 Description: RDFa parsing C library - development kit
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
- It uses expat for the underlying XML parser, is very small in size (19KB),
+ It uses libxml2 for the underlying XML parser, is very small in size (19KB),
  cross-platform, stream-based, has a very small execution footprint, and
  has bindings to other languages, such as Python.
  .
@@ -39,7 +39,7 @@ Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: RDFa parsing Python library (Python bindings)
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
- It uses expat for the underlying XML parser, is very small in size (19KB),
+ It uses libxml2 for the underlying XML parser, is very small in size (19KB),
  cross-platform, stream-based, and has a very small execution footprint.
  .
  This package contains Python bindings to access librdfa.

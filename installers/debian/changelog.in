@@ -1,5 +1,5 @@
-librdfa (@VERSION@-@RELEASE@) unstable; urgency=low
+librdfa (@VERSION@-@RELEASE@) stable; urgency=low
 
   * Initial release.
 
- -- Manu Sporny <msporny@digitalbazaar.com>  Tue, 5 Feb 2008 09:34:19 -0400
+ -- Manu Sporny <msporny@digitalbazaar.com>  Tue, 5 Feb 2012 09:34:19 -0400

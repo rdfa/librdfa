@@ -57,6 +57,16 @@ AC_ARG_ENABLE([macos],
       esac
    ], [BUILD_FOR_MACOS=no])  dnl Default value
 
+AC_ARG_ENABLE([libxml2],
+               AC_HELP_STRING([--enable-libxml2],
+                              [enable libxml2 as the default parser (default is YES)]),
+              [ac_enable_parser_libxml2=yes], [ac_enable_parser_libxml2=yes])
+
+AC_ARG_ENABLE([raptor],
+               AC_HELP_STRING([--enable-raptor],
+                              [enable raptor as the default parser (default is NO)]),
+              [ac_enable_parser_raptor=yes], [ac_enable_parser_raptor=no])
+
 AC_ARG_ENABLE([python],
                AC_HELP_STRING([--enable-python],
                               [compile extensions for Python (default is NO)]),
@@ -78,6 +88,9 @@ OS="$build_os"
 # Checking for standard build tools
 #AC_LANG(C++)
 AC_PROG_INSTALL()
+
+# The default parser environment
+PARSER="libxml2"
 
 # Conditional setup for Windows build
 if test "$BUILD_FOR_WINDOWS" = "yes" ; then
@@ -139,6 +152,19 @@ if test "$ac_enable_python_build" = "yes" ; then
    BUILD_FOR_PYTHON="yes"
 fi
 
+# Check default parser
+if test "$ac_enable_parser_libxml2" = "yes"; then
+   # Make sure the proper libraries exist
+   if test "$BUILD_FOR_WINDOWS" = "no" ; then
+      AC_CHECK_LIB(xml2, main, [], AC_MSG_ERROR(could not find libxml2 library), -L$LIBXML2_LIB_DIRECTORY)
+   fi
+   PARSER="libxml2"
+   AC_SUBST(LIBXML2_LIB_DIRECTORY)
+   AC_SUBST(LIBXML2_INCLUDE_DIRECTORY)
+elif test "$ac_enable_parser_raptor" = "yes"; then
+   PARSER="raptor"
+fi
+
 # Check doc build tools
 if test "$ac_enable_docs_build" = "yes"; then
    AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
@@ -147,11 +173,6 @@ fi
 
 # Perform compilation environment tests
 #AC_CHECK_HEADERS(iostream)
-
-# Make sure the proper libraries exist
-if test "$BUILD_FOR_WINDOWS" = "no" ; then
-   AC_CHECK_LIB(xml2, main, [], AC_MSG_ERROR(could not find libxml2 library), -L$LIBXML2_LIB_DIRECTORY)
-fi
 
 # Make all the proper substitutions
 AC_SUBST(RDFADIR)
@@ -171,8 +192,7 @@ AC_SUBST(AS)
 
 AC_SUBST(OS)
 
-AC_SUBST(LIBXML2_LIB_DIRECTORY)
-AC_SUBST(LIBXML2_INCLUDE_DIRECTORY)
+AC_SUBST(PARSER)
 
 # Generating files
 AC_CONFIG_FILES([
