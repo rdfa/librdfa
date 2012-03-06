@@ -24,6 +24,7 @@
  * It is also very fast and can operate on hundreds of gigabytes of XML
  * data without breaking a sweat.
  */
+#include <string.h>
 #include "rdfa_utils.h"
 
 rdfacontext* rdfa_create_context(const char* base)

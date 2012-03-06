@@ -148,16 +148,15 @@ static size_t rdfa_init_base(
 /**
  * Handles the start_element call
  */
-static void start_element(void *parser_context, const xmlChar *name,
-   const xmlChar *prefix, const xmlChar *URI, int nb_namespaces,
-   const xmlChar **namespaces, int nb_attributes, int nb_defaulted,
-   const xmlChar **attributes)
+static void start_element(void *parser_context, const char* name,
+   const char* prefix, const char* URI, int nb_namespaces,
+   const char** namespaces, int nb_attributes, int nb_defaulted,
+   const char** attributes)
 {
    //xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;
    rdfacontext* root_context = (rdfacontext*)parser_context;
    rdfalist* context_stack = (rdfalist*)root_context->context_stack;
    rdfacontext* context = rdfa_create_new_element_context(context_stack);
-   const xmlChar** aptr = attributes;
    const char* xml_lang = NULL;
    const char* about_curie = NULL;
    char* about = NULL;
@@ -236,7 +235,7 @@ static void start_element(void *parser_context, const xmlChar *name,
    }
    context->xml_literal = rdfa_n_append_string(
       context->xml_literal, &context->xml_literal_size,
-      (char*)name, xmlStrlen(name));
+      name, strlen(name));
 
    if(!context->xml_literal_namespaces_defined)
    {
@@ -267,7 +266,7 @@ static void start_element(void *parser_context, const xmlChar *name,
 #endif
       {
          unsigned char insert_xmlns_definition = 1;
-         const xmlChar* attr = NULL;
+         const char* attr = NULL;
 
          // get the next mapping to process
 #ifdef LIBRDFA_IN_RAPTOR
@@ -286,7 +285,7 @@ static void start_element(void *parser_context, const xmlChar *name,
          // defined in the current element.
          if(attributes != NULL)
          {
-            const xmlChar** attrs = attributes;
+            const char** attrs = attributes;
             while((*attrs != NULL) && insert_xmlns_definition)
             {
                attr = *attrs++;
@@ -365,7 +364,7 @@ static void start_element(void *parser_context, const xmlChar *name,
       for(ci = 0; ci < nb_attributes * 5; ci += 5)
       {
          const char* attr;
-         const char* value;
+         char* value;
          char* literal_text;
          unsigned int value_length = 0;
 
@@ -684,8 +683,8 @@ static void character_data(
    free(buffer);
 }
 
-static void end_element(void *parser_context, const xmlChar *name,
-   const xmlChar *prefix,const xmlChar *URI)
+static void end_element(void* parser_context, const char* name,
+   const char* prefix,const xmlChar* URI)
 {
    //xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;
    rdfalist* context_stack =
