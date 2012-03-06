@@ -5,6 +5,8 @@
 *.d
 *.py[co]
 *.sw[nop]
+tests/test-cases/*.xhtml
+tests/test-cases/*.sparql
 .cdtproject
 .classpath
 .cproject
