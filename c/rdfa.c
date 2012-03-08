@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <libxml/SAX2.h>
 #include "rdfa_utils.h"
 #include "rdfa.h"
@@ -339,20 +340,37 @@ static void start_element(void *parser_context, const char* name,
 #endif
    } /* end if namespaces inserted */
 
-   // process all of the namespaces for the element
+   // 3. For backward compatibility, RDFa Processors should also permit the
+   // definition of mappings via @xmlns. In this case, the value to be mapped
+   // is set by the XML namespace prefix, and the value to map is the value of
+   // the attribute - an IRI. (Note that prefix mapping via @xmlns is
+   // deprecated, and may be removed in a future version of this
+   // specification.) When xmlns is supported, such mappings must be processed
+   // before processing any mappings from @prefix on the same element.
    if(namespaces != NULL)
    {
       int ni;
+
       for(ni = 0; ni < nb_namespaces * 2; ni += 2)
       {
          const char* ns = namespaces[ni];
          const char* value = namespaces[ni + 1];
-         // 2. Next the [current element] is parsed for
-         //    [URI mapping]s and these are added to the
-         //    [local list of URI mappings]. Note that a
-         //    [URI mapping] will simply overwrite any current
-         //    mapping in the list that has the same name;
-         rdfa_update_uri_mappings(context, ns, value);
+         // Regardless of how the mapping is declared, the value to be mapped
+         // must be converted to lower case, and the IRI is not processed in
+         // any way; in particular if it is a relative path it must not be
+         // resolved against the current base.
+
+         // convert the namespace string to lowercase
+         int i;
+         int ns_length = strlen(ns);
+         char* lcns = (char*)malloc(ns_length + 1);
+         for(i = 0; i <= ns_length; i++)
+         {
+            lcns[i] = tolower(ns[i]);
+         }
+
+         // update the URI mappings
+         rdfa_update_uri_mappings(context, lcns, value);
       }
    }
 
@@ -409,7 +427,45 @@ static void start_element(void *parser_context, const char* name,
                   free(resolved_uri);
                }
             }
+            else if(strcmp(attr, "prefix") == 0)
+            {
+               // Mappings are defined via @prefix.
+               char* working_string = NULL;
+               char* prefix = NULL;
+               char* iri = NULL;
+               char* saveptr = NULL;
 
+               working_string = rdfa_replace_string(working_string, value);
+
+               // Values in this attribute are evaluated from beginning to
+               // end (e.g., left to right in typical documents).
+               prefix = strtok_r(working_string, ":", &saveptr);
+               while(prefix != NULL)
+               {
+                  // find the prefix and IRI mappings while skipping whitespace
+                  while((*saveptr == ' ' || *saveptr == '\n' ||
+                     *saveptr == '\r' || *saveptr == '\t' || *saveptr == '\f' ||
+                     *saveptr == '\v') && *saveptr != NULL)
+                  {
+                     saveptr++;
+                  }
+                  iri = strtok_r(NULL, RDFA_WHITESPACE, &saveptr);
+                  while((*saveptr == ' ' || *saveptr == '\n' ||
+                     *saveptr == '\r' || *saveptr == '\t' || *saveptr == '\f' ||
+                     *saveptr == '\v') && *saveptr != NULL)
+                  {
+                     saveptr++;
+                  }
+
+                  // update the prefix mappings
+                  rdfa_update_uri_mappings(context, prefix, iri);
+
+                  // get the next prefix to process
+                  prefix = strtok_r(NULL, ":", &saveptr);
+               }
+
+               free(working_string);
+            }
             free(value);
          }
       }
