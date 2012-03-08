@@ -111,9 +111,10 @@ extern "C"
 #define RDFA_PARSE_SUCCESS 1
 
 // maximum list lengths
+#define MAX_LIST_MAPPINGS 64
 #define MAX_TERM_MAPPINGS 64
-#define MAX_URI_MAPPINGS 512
-#define MAX_INCOMPLETE_TRIPLES 1024
+#define MAX_URI_MAPPINGS 128
+#define MAX_INCOMPLETE_TRIPLES 512
 
 // host language definitions
 #define HOST_LANGUAGE_NONE 0
@@ -207,6 +208,7 @@ typedef struct rdfacontext
    char** uri_mappings;
 #endif
    char** term_mappings;
+   char** list_mappings;
    rdfalist* incomplete_triples;
    rdfalist* local_incomplete_triples;
    char* language;
