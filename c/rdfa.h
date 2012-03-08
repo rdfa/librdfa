@@ -104,6 +104,10 @@ extern "C"
 
 #define DEBUG 0
 
+// RDFa version numbers
+#define RDFA_VERSION_1_0 1
+#define RDFA_VERSION_1_1 2
+
 // parse process return types
 #define RDFA_PARSE_WARNING -2
 #define RDFA_PARSE_FAILED -1
@@ -200,6 +204,7 @@ typedef struct rdfalist
  */
 typedef struct rdfacontext
 {
+   unsigned char rdfa_version;
    char* base;
    char* parent_subject;
    char* parent_object;

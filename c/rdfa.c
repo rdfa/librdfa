@@ -361,6 +361,60 @@ static void start_element(void *parser_context, const char* name,
    if(attributes != NULL)
    {
       int ci;
+
+      if(context->rdfa_version == RDFA_VERSION_1_1)
+      {
+         // process all vocab and prefix attributes
+         for(ci = 0; ci < nb_attributes * 5; ci += 5)
+         {
+            const char* attr;
+            char* value;
+            unsigned int value_length = 0;
+
+            attr = attributes[ci];
+            value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
+
+            // append the attribute-value pair to the XML literal
+            value = (char*)malloc(value_length + 1);
+            snprintf(value, value_length, "%s", attributes[ci + 3]);
+
+            // 2. Next the current element is examined for any change to the
+            // default vocabulary via @vocab.
+            if(strcmp(attr, "vocab") == 0)
+            {
+               if(strlen(value) < 1)
+               {
+                  // If the value is empty, then the local default vocabulary
+                  // must be reset to the Host Language defined default
+                  // (if any).
+                  free(context->default_vocabulary);
+                  context->default_vocabulary = NULL;
+               }
+               else
+               {
+                  // If @vocab is present and contains a value, the local
+                  // default vocabulary is updated according to the
+                  // section on CURIE and IRI Processing.
+                  char* resolved_uri = rdfa_resolve_uri(context, value);
+                  context->default_vocabulary = rdfa_replace_string(
+                     context->default_vocabulary, resolved_uri);
+
+                  // The value of @vocab is used to generate a triple
+                  rdftriple* triple = rdfa_create_triple(
+                     context->base, "http://www.w3.org/ns/rdfa#usesVocabulary",
+                     resolved_uri, RDF_TYPE_IRI, NULL, NULL);
+                  context->processor_graph_triple_callback(
+                     triple, context->callback_data);
+
+                  free(resolved_uri);
+               }
+            }
+
+            free(value);
+         }
+      }
+
+      // resolve all of the other RDFa values
       for(ci = 0; ci < nb_attributes * 5; ci += 5)
       {
          const char* attr;

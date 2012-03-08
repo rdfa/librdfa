@@ -77,6 +77,9 @@ rdfacontext* rdfa_create_context(const char* base)
 
 void rdfa_init_context(rdfacontext* context)
 {
+   // assume the RDFa processing rules are RDFa 1.1 unless otherwise specified
+   context->rdfa_version = RDFA_VERSION_1_1;
+
    // the [parent subject] is set to the [base] value;
    context->parent_subject = NULL;
    if(context->base != NULL)
@@ -172,6 +175,9 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rdfacontext* parent_context = (rdfacontext*)
       context_stack->items[context_stack->num_items - 1]->data;
    rdfacontext* rval = rdfa_create_context(parent_context->base);
+
+   // specify which RDFa processing rules to use
+   rval->rdfa_version = parent_context->rdfa_version;
 
    // * Otherwise, the values are:
 
