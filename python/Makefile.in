@@ -2,7 +2,7 @@
 
 SOURCES = $(wildcard *.cpp)
 LIBRARIES = _rdfamodule
-DYNAMIC_LINK_LIBRARIES = rdfa expat
+DYNAMIC_LINK_LIBRARIES = rdfa xml2
 DYNAMIC_WINDOWS_LIBRARIES = 
 
 # ----------- Standard Makefile
@@ -24,17 +24,17 @@ dist/_rdfa.so: dist/python$(PY_DEFAULT)-rdfa.so
 
 build/SwigRdfaParser.cpp: rdfa.i
 	echo "Generating $@ (from rdfa.i)..."
-	swig -c++ -I. -python -o build/SwigRdfaParser.cpp rdfa.i
+	swig -c++ -I. -I/usr/include/libxml2 -python -o build/SwigRdfaParser.cpp rdfa.i
 	cp build/rdfa.py dist
 
 build/SwigRdfaParser-python%.o: build/SwigRdfaParser.cpp
 	echo "Building $@..."
-	g++ -g -c -I../c -I. -I/usr/include/python$* -fPIC build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python$*.o
+	g++ -g -c -I../c -I. -I/usr/include/python$* -I/usr/include/libxml2 -fPIC build/SwigRdfaParser.cpp -o build/SwigRdfaParser-python$*.o
 
 build/RdfaParser.o:
 	echo "Building $@..."
 	cd build && ln -sf ../RdfaParser.cpp RdfaParser.cpp
-	g++ -g -c -I../c -I. -fPIC build/RdfaParser.cpp -o build/RdfaParser.o
+	g++ -g -c -I../c -I. -I/usr/include/libxml2 -fPIC build/RdfaParser.cpp -o build/RdfaParser.o
 
 build-objects: \
 	directories \

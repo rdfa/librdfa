@@ -302,7 +302,7 @@ def main(argv, stdout, environ):
     rdf['triples'] = []
 
     # Setup the parser
-    parser.setTripleHandler(handleTriple, rdf)
+    parser.setDefaultGraphTripleHandler(handleTriple, rdf)
     parser.setBufferHandler(fillBuffer, dataFile)
 
     # Parse the document
