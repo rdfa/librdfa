@@ -359,18 +359,26 @@ static void start_element(void *parser_context, const char* name,
          // must be converted to lower case, and the IRI is not processed in
          // any way; in particular if it is a relative path it must not be
          // resolved against the current base.
-
-         // convert the namespace string to lowercase
-         int i;
-         int ns_length = strlen(ns);
-         char* lcns = (char*)malloc(ns_length + 1);
-         for(i = 0; i <= ns_length; i++)
+         char* lcns = NULL;
+         if(ns != NULL)
          {
-            lcns[i] = tolower(ns[i]);
+            // convert the namespace string to lowercase
+            int i;
+            int ns_length = strlen(ns);
+            lcns = (char*)malloc(ns_length + 1);
+            for(i = 0; i <= ns_length; i++)
+            {
+               lcns[i] = tolower(ns[i]);
+            }
          }
 
          // update the URI mappings
          rdfa_update_uri_mappings(context, lcns, value);
+
+         if(lcns != NULL)
+         {
+            free(lcns);
+         }
       }
    }
 
