@@ -164,7 +164,7 @@ static void start_element(void *parser_context, const char* name,
    rdfacontext* root_context = (rdfacontext*)parser_context;
    rdfalist* context_stack = (rdfalist*)root_context->context_stack;
    rdfacontext* context = rdfa_create_new_element_context(context_stack);
-   const char* xml_lang = NULL;
+   char* xml_lang = NULL;
    const char* about_curie = NULL;
    char* about = NULL;
    const char* src_curie = NULL;
@@ -181,7 +181,7 @@ static void start_element(void *parser_context, const char* name,
    char* resource = NULL;
    const char* href_curie = NULL;
    char* href = NULL;
-   const char* content = NULL;
+   char* content = NULL;
    const char* datatype_curie = NULL;
    char* datatype = NULL;
 
@@ -522,10 +522,12 @@ static void start_element(void *parser_context, const char* name,
       {
          const char* attr;
          char* value;
+         char* attrns;
          char* literal_text;
          unsigned int value_length = 0;
 
          attr = attributes[ci];
+         attrns = attributes[ci + 1];
          value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
 
          // append the attribute-value pair to the XML literal
@@ -540,7 +542,8 @@ static void start_element(void *parser_context, const char* name,
          free(literal_text);
 
          // if xml:lang is defined, ensure that it is not overwritten
-         if(strcmp(attr, "xml:lang") == 0)
+         if(attrns != NULL && strcmp(attrns, "xml") == 0 &&
+            strcmp(attr, "lang") == 0)
          {
             context->xml_literal_xml_lang_defined = 1;
          }
@@ -597,7 +600,7 @@ static void start_element(void *parser_context, const char* name,
          }
          else if(strcmp(attr, "content") == 0)
          {
-            content = value;
+            content = rdfa_replace_string(content, value);
          }
          else if(strcmp(attr, "datatype") == 0)
          {
@@ -613,12 +616,21 @@ static void start_element(void *parser_context, const char* name,
                   CURIE_PARSE_INSTANCEOF_DATATYPE);
             }
          }
-   #ifndef LIBRDFA_IN_RAPTOR
-         else if(strcmp(attr, "xml:lang") == 0)
+#ifndef LIBRDFA_IN_RAPTOR
+         else if((attrns == NULL && strcmp(attr, "lang") == 0) ||
+            (attrns != NULL && strcmp(attrns, "xml") == 0 &&
+               strcmp(attr, "lang") == 0))
          {
-            xml_lang = value;
+            xml_lang = rdfa_replace_string(xml_lang, value);
          }
-   #endif
+#endif
+#ifdef DEBUG
+         else
+         {
+            printf("DEBUG: Skipping non-RDFa attribute: %s\n", attr);
+         }
+#endif
+
          free(value);
       }
    }
@@ -705,6 +717,10 @@ static void start_element(void *parser_context, const char* name,
       {
          printf("DEBUG: @datatype = %s\n", datatype);
       }
+      if(xml_lang != NULL)
+      {
+         printf("DEBUG: @xml:lang = %s\n", xml_lang);
+      }
    }
 
    // TODO: This isn't part of the processing model, it needs to be
@@ -790,6 +806,8 @@ static void start_element(void *parser_context, const char* name,
    rdfa_free_list(type_of);
    rdfa_free_list(rel);
    rdfa_free_list(rev);
+   free(xml_lang);
+   free(content);
    free(resource);
    free(href);
    free(datatype);
