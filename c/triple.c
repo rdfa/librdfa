@@ -186,6 +186,75 @@ void rdfa_generate_namespace_triple(
       context->processor_graph_triple_callback(triple, context->callback_data);
    }
 }
+
+/**
+ * Generates a set of triples that describe the location of a warning or
+ * error in a document.
+ *
+ * @param context the currently active context.
+ * @param subject the name of the subject that is associated with the triples.
+ */
+void rdfa_processor_location_triples(rdfacontext* context, const char* subject)
+{
+}
+
+/**
+ * Generates a set of triples in the processor graph including the processor's
+ * position in the byte stream.
+ *
+ * @param context the current active context.
+ * @param type the type of the message, which may be any of the RDF Classes
+ *             defined in the RDFa Core specification:
+ *             http://www.w3.org/TR/rdfa-core/#processor-graph-reporting
+ * @param msg the message associated with the processor warning.
+ */
+void rdfa_processor_triples(
+   rdfacontext* context, const char* type, const char* msg)
+{
+   if(context->processor_graph_triple_callback != NULL)
+   {
+      char buffer[32];
+      char* subject = rdfa_create_bnode(context);
+      char* context_subject = rdfa_create_bnode(context);
+
+      // generate the RDFa Processing Graph warning type triple
+      rdftriple* triple = rdfa_create_triple(
+         subject, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+         type, RDF_TYPE_IRI, NULL, NULL);
+      context->processor_graph_triple_callback(triple, context->callback_data);
+
+      // generate the description
+      triple = rdfa_create_triple(
+         subject, "http://purl.org/dc/terms/description", msg,
+         RDF_TYPE_PLAIN_LITERAL, NULL, "en");
+      context->processor_graph_triple_callback(triple, context->callback_data);
+
+      // generate the context triple for the error
+      triple = rdfa_create_triple(
+         subject, "http://www.w3.org/ns/rdfa#context",
+         context_subject, RDF_TYPE_IRI, NULL, NULL);
+      context->processor_graph_triple_callback(triple, context->callback_data);
+
+      // generate the type for the context triple
+      triple = rdfa_create_triple(
+         context_subject, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+         "http://www.w3.org/2009/pointers#LineCharPointer",
+         RDF_TYPE_IRI, NULL, NULL);
+      context->processor_graph_triple_callback(triple, context->callback_data);
+
+      // generate the line number
+      snprintf(buffer, sizeof(buffer) - 1, "%d",
+         (int)xmlSAX2GetLineNumber(context->parser));
+      triple = rdfa_create_triple(
+         context_subject, "http://www.w3.org/2009/pointers#lineNumber",
+         buffer, RDF_TYPE_TYPED_LITERAL,
+         "http://www.w3.org/2001/XMLSchema#positiveInteger", NULL);
+      context->processor_graph_triple_callback(triple, context->callback_data);
+
+      free(context_subject);
+      free(subject);
+   }
+}
 #endif
 
 /**

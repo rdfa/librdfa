@@ -527,7 +527,7 @@ static void start_element(void *parser_context, const char* name,
          unsigned int value_length = 0;
 
          attr = attributes[ci];
-         attrns = attributes[ci + 1];
+         attrns = (char*)attributes[ci + 1];
          value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
 
          // append the attribute-value pair to the XML literal
@@ -622,12 +622,6 @@ static void start_element(void *parser_context, const char* name,
                strcmp(attr, "lang") == 0))
          {
             xml_lang = rdfa_replace_string(xml_lang, value);
-         }
-#endif
-#ifdef DEBUG
-         else
-         {
-            printf("DEBUG: Skipping non-RDFa attribute: %s\n", attr);
          }
 #endif
 
@@ -1186,6 +1180,10 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       xmlParserCtxtPtr parser = xmlCreatePushParserCtxt(
          &handler, context, (const char*)context->working_buffer,
          context->wb_position, NULL);
+
+      // ensure that entity substitution is turned on by default
+      xmlSubstituteEntitiesDefault(1);
+
       context->parser = parser;
 #endif
       context->preread = 1;

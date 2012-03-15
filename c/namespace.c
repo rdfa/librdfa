@@ -27,8 +27,6 @@
 #include "rdfa.h"
 
 #ifndef LIBRDFA_IN_RAPTOR
-
-// pre-define functions that we will need in this module
 /**
  * Attempts to update the uri mappings in the given context using the
  * given attribute/value pair.
@@ -55,6 +53,14 @@ void rdfa_update_uri_mappings(
    if(attr == NULL)
    {
       rdfa_update_mapping(context->uri_mappings, XMLNS_DEFAULT_MAPPING, value);
+   }
+   else if(strcmp(attr, "_") == 0)
+   {
+      rdfa_processor_triples(context,
+         RDFA_PROCESSOR_WARNING,
+         "The underscore character must not be used as a compact IRI prefix "
+         "because it conflicts with the prefix for blank node identifiers. "
+         "The occurrence of this prefix declaration is being ignored.");
    }
    else
    {

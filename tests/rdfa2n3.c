@@ -26,9 +26,15 @@
 #include <rdfa_utils.h>
 
 #define BASE_URI \
-   "http://rdfa.info/test-suite/tests-cases/"
+   "http://rdfa.info/test-suite/tests-cases/rdfa1.0/xhtml/"
 
-void process_triple(rdftriple* triple, void* callback_data)
+void process_default_triple(rdftriple* triple, void* callback_data)
+{
+   rdfa_print_triple(triple);
+   rdfa_free_triple(triple);
+}
+
+void process_processor_triple(rdftriple* triple, void* callback_data)
 {
    rdfa_print_triple(triple);
    rdfa_free_triple(triple);
@@ -60,7 +66,10 @@ int main(int argc, char** argv)
          rdfacontext* context = rdfa_create_context(base_uri);
          context->callback_data = xhtml_file;
 
-         rdfa_set_default_graph_triple_handler(context, &process_triple);
+         rdfa_set_default_graph_triple_handler(
+            context, &process_default_triple);
+         rdfa_set_processor_graph_triple_handler(
+            context, &process_processor_triple);
          rdfa_set_buffer_filler(context, &fill_buffer);
          rdfa_parse(context);
          rdfa_free_context(context);

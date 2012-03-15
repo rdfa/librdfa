@@ -70,6 +70,13 @@ typedef enum
    RDFALIST_FLAG_LAST = (1 << 5)
 } liflag_t;
 
+/*
+ *  RDFa processor graph reporting types
+ */
+#define RDFA_PROCESSOR_INFO "http://www.w3.org/ns/rdfa#Info"
+#define RDFA_PROCESSOR_WARNING "http://www.w3.org/ns/rdfa#Warning"
+#define RDFA_PROCESSOR_ERROR "http://www.w3.org/ns/rdfa#Error"
+
 /**
  * Initializes a mapping given the number of elements the mapping is
  * expected to hold.
@@ -347,11 +354,13 @@ void rdfa_save_incomplete_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 void rdfa_complete_object_literal_triples(rdfacontext* context);
 
-/* triple.c - needed by namespace.c */
+/* Declarations needed by namespace.c */
 void rdfa_generate_namespace_triple(
    rdfacontext* context, const char* prefix, const char* iri);
+void rdfa_processor_triples(
+   rdfacontext* context, const char* type, const char* msg);
 
-/* context.c - needed by rdfa.c */
+/* Declarations needed by rdfa.c */
 rdfacontext* rdfa_create_context(const char* base);
 void rdfa_init_context(rdfacontext* context);
 rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack);

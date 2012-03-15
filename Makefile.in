@@ -93,10 +93,6 @@ packages:
 	@cd installers/packages && fakeroot alien --to-rpm -k --scripts *deb
 	@echo "Generating TGZ packages..."
 	@cd installers/packages && fakeroot alien --to-tgz -k --scripts *deb
-	@echo "Generating Solaris packages..."
-	@cd installers/packages && fakeroot alien --to-pkg -k --scripts *deb
-	@echo "Generating Stampede packages..."
-	@cd installers/packages && fakeroot alien --to-slp -k --scripts *deb
 
 ifeq (@OS@,mingw32)
 install-windows:
