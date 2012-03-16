@@ -266,7 +266,9 @@ char* rdfa_resolve_curie(
       }
       else if(prefix != NULL)
       {
-         if(strcmp(prefix, "_") == 0)
+         if((mode != CURIE_PARSE_PROPERTY) &&
+            (mode != CURIE_PARSE_RELREV) &&
+            strcmp(prefix, "_") == 0)
          {
             // if the prefix specifies this as a blank node, then we
             // use the blank node prefix

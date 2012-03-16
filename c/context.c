@@ -176,9 +176,6 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
       context_stack->items[context_stack->num_items - 1]->data;
    rdfacontext* rval = rdfa_create_context(parent_context->base);
 
-   // specify which RDFa processing rules to use
-   rval->rdfa_version = parent_context->rdfa_version;
-
    // * Otherwise, the values are:
 
    // * the [ base ] is set to the [ base ] value of the current
@@ -191,6 +188,9 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rdfa_free_mapping(rval->uri_mappings);
    rval->uri_mappings = rdfa_copy_mapping(parent_context->uri_mappings);
 #endif
+
+   // inherit the parent context's RDFa processor mode
+   rval->rdfa_version = parent_context->rdfa_version;
 
    // inherit the parent context's language
    if(parent_context->language != NULL)

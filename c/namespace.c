@@ -58,7 +58,7 @@ void rdfa_update_uri_mappings(
    {
       rdfa_processor_triples(context,
          RDFA_PROCESSOR_WARNING,
-         "The underscore character must not be used as a compact IRI prefix "
+         "The underscore character must not be declared as a prefix "
          "because it conflicts with the prefix for blank node identifiers. "
          "The occurrence of this prefix declaration is being ignored.");
    }
@@ -66,6 +66,13 @@ void rdfa_update_uri_mappings(
    {
       rdfa_generate_namespace_triple(context, attr, value);
       rdfa_update_mapping(context->uri_mappings, attr, value);
+   }
+
+   // print the current mapping
+   if(DEBUG)
+   {
+      printf("DEBUG: PREFIX MAPPINGS:");
+      rdfa_print_mapping(context->uri_mappings);
    }
 }
 #endif

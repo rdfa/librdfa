@@ -219,7 +219,8 @@ static void start_element(void *parser_context, const char* name,
       if (attributes != NULL) {
           for (i = 0;i < nb_attributes * 5;i += 5) {
               if (attributes[i + 1] != NULL)
-                  fprintf(stdout, ", %s:%s='", attributes[i + 1], attributes[i]);
+                  fprintf(
+                     stdout, ", %s:%s='", attributes[i + 1], attributes[i]);
               else
                   fprintf(stdout, ", %s='", attributes[i]);
               fprintf(stdout, "%.4s...', %d", attributes[i + 3],
@@ -299,8 +300,7 @@ static void start_element(void *parser_context, const char* name,
 
                // if the attribute is a umap_key, skip the definition
                // of the attribute.
-               if((strcmp(attr, umap_key) == 0) ||
-                  (strcmp(umap_key, XMLNS_DEFAULT_MAPPING) == 0))
+               if(strcmp(attr, umap_key) == 0)
                {
                   insert_xmlns_definition = 0;
                }
@@ -393,30 +393,31 @@ static void start_element(void *parser_context, const char* name,
    {
       int ci;
 
-      if(context->rdfa_version == RDFA_VERSION_1_1)
+      // search for a version attribute
+      for(ci = 0; ci < nb_attributes * 5; ci += 5)
       {
-         // search for a version attribute
-         for(ci = 0; ci < nb_attributes * 5; ci += 5)
+         const char* attr;
+         char* value;
+         unsigned int value_length = 0;
+
+         attr = attributes[ci];
+         value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
+
+         if(strcmp(attr, "version") == 0)
          {
-            const char* attr;
-            char* value;
-            unsigned int value_length = 0;
-
-            attr = attributes[ci];
-            value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
-
-            if(strcmp(attr, "version") == 0)
+            // append the attribute-value pair to the XML literal
+            value = (char*)malloc(value_length + 1);
+            snprintf(value, value_length, "%s", attributes[ci + 3]);
+            if(strstr(value, "RDFa 1.0") != NULL)
             {
-               // append the attribute-value pair to the XML literal
-               value = (char*)malloc(value_length + 1);
-               snprintf(value, value_length, "%s", attributes[ci + 3]);
-               if(strstr(value, "RDFa 1.0") != NULL)
-               {
-                  context->rdfa_version = RDFA_VERSION_1_0;
-               }
-
-               free(value);
+               context->rdfa_version = RDFA_VERSION_1_0;
             }
+            else if(strstr(value, "RDFa 1.1") != NULL)
+            {
+               context->rdfa_version = RDFA_VERSION_1_1;
+            }
+
+            free(value);
          }
       }
    }
