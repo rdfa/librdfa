@@ -160,7 +160,6 @@ static void start_element(void *parser_context, const char* name,
    const char** namespaces, int nb_attributes, int nb_defaulted,
    const char** attributes)
 {
-   //xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;
    rdfacontext* root_context = (rdfacontext*)parser_context;
    rdfalist* context_stack = (rdfalist*)root_context->context_stack;
    rdfacontext* context = rdfa_create_new_element_context(context_stack);

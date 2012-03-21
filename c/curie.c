@@ -335,6 +335,13 @@ char* rdfa_resolve_curie(
       }
       rval = rdfa_replace_string(rval, context->underscore_colon_bnode_name);
    }
+
+   // if we're NULL at this point, this might be an IRI if we are in
+   // RDFa 1.1 mode
+   if((rval == NULL) && (context->rdfa_version == RDFA_VERSION_1_1))
+   {
+      rval = rdfa_resolve_uri(context, uri);
+   }
    
    // even though a reference-only CURIE is valid, it does not
    // generate a triple in XHTML+RDFa. If we're NULL at this point,
@@ -385,6 +392,12 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
    if(rval == NULL)
    {
       rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_RELREV);
+   }
+
+   // if a CURIE wasn't found, attempt to resolve the value as an IRI
+   if(rval == NULL && (context->rdfa_version == RDFA_VERSION_1_1))
+   {
+      rval = rdfa_resolve_uri(context, uri);
    }
    
    return rval;
