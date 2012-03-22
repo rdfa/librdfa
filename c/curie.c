@@ -323,24 +323,29 @@ char* rdfa_resolve_curie(
       free(working_copy);
    }
 
-   // if we're NULL at this point, the CURIE might be the special
-   // unnamed bnode specified by _:
-   if((rval == NULL) &&
-      ((strcmp(uri, "[_:]") == 0) ||
-       (strcmp(uri, "_:") == 0)))
+   if(rval == NULL)
    {
-      if(context->underscore_colon_bnode_name == NULL)
+      // if we're NULL at this point, the CURIE might be the special
+      // unnamed bnode specified by _:
+      if((strcmp(uri, "[_:]") == 0) || (strcmp(uri, "_:") == 0))
       {
-         context->underscore_colon_bnode_name = rdfa_create_bnode(context);
+         if(context->underscore_colon_bnode_name == NULL)
+         {
+            context->underscore_colon_bnode_name = rdfa_create_bnode(context);
+         }
+         rval = rdfa_replace_string(rval, context->underscore_colon_bnode_name);
       }
-      rval = rdfa_replace_string(rval, context->underscore_colon_bnode_name);
-   }
-
-   // if we're NULL at this point, this might be an IRI if we are in
-   // RDFa 1.1 mode
-   if((rval == NULL) && (context->rdfa_version == RDFA_VERSION_1_1))
-   {
-      rval = rdfa_resolve_uri(context, uri);
+      // if we're NULL at this point and the IRI isn't [], then this might be
+      // an IRI
+      else if(context->rdfa_version == RDFA_VERSION_1_1 &&
+         (strcmp(uri, "[]") != 0))
+      {
+         if((mode == CURIE_PARSE_PROPERTY) &&
+            (strstr(uri, "_:") == NULL) && (strstr(uri, "[_:") == NULL))
+         {
+            rval = rdfa_resolve_uri(context, uri);
+         }
+      }
    }
    
    // even though a reference-only CURIE is valid, it does not
