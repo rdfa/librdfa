@@ -22,7 +22,7 @@ import sys, os, urllib2
 sys.path += ("../python/dist",)
 import rdfa
 from StringIO import StringIO
-from rdflib.Graph import ConjunctiveGraph
+from rdflib import Namespace, BNode, Literal, URIRef, Graph, ConjunctiveGraph
 
 URL_TYPE_HTTP = 1
 URL_TYPE_FILE = 2
@@ -56,160 +56,6 @@ def handleTriple(rdf, subject, predicate, obj, objectType, dataType,
 def fillBuffer(dataFile, bufferSize):
     return dataFile.read()
 
-def objectToN3(obj, objectType, dataType, language):
-    rval = ""
-    
-    if(objectType in (rdfa.RDF_TYPE_PLAIN_LITERAL,
-                      rdfa.RDF_TYPE_TYPED_LITERAL,
-                      rdfa.RDF_TYPE_XML_LITERAL)):
-        rval += "\"%s\"" % \
-                (obj.replace("\"", "\\\"").replace("\n", "\\n"),)
-    elif(objectType == rdfa.RDF_TYPE_IRI):
-        rval += "<%s>" % (obj,)
-
-    if(language and (objectType == rdfa.RDF_TYPE_PLAIN_LITERAL)):
-        rval += "@%s" % (language,)
-
-    if(objectType == rdfa.RDF_TYPE_TYPED_LITERAL):
-        rval += "^^<%s>" % (dataType,)
-    elif(objectType == rdfa.RDF_TYPE_XML_LITERAL):
-        rval += "^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral>"
-
-    return rval
-
-##
-# Converts a bnode to a N3 formatted string.
-#
-# @param obj the object of the triple.
-# @param triples the triple store.
-# @param processed all of the subjects that have already been processed.
-#
-# @return an N3 formatted string.
-def bnodeToN3(triples, processed, allTriples):
-    #print "bnodeToN3", triples
-    rval = "[ "
-
-    # Print all subjects with URIs first
-    previousTriple = False
-    for triple in triples:
-        subject = triple[0]
-        predicate = triple[1]
-        obj = triple[2]
-        objectType = triple[3]
-        dataType = triple[4]
-        language = triple[5]
-
-        #print "STO:", triple
-        if(previousTriple):
-            rval += "; "
-        else:
-            previousTriple = True
-
-        if(obj.startswith("_:") and obj not in processed):
-            objectTriples = getTriplesBySubject(obj, allTriples)
-            rval += "<%s> %s" % \
-                (predicate, bnodeToN3(objectTriples, processed, allTriples))
-        elif(subject not in processed):
-            rval += "<%s> %s" % \
-                (predicate, objectToN3(obj, objectType, dataType, language))
-    
-    rval += " ]"
-
-    if(len(triples) < 1):
-        rval = "[ ]"
-    else:
-        processed.append(triples[0][0])
-
-    return rval
-
-##
-# Converts a triple to a N3 formatted string.
-#
-# @param subject the subject of the triple.
-# @param predicate the predicate for the triple.
-# @param obj the object of the triple.
-# @param objectType the type for the object in the triple.
-# @param dataType the dataType for the object in the triple.
-# @param language the language for the object in the triple.
-# @param processed all of the bnodes that have already been processed.
-#
-# @return an N3 formatted string.
-def tripleToN3(triples, processed, allTriples):
-    rval = ""
-
-    for triple in triples:
-        subject = triple[0]
-        predicate = triple[1]
-        obj = triple[2]
-        objectType = triple[3]
-        dataType = triple[4]
-        language = triple[5]
-
-        if(not (obj.startswith("_:") and (obj in processed))):
-            rval += "<%s> <%s> " % (subject, predicate)
-
-            #print "PROCESSED:", processed
-
-            if(obj.startswith("_:")):
-                bnodeTriples = getTriplesBySubject(obj, allTriples)
-                rval += bnodeToN3(bnodeTriples, processed, allTriples)
-            else:
-                rval += objectToN3(obj, objectType, dataType, language)
-
-            rval += " .\n"
-
-    return rval
-
-##
-# Gets the non-bnode subjects that are in the triple store.
-#
-# @param triples the triple store.
-#
-# @return all of the non-bnode subjects in the triple store.
-def getNonBnodeSubjects(triples):
-    rval = {}
-    
-    for triple in triples:
-        subject = triple[0]
-        if(not subject.startswith("_:")):
-            rval[subject] = True
-
-    return rval.keys()
-
-##
-# Gets the bnode subjects that are in the triple store.
-#
-# @param triples the triple store.
-#
-# @return all of the bnode subjects in the triple store.
-def getBnodeSubjects(triples):
-    rval = {}
-    
-    for triple in triples:
-        subject = triple[0]
-        if(subject.startswith("_:")):
-            rval[subject] = True
-
-    rval = rval.keys()
-    rval.sort()
-
-    return rval
-
-##
-# Gets the triples by subject.
-#
-# @param subject The subject to use when retrieving the triples.
-#
-# @return A list of all triples that match a given subject.
-def getTriplesBySubject(subject, triples):
-    rval = []
-
-    for triple in triples:
-        if(triple[0] == subject):
-            rval.append(triple)
-
-    return rval
-
 ##
 # Gets RDF/XML given an object with pre-defined namespaces and triples.
 #
@@ -217,43 +63,68 @@ def getTriplesBySubject(subject, triples):
 #
 # @return the RDF/XML text.
 def getRdfXml(rdf):
+    g = ConjunctiveGraph()
     n3 = ""
     
     # Append the RDF namespace and print the prefix namespace mappings
     rdf['namespaces']['xh1'] = "http://www.w3.org/1999/xhtml/vocab#"
     rdf['namespaces']['rdf'] = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     for prefix, uri in rdf['namespaces'].items():
-        n3 += "@prefix %s: <%s> .\n" % (prefix, uri)
-        
+        g.bind(prefix, Namespace(uri))
+    
+    # BNode map
+    bnodes = {}
+    
     # Print each subject-based triple to the screen
     triples = rdf['triples']
-    processed = []
+    for triple in triples:
+        subject = triple[0]
+        predicate = triple[1]
+        obj = triple[2]
+        objectType = triple[3]
+        dataType = triple[4]
+        language = triple[5]
+        s = None
+        p = None
+        o = None
+        
+        # Create the subject
+        if(subject.startswith("_:")):
+            if(subject in bnodes):
+                s = bnodes[subject]
+            else:
+                s = BNode()
+                bnodes[subject] = s
+        else:
+            s = URIRef(subject)
+        
+        # Create the predicate
+        p = URIRef(predicate)
 
-    # Get all of the non-bnode subjects
-    nonBnodeSubjects = getNonBnodeSubjects(triples)
+        # Create the object
+        if(objectType == rdfa.RDF_TYPE_IRI):
+            if(obj.startswith("_:")):
+                if(obj in bnodes):
+                    o = bnodes[obj]
+                else:
+                    o = BNode()
+                    bnodes[obj] = o
+            else:
+                o = URIRef(obj)
+        elif(objectType == rdfa.RDF_TYPE_TYPED_LITERAL):
+            o = Literal(obj, datatype = dataType)
+        elif(objectType == rdfa.RDF_TYPE_PLAIN_LITERAL):
+            if(language == None):
+                o = Literal(obj)
+            else:
+                o = Literal(obj, lang = language)
+        elif(objectType == rdfa.RDF_TYPE_XML_LITERAL):
+            o = Literal(obj, datatype = 
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral")
 
-    # Get all of the bnode subjects
-    bnodeSubjects = getBnodeSubjects(triples)
-
-    for subject in nonBnodeSubjects:
-        subjectTriples = getTriplesBySubject(subject, triples)
-        #print "PROCESSING NB SUBJECT:", subjectTriples
-
-        if(subject not in processed):
-            n3 += tripleToN3(subjectTriples, processed, triples)
-        processed.append(subject)
-
-    for subject in bnodeSubjects:
-        subjectTriples = getTriplesBySubject(subject, triples)
-        #print "PROCESSING BN SUBJECT:", subject
-        if(subject not in processed):
-            n3 += bnodeToN3(subjectTriples, processed, triples)
-            n3 += " .\n"
-
-    #print n3
-
-    g = ConjunctiveGraph()
-    g.parse(StringIO(n3), format="n3")
+        # Add the triple to the graph
+        g.add((s, p, o))
+    
     rdfxml = g.serialize()
 
     return rdfxml
