@@ -340,7 +340,11 @@ char* rdfa_resolve_curie(
       else if(context->rdfa_version == RDFA_VERSION_1_1 &&
          (strcmp(uri, "[]") != 0))
       {
-         if((mode == CURIE_PARSE_PROPERTY) &&
+         if((context->default_vocabulary != NULL) && (strstr(uri, ":") == NULL))
+         {
+            rval = rdfa_join_string(context->default_vocabulary, uri);
+         }
+         else if((mode == CURIE_PARSE_PROPERTY) &&
             (strstr(uri, "_:") == NULL) && (strstr(uri, "[_:") == NULL))
          {
             rval = rdfa_resolve_uri(context, uri);
@@ -390,6 +394,14 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
          rval = rdfa_join_string(XHTML_VOCAB_URI, g_relrev_reserved_words[i]);
          i = XHTML_RELREV_RESERVED_WORDS_SIZE;
       }
+   }
+
+   // override reserved words if there is a default vocab defined
+   // NOTE: Don't have to check for RDFa 1.1 mode because vocab is only defined
+   // in RDFa 1.1
+   if(context->default_vocabulary != NULL)
+   {
+      rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_RELREV);
    }
 
    // if none of the XHTML @rel/@rev reserved words were found,

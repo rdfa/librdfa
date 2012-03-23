@@ -199,6 +199,13 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rdfa_replace_string(rval->language, parent_context->language);
    }
 
+   // inherit the parent context's default vocabulary
+   if(parent_context->default_vocabulary != NULL)
+   {
+      rval->default_vocabulary = rdfa_replace_string(
+         rval->default_vocabulary, parent_context->default_vocabulary);
+   }
+
    // set the callbacks callback
    rval->default_graph_triple_callback =
       parent_context->default_graph_triple_callback;
