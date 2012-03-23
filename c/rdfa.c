@@ -468,7 +468,7 @@ static void start_element(void *parser_context, const char* name,
                   rdftriple* triple = rdfa_create_triple(
                      context->base, "http://www.w3.org/ns/rdfa#usesVocabulary",
                      resolved_uri, RDF_TYPE_IRI, NULL, NULL);
-                  context->processor_graph_triple_callback(
+                  context->default_graph_triple_callback(
                      triple, context->callback_data);
 
                   free(resolved_uri);
