@@ -95,7 +95,7 @@ void rdfa_init_context(rdfacontext* context)
 
 #ifndef LIBRDFA_IN_RAPTOR
    // the [list of URI mappings] is cleared;
-   context->uri_mappings = (char**)rdfa_create_mapping(MAX_URI_MAPPINGS);
+   context->uri_mappings = rdfa_create_mapping(MAX_URI_MAPPINGS);
 #endif
 
    // the [list of incomplete triples] is cleared;
@@ -109,14 +109,14 @@ void rdfa_init_context(rdfacontext* context)
 
    // the list of term mappings is set to null
    // (or a list defined in the initial context of the Host Language).
-   context->term_mappings = (char**)rdfa_create_mapping(MAX_TERM_MAPPINGS);
+   context->term_mappings = rdfa_create_mapping(MAX_TERM_MAPPINGS);
 
    // the maximum number of list mappings
-   context->list_mappings = (char**)rdfa_create_mapping(MAX_LIST_MAPPINGS);
+   context->list_mappings = rdfa_create_mapping(MAX_LIST_MAPPINGS);
 
    // the maximum number of local list mappings
    context->local_list_mappings =
-      (char**)rdfa_create_mapping(MAX_LOCAL_LIST_MAPPINGS);
+      rdfa_create_mapping(MAX_LOCAL_LIST_MAPPINGS);
 
    // the default vocabulary is set to null
    // (or a IRI defined in the initial context of the Host Language).
@@ -189,8 +189,10 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
 
    // copy the URI mappings
 #ifndef LIBRDFA_IN_RAPTOR
-   rdfa_free_mapping(rval->uri_mappings);
-   rval->uri_mappings = rdfa_copy_mapping(parent_context->uri_mappings);
+   rdfa_free_mapping(rval->uri_mappings, (free_mapping_value_fp)free);
+   rval->uri_mappings =
+      rdfa_copy_mapping((void**)parent_context->uri_mappings,
+         (copy_mapping_value_fp)rdfa_replace_string);
 #endif
 
    // inherit the parent context's RDFa processor mode
@@ -347,10 +349,10 @@ void rdfa_free_context(rdfacontext* context)
    free(context->parent_object);
 
 #ifndef LIBRDFA_IN_RAPTOR
-   rdfa_free_mapping(context->uri_mappings);
+   rdfa_free_mapping(context->uri_mappings, (free_mapping_value_fp)free);
 #endif
 
-   rdfa_free_mapping(context->term_mappings);
+   rdfa_free_mapping(context->term_mappings, (free_mapping_value_fp)free);
    rdfa_free_list(context->incomplete_triples);
    free(context->language);
    free(context->underscore_colon_bnode_name);

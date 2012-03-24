@@ -240,10 +240,10 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
 }
 
 #ifndef LIBRDFA_IN_RAPTOR
-char** rdfa_create_mapping(size_t elements)
+void** rdfa_create_mapping(size_t elements)
 {
-   size_t mapping_size = sizeof(char*) * MAX_URI_MAPPINGS * 2;
-   char** mapping = malloc(mapping_size);
+   size_t mapping_size = sizeof(void*) * MAX_URI_MAPPINGS * 2;
+   void** mapping = malloc(mapping_size);
 
    // only initialize the mapping if it is not null.
    if(mapping != NULL)
@@ -254,12 +254,13 @@ char** rdfa_create_mapping(size_t elements)
    return mapping;
 }
 
-char** rdfa_copy_mapping(char** mapping)
+void** rdfa_copy_mapping(
+   void** mapping, copy_mapping_value_fp copy_mapping_value)
 {
-   size_t mapping_size = sizeof(char*) * MAX_URI_MAPPINGS * 2;
-   char** rval = malloc(mapping_size);
-   char** mptr = mapping;
-   char** rptr = rval;
+   size_t mapping_size = sizeof(void*) * MAX_URI_MAPPINGS * 2;
+   void** rval = malloc(mapping_size);
+   void** mptr = mapping;
+   void** rptr = rval;
 
    // initialize the mapping
    memset(rval, 0, mapping_size);
@@ -267,7 +268,13 @@ char** rdfa_copy_mapping(char** mapping)
    // copy each element of the old mapping to the new mapping.
    while(*mptr != NULL)
    {
+      // copy the key
       *rptr = rdfa_replace_string(*rptr, *mptr);
+      rptr++;
+      mptr++;
+
+      // copy the value
+      *rptr = copy_mapping_value(*rptr, *mptr);
       rptr++;
       mptr++;
    }
@@ -275,19 +282,19 @@ char** rdfa_copy_mapping(char** mapping)
    return rval;
 }
 
-void rdfa_update_mapping(char** mapping, const char* key, const char* value)
+void rdfa_update_mapping(void** mapping, const char* key, const void* value,
+   update_mapping_value_fp update_mapping_value)
 {
    int found = 0;
-   char** mptr = mapping;
+   void** mptr = mapping;
 
-   // search the current mapping to see if the namespace
-   // prefix exists in the mapping
-   while(*mptr != NULL)
+   // search the current mapping to see if the key exists in the mapping
+   while(!found && (*mptr != NULL))
    {
-      if(strcmp(*mptr, key) == 0)
+      if(strcmp((char*)*mptr, key) == 0)
       {
          mptr++;
-         *mptr = rdfa_replace_string(*mptr, value);
+         *mptr = update_mapping_value(*mptr, value);
          found = 1;
       }
       else
@@ -303,14 +310,14 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value)
    {
       *mptr = rdfa_replace_string(*mptr, key);
       mptr++;
-      *mptr = rdfa_replace_string(*mptr, value);
+      *mptr = update_mapping_value(*mptr, value);
    }
 }
 
-const char* rdfa_get_mapping(char** mapping, const char* key)
+const void* rdfa_get_mapping(void** mapping, const char* key)
 {
-   const char* rval = NULL;
-   char** mptr = mapping;
+   const void* rval = NULL;
+   void** mptr = mapping;
 
    // search the current mapping to see if the key exists in the mapping.
    while(*mptr != NULL)
@@ -330,7 +337,7 @@ const char* rdfa_get_mapping(char** mapping, const char* key)
    return rval;
 }
 
-void rdfa_next_mapping(char** mapping, char** key, char** value)
+void rdfa_next_mapping(void** mapping, char** key, void** value)
 {
    *key = NULL;
    *value = NULL;
@@ -342,18 +349,20 @@ void rdfa_next_mapping(char** mapping, char** key, char** value)
    }
 }
 
-void rdfa_print_mapping(char** mapping)
+void rdfa_print_mapping(void** mapping, print_mapping_value_fp print_value)
 {
-   char** mptr = mapping;
+   void** mptr = mapping;
    printf("{\n");
    while(*mptr != NULL)
    {
       char* key;
-      char* value;
-      key = *mptr++;
+      void* value;
+      key = (char*)*mptr++;
       value = *mptr++;
 
-      printf("   %s : %s", key, value);
+      printf("   %s : ", key);
+      print_value(value);
+
       if(*mptr != NULL)
       {
          printf(",\n");
@@ -366,16 +375,22 @@ void rdfa_print_mapping(char** mapping)
    printf("}\n");
 }
 
-void rdfa_free_mapping(char** mapping)
+void rdfa_print_string(const char* str)
 {
-   char** mptr = mapping;
+   printf("%s", str);
+}
+
+
+void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value)
+{
+   void** mptr = mapping;
 
    if(mapping != NULL)
    {
       // free all of the memory in the mapping
       while(*mptr != NULL)
       {
-         free(*mptr);
+         free_value(*mptr);
          mptr++;
       }
 

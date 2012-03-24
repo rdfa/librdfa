@@ -254,10 +254,10 @@ static void start_element(void *parser_context, const char* name,
       raptor_namespace** ns_list = NULL;
       size_t ns_size;
 #else
-      char** umap = context->uri_mappings;
+      void** umap = context->uri_mappings;
 #endif
       char* umap_key = NULL;
-      char* umap_value = NULL;
+      void* umap_value = NULL;
 
       // if the namespaces are not defined, then neither is the xml:lang
       context->xml_literal_xml_lang_defined = 0;
@@ -332,7 +332,7 @@ static void start_element(void *parser_context, const char* name,
                context->xml_literal, &context->xml_literal_size, "=\"", 2);
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size,
-               umap_value, strlen(umap_value));
+               umap_value, strlen((char*)umap_value));
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size, "\"", 1);
          }
@@ -1180,8 +1180,8 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       xmlSAXHandler handler;
       memset(&handler, 0, sizeof(xmlSAXHandler));
       handler.initialized = XML_SAX2_MAGIC;
-      handler.startElementNs = (startElementSAXFunc)start_element;
-      handler.endElementNs = (endElementSAXFunc)end_element;
+      handler.startElementNs = (startElementNsSAX2Func)start_element;
+      handler.endElementNs = (endElementNsSAX2Func)end_element;
       handler.characters = (charactersSAXFunc)character_data;
       handler.error = (errorSAXFunc)rdfa_report_error;
 

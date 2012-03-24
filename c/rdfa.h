@@ -211,11 +211,11 @@ typedef struct rdfacontext
    char* parent_object;
    char* default_vocabulary;
 #ifndef LIBRDFA_IN_RAPTOR
-   char** uri_mappings;
+   void** uri_mappings;
 #endif
-   char** term_mappings;
-   char** list_mappings;
-   char** local_list_mappings;
+   void** term_mappings;
+   void** list_mappings;
+   void** local_list_mappings;
    rdfalist* incomplete_triples;
    rdfalist* local_incomplete_triples;
    char* language;

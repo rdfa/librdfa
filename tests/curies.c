@@ -242,9 +242,11 @@ void run_curie_tests()
    rdfa_init_context(context);
 
    rdfa_update_mapping(
-      context->uri_mappings, "dc", "http://purl.org/dc/elements/1.1/");
+      context->uri_mappings, "dc", "http://purl.org/dc/elements/1.1/",
+      (update_mapping_value_fp)rdfa_replace_string);
    rdfa_update_mapping(
-      context->uri_mappings, "dctv", "http://purl.org/dc/dcmitype/");
+      context->uri_mappings, "dctv", "http://purl.org/dc/dcmitype/",
+      (update_mapping_value_fp)rdfa_replace_string);
 
    printf("------------------------ CURIE tests ---------------------\n");
 

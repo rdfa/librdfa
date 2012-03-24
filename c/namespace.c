@@ -52,7 +52,9 @@ void rdfa_update_uri_mappings(
 
    if(attr == NULL)
    {
-      rdfa_update_mapping(context->uri_mappings, XMLNS_DEFAULT_MAPPING, value);
+      rdfa_update_mapping(
+         context->uri_mappings, XMLNS_DEFAULT_MAPPING, value,
+         (update_mapping_value_fp)rdfa_replace_string);
    }
    else if(strcmp(attr, "_") == 0)
    {
@@ -65,14 +67,16 @@ void rdfa_update_uri_mappings(
    else
    {
       rdfa_generate_namespace_triple(context, attr, value);
-      rdfa_update_mapping(context->uri_mappings, attr, value);
+      rdfa_update_mapping(context->uri_mappings, attr, value,
+         (update_mapping_value_fp)rdfa_replace_string);
    }
 
    // print the current mapping
    if(DEBUG)
    {
       printf("DEBUG: PREFIX MAPPINGS:");
-      rdfa_print_mapping(context->uri_mappings);
+      rdfa_print_mapping(context->uri_mappings,
+         (print_mapping_value_fp)rdfa_print_string);
    }
 }
 #endif

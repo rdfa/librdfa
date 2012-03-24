@@ -78,15 +78,35 @@ typedef enum
 #define RDFA_PROCESSOR_ERROR "http://www.w3.org/ns/rdfa#Error"
 
 /**
+ * A function pointer that will be used to copy mapping values.
+ */
+typedef void* (*copy_mapping_value_fp)(void*, void*);
+
+/**
+ * A function pointer that will be used to update mapping values.
+ */
+typedef void* (*update_mapping_value_fp)(const void*, const void*);
+
+/**
+ * A function pointer that will be used to print mapping values.
+ */
+typedef void (*print_mapping_value_fp)(void*);
+
+/**
+ * A function pointer that will be used to free memory associated with values.
+ */
+typedef void (*free_mapping_value_fp)(void*);
+
+/**
  * Initializes a mapping given the number of elements the mapping is
  * expected to hold.
  *
  * @param elements the maximum number of elements the mapping is
  *                 supposed to hold.
  *
- * @return an initialized char**, with all of the elements set to NULL.
+ * @return an initialized void**, with all of the elements set to NULL.
  */
-char** rdfa_create_mapping(size_t elements);
+void** rdfa_create_mapping(size_t elements);
 
 /**
  * Copies the entire contents of a mapping verbatim and returns a
@@ -98,7 +118,8 @@ char** rdfa_create_mapping(size_t elements);
  *         allocated. You MUST free the returned mapping when you are
  *         done with it.
  */
-char** rdfa_copy_mapping(char** mapping);
+void** rdfa_copy_mapping(
+   void** mapping, copy_mapping_value_fp copy_mapping_value);
 
 /**
  * Updates the given mapping when presented with a key and a value. If
@@ -107,8 +128,11 @@ char** rdfa_copy_mapping(char** mapping);
  * @param mapping the mapping to update.
  * @param key the key.
  * @param value the value.
+ * @param replace_mapping_value a pointer to a function that will replace the
+ *    old
  */
-void rdfa_update_mapping(char** mapping, const char* key, const char* value);
+void rdfa_update_mapping(void** mapping, const char* key, const void* value,
+   update_mapping_value_fp update_mapping_value);
 
 /**
  * Gets the value for a given mapping when presented with a key. If
@@ -119,7 +143,7 @@ void rdfa_update_mapping(char** mapping, const char* key, const char* value);
  *
  * @return value the value in the mapping for the given key.
  */
-const char* rdfa_get_mapping(char** mapping, const char* key);
+const void* rdfa_get_mapping(void** mapping, const char* key);
 
 /**
  * Gets the current mapping for the given mapping and increments the
@@ -131,21 +155,23 @@ const char* rdfa_get_mapping(char** mapping, const char* key);
  * @param value the value that is associated with the key. NULL if the
  *              mapping is blank or you are at the end of the mapping.
  */
-void rdfa_next_mapping(char** mapping, char** key, char** value);
+void rdfa_next_mapping(void** mapping, char** key, void** value);
 
 /**
  * Prints the mapping to the screen in a human-readable way.
  *
  * @param mapping the mapping to print to the screen.
+ * @param print_value the function pointer to use to print the mapping values.
  */
-void rdfa_print_mapping(char** mapping);
+void rdfa_print_mapping(void** mapping, print_mapping_value_fp print_value);
 
 /**
  * Frees all memory associated with a mapping.
  *
  * @param mapping the mapping to free.
+ * @param free_value the function to free mapping values.
  */
-void rdfa_free_mapping(char** mapping);
+void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value);
 
 /**
  * Creates a list and initializes it to the given size.
@@ -248,6 +274,14 @@ char* rdfa_n_append_string(
  *         prefix and suffix in it.
  */
 char* rdfa_join_string(const char* prefix, const char* suffix);
+
+/**
+ * Prints a string to stdout. This function is used by the rdfa_print_mapping
+ * function.
+ *
+ * @param str the string to print to stdout.
+ */
+void rdfa_print_string(const char* str);
 
 /**
  * Canonicalizes a given string by condensing all whitespace to single
