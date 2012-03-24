@@ -245,7 +245,7 @@ char** rdfa_create_mapping(size_t elements)
    size_t mapping_size = sizeof(char*) * MAX_URI_MAPPINGS * 2;
    char** mapping = malloc(mapping_size);
 
-   // only initialize the mapping if it is null.
+   // only initialize the mapping if it is not null.
    if(mapping != NULL)
    {
       memset(mapping, 0, mapping_size);

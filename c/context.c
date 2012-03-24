@@ -114,6 +114,10 @@ void rdfa_init_context(rdfacontext* context)
    // the maximum number of list mappings
    context->list_mappings = (char**)rdfa_create_mapping(MAX_LIST_MAPPINGS);
 
+   // the maximum number of local list mappings
+   context->local_list_mappings =
+      (char**)rdfa_create_mapping(MAX_LOCAL_LIST_MAPPINGS);
+
    // the default vocabulary is set to null
    // (or a IRI defined in the initial context of the Host Language).
    context->default_vocabulary = NULL;

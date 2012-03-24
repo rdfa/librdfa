@@ -170,6 +170,7 @@ static void start_element(void *parser_context, const char* name,
    char* src = NULL;
    const char* type_of_curie = NULL;
    rdfalist* type_of = NULL;
+   unsigned char inlist = 0;
    const char* rel_curie = NULL;
    rdfalist* rel = NULL;
    const char* rev_curie = NULL;
@@ -513,6 +514,10 @@ static void start_element(void *parser_context, const char* name,
 
                free(working_string);
             }
+            else if(strcmp(attr, "inlist") == 0)
+            {
+               inlist = 1;
+            }
             free(value);
          }
       }
@@ -679,6 +684,10 @@ static void start_element(void *parser_context, const char* name,
       {
          printf("DEBUG: @type_of = ");
          rdfa_print_list(type_of);
+      }
+      if(inlist)
+      {
+         printf("DEBUG: @inlist = true\n");
       }
       if(rel != NULL)
       {

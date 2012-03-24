@@ -102,7 +102,7 @@ extern "C"
 {
 #endif
 
-#define DEBUG 0
+#define DEBUG 1
 
 // RDFa version numbers
 #define RDFA_VERSION_1_0 1
@@ -115,7 +115,8 @@ extern "C"
 #define RDFA_PARSE_SUCCESS 1
 
 // maximum list lengths
-#define MAX_LIST_MAPPINGS 64
+#define MAX_LOCAL_LIST_MAPPINGS 256
+#define MAX_LIST_MAPPINGS 1024
 #define MAX_TERM_MAPPINGS 64
 #define MAX_URI_MAPPINGS 128
 #define MAX_INCOMPLETE_TRIPLES 512
@@ -214,6 +215,7 @@ typedef struct rdfacontext
 #endif
    char** term_mappings;
    char** list_mappings;
+   char** local_list_mappings;
    rdfalist* incomplete_triples;
    rdfalist* local_incomplete_triples;
    char* language;
