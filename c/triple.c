@@ -286,7 +286,7 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
       rdfalist* incomplete_triples = context->incomplete_triples;
       rdfalistitem* incomplete_triple = incomplete_triples->items[i];
 
-      if(incomplete_triple->flags & RDFALIST_FLAG_FORWARD)
+      if(incomplete_triple->flags & RDFALIST_FLAG_DIR_FORWARD)
       {
          // If [direction] is 'forward' then the following triple is generated:
          //
@@ -445,7 +445,7 @@ void rdfa_save_incomplete_triples(
 
          rdfa_add_item(
             context->local_incomplete_triples, curie->data,
-               (liflag_t)(RDFALIST_FLAG_FORWARD | RDFALIST_FLAG_TEXT));
+               (liflag_t)(RDFALIST_FLAG_DIR_FORWARD | RDFALIST_FLAG_TEXT));
 
          relptr++;
       }
@@ -468,7 +468,7 @@ void rdfa_save_incomplete_triples(
 
          rdfa_add_item(
             context->local_incomplete_triples, curie->data,
-               (liflag_t)(RDFALIST_FLAG_REVERSE | RDFALIST_FLAG_TEXT));
+               (liflag_t)(RDFALIST_FLAG_DIR_REVERSE | RDFALIST_FLAG_TEXT));
 
          revptr++;
       }
@@ -616,4 +616,168 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
    // [current object literal] is rdf:XMLLiteral, then the [recurse]
    // flag is set to false
    context->recurse = 0;
+}
+
+void rdfa_complete_current_property_value_triples(rdfacontext* context)
+{
+   // 11. The next step of the iteration is to establish any current property
+   //     value;
+   // Predicates for the current property value can be set by using @property.
+   // If present, one or more resources are obtained according to the section
+   // on CURIE and IRI Processing, and then the actual literal value is
+   // obtained as follows:
+   char* current_property_value = NULL;
+   rdfresource_t type = RDF_TYPE_UNKNOWN;
+
+   unsigned int i;
+   rdfalistitem** pptr;
+
+   // as a typed literal if @datatype is present, does not have an empty
+   // value according to the section on CURIE and IRI Processing, and is not
+   // set to XMLLiteral in the vocabulary
+   // http://www.w3.org/1999/02/22-rdf-syntax-ns#.
+   if((context->datatype != NULL) && (strcmp(context->datatype,
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral") != 0))
+   {
+      // The actual literal is either the value of @content (if present) or a
+      // string created by concatenating the value of all descendant text nodes,
+      // of the current element in turn.
+      if(context->content != NULL)
+      {
+         current_property_value = context->content;
+      }
+      else
+      {
+         current_property_value = context->plain_literal;
+      }
+
+      // The final string includes the datatype
+      // IRI, as described in [RDF-CONCEPTS], which will have been obtained
+      // according to the section on CURIE and IRI Processing.
+      // otherwise, as a plain literal if @datatype is present but has an
+      // empty value according to the section on CURIE and IRI Processing.
+      if(strlen(context->datatype) > 0)
+      {
+         type = RDF_TYPE_TYPED_LITERAL;
+      }
+      else
+      {
+         type = RDF_TYPE_PLAIN_LITERAL;
+      }
+   }
+   else if((context->datatype != NULL) && (strcmp(context->datatype,
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral") == 0))
+   {
+      // otherwise, as an XML literal if @datatype is present and is set to
+      // XMLLiteral in the vocabulary
+      // http://www.w3.org/1999/02/22-rdf-syntax-ns#.
+      // The value of the XML literal is a string created by serializing to
+      // text, all nodes that are descendants of the current element, i.e., not
+      // including the element itself, and giving it a datatype of XMLLiteral
+      // in the vocabulary http://www.w3.org/1999/02/22-rdf-syntax-ns#. The
+      // format of the resulting serialized content is as defined in Exclusive
+      // XML Canonicalization Version [XML-EXC-C14N].
+      // In order to maintain maximum portability of this literal, any children
+      // of the current node that are elements must have the current XML
+      // namespace declarations (if any) declared on the serialized element.
+      // Since the child element node could also declare new XML namespaces,
+      // the RDFa Processor must be careful to merge these together when
+      // generating the serialized element definition. For avoidance of doubt,
+      // any re-declarations on the child node must take precedence over
+      // declarations that were active on the current node.
+      current_property_value = context->xml_literal;
+      type = RDF_TYPE_XML_LITERAL;
+   }
+   else if(context->content != NULL)
+   {
+      // otherwise, as an plain literal using the value of @content if
+      // @content is present.
+      current_property_value = context->content;
+      type = RDF_TYPE_PLAIN_LITERAL;
+   }
+   else if((context->rel_present == 0) && (context->rev_present == 0) &&
+      (context->content == NULL))
+   {
+      // otherwise, if the @rel, @rev, and @content attributes are not present,
+      // as a resource obtained from one of the following:
+      if(context->resource != NULL)
+      {
+         // by using the resource from @resource, if present, obtained
+         // according to the section on CURIE and IRI Processing;
+         current_property_value = context->resource;
+         type = RDF_TYPE_IRI;
+      }
+      else if(context->href != NULL)
+      {
+         // otherwise, by using the IRI from @href, if present, obtained
+         // according to the section on CURIE and IRI Processing;
+         current_property_value = context->href;
+         type = RDF_TYPE_IRI;
+      }
+      else if(context->src != NULL)
+      {
+         // otherwise, by using the IRI from @src, if present, obtained
+         // according to the section on CURIE and IRI Processing.
+         current_property_value = context->src;
+         type = RDF_TYPE_IRI;
+      }
+      else if((context->about == NULL) && (context->typed_resource != NULL))
+      {
+      // otherwise, if @typeof is present and @about is not, the value of
+      // typed resource.
+         current_property_value = context->typed_resource;
+         type = RDF_TYPE_IRI;
+      }
+   }
+   else
+   {
+      // otherwise as a plain literal.
+      current_property_value = context->plain_literal;
+      type = RDF_TYPE_PLAIN_LITERAL;
+   }
+
+   // Additionally, if there is a value for current language then the value
+   // of the plain literal should include this language information, as
+   // described in [RDF-CONCEPTS]. The actual literal is either the value
+   // of @content (if present) or a string created by concatenating the text
+   // content of each of the descendant elements of the current element in
+   // document order.
+   //
+   // NOTE: This happens automatically due to the way the code is setup.
+
+   if(context->inlist_present)
+   {
+      // The current property value is then used with each predicate as
+      // follows:
+      // If the element also includes the @inlist attribute, the current
+      // property value is added to the local list mapping as follows:
+      // if the local list mapping does not contain a list associated with
+      // the predicate IRI, instantiate a new list and add to local list
+      // mappings add the current property value to the list associated
+      // with the predicate IRI in the local list mapping
+      rdfa_establish_new_inlist_triples(context, context->property, type);
+   }
+   else
+   {
+      pptr = context->property->items;
+      for(i = 0; i < context->property->num_items; i++)
+      {
+         // Otherwise the current property value is used to generate a triple
+         // as follows:
+         // subject
+         //   new subject
+         // predicate
+         //   full IRI
+         // object
+         //   current property value
+         rdfalistitem* curie = *pptr;
+         rdftriple* triple = triple = rdfa_create_triple(context->new_subject,
+            (const char*)curie->data, current_property_value, type,
+            context->datatype, context->language);
+
+         context->default_graph_triple_callback(triple, context->callback_data);
+
+         pptr++;
+      }
+   }
 }

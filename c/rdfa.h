@@ -115,11 +115,12 @@ extern "C"
 #define RDFA_PARSE_SUCCESS 1
 
 // maximum list lengths
-#define MAX_LOCAL_LIST_MAPPINGS 256
-#define MAX_LIST_MAPPINGS 1024
+#define MAX_LOCAL_LIST_MAPPINGS 32
+#define MAX_LIST_MAPPINGS 32
+#define MAX_LIST_ITEMS 16
 #define MAX_TERM_MAPPINGS 64
 #define MAX_URI_MAPPINGS 128
-#define MAX_INCOMPLETE_TRIPLES 512
+#define MAX_INCOMPLETE_TRIPLES 128
 
 // host language definitions
 #define HOST_LANGUAGE_NONE 0
@@ -230,9 +231,17 @@ typedef struct rdfacontext
    char* new_subject;
    char* current_object_resource;
 
+   char* about;
+   char* typed_resource;
+   char* resource;
+   char* href;
+   char* src;
    char* content;
    char* datatype;
    rdfalist* property;
+   unsigned char inlist_present;
+   unsigned char rel_present;
+   unsigned char rev_present;
    char* plain_literal;
    size_t plain_literal_size;
    char* xml_literal;

@@ -122,6 +122,15 @@ void rdfa_init_context(rdfacontext* context)
    // (or a IRI defined in the initial context of the Host Language).
    context->default_vocabulary = NULL;
 
+   // whether or not the @inlist attribute is present on the current element
+   context->inlist_present = 0;
+
+   // whether or not the @rel attribute is present on the current element
+   context->rel_present = 0;
+
+   // whether or not the @rev attribute is present on the current element
+   context->rev_present = 0;
+
    // 1. First, the local values are initialized, as follows:
    //
    // * the [recurse] flag is set to 'true';
@@ -155,6 +164,12 @@ void rdfa_init_context(rdfacontext* context)
    context->underscore_colon_bnode_name = NULL;
    context->xml_literal_namespaces_defined = 0;
    context->xml_literal_xml_lang_defined = 0;
+
+   context->about = NULL;
+   context->typed_resource = NULL;
+   context->resource = NULL;
+   context->href = NULL;
+   context->src = NULL;
    context->content = NULL;
    context->datatype = NULL;
    context->property = NULL;
@@ -358,6 +373,11 @@ void rdfa_free_context(rdfacontext* context)
    free(context->underscore_colon_bnode_name);
    free(context->new_subject);
    free(context->current_object_resource);
+   free(context->about);
+   free(context->typed_resource);
+   free(context->resource);
+   free(context->href);
+   free(context->src);
    free(context->content);
    free(context->datatype);
    rdfa_free_list(context->property);

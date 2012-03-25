@@ -1,6 +1,6 @@
 # Makefile to compile the module in this directory
 
-SOURCES = iri.c context.c curie.c language.c namespace.c rdfa.c rdfa_utils.c subject.c triple.c
+SOURCES = iri.c context.c curie.c language.c namespace.c rdfa.c rdfa_utils.c subject.c triple.c lists.c
 
 ifeq (@OS@,mingw32)
 SOURCES += mingw32_utils.c

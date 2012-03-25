@@ -170,7 +170,6 @@ static void start_element(void *parser_context, const char* name,
    char* src = NULL;
    const char* type_of_curie = NULL;
    rdfalist* type_of = NULL;
-   unsigned char inlist = 0;
    const char* rel_curie = NULL;
    rdfalist* rel = NULL;
    const char* rev_curie = NULL;
@@ -516,7 +515,7 @@ static void start_element(void *parser_context, const char* name,
             }
             else if(strcmp(attr, "inlist") == 0)
             {
-               inlist = 1;
+               context->inlist_present = 1;
             }
             free(value);
          }
@@ -574,12 +573,14 @@ static void start_element(void *parser_context, const char* name,
          }
          else if(strcmp(attr, "rel") == 0)
          {
+            context->rel_present = 1;
             rel_curie = value;
             rel = rdfa_resolve_curie_list(
                context, rel_curie, CURIE_PARSE_RELREV);
          }
          else if(strcmp(attr, "rev") == 0)
          {
+            context->rev_present = 1;
             rev_curie = value;
             rev = rdfa_resolve_curie_list(
                context, rev_curie, CURIE_PARSE_RELREV);
@@ -685,7 +686,7 @@ static void start_element(void *parser_context, const char* name,
          printf("DEBUG: @type_of = ");
          rdfa_print_list(type_of);
       }
-      if(inlist)
+      if(context->inlist_present)
       {
          printf("DEBUG: @inlist = true\n");
       }
@@ -777,9 +778,39 @@ static void start_element(void *parser_context, const char* name,
 
    if(context->current_object_resource != NULL)
    {
+      // If the element contains both the @inlist and the @rel attributes:
+      // the @rel may contain one or more resources, obtained according to
+      // the section on CURIE and IRI Processing each of which is used to
+      // add an entry to the list mapping as follows:
+      // if the local list mapping does not contain a list associated with
+      // the IRI, instantiate a new list and add to local list mappings
+      // add the current object resource to the list associated with the
+      // resource in the local list mapping
+      if(context->rdfa_version == RDFA_VERSION_1_1 && (rel != NULL) &&
+         context->inlist_present)
+      {
+         rdfresource_t object_type = RDF_TYPE_IRI;
+         if((property != NULL) || (content != NULL))
+         {
+            object_type = RDF_TYPE_PLAIN_LITERAL;
+            if(datatype != NULL)
+            {
+               object_type = RDF_TYPE_TYPED_LITERAL;
+            }
+         }
+         rdfa_establish_new_inlist_triples(context, rel, object_type);
+      }
+
       // 7. If in any of the previous steps a [current object  resource]
       // was set to a non-null value, it is now used to generate triples
       rdfa_complete_relrev_triples(context, rel, rev);
+   }
+
+   if((context->current_object_resource == NULL) &&
+      context->rdfa_version == RDFA_VERSION_1_1  && (rel != NULL) &&
+      context->inlist_present)
+   {
+      rdfa_save_incomplete_list_triples(context, rel);
    }
    else if((rel != NULL) || (rev != NULL))
    {
@@ -799,9 +830,13 @@ static void start_element(void *parser_context, const char* name,
    }
 
    // save these for processing steps #9 and #10
-   context->property = property;
-   context->content = rdfa_replace_string(context->datatype, content);
+   context->about = rdfa_replace_string(context->about, about);
+   context->resource = rdfa_replace_string(context->resource, resource);
+   context->href = rdfa_replace_string(context->href, href);
+   context->src = rdfa_replace_string(context->src, src);
+   context->content = rdfa_replace_string(context->content, content);
    context->datatype = rdfa_replace_string(context->datatype, datatype);
+   context->property = property;
 
    // free the resolved CURIEs
    free(about);
@@ -932,7 +967,14 @@ static void end_element(void* parser_context, const char* name,
 
       // process data between first tag and last tag
       // this needs the xml literal to be null terminated
-      rdfa_complete_object_literal_triples(context);
+      if(context->rdfa_version == RDFA_VERSION_1_0)
+      {
+         rdfa_complete_object_literal_triples(context);
+      }
+      else
+      {
+         rdfa_complete_current_property_value_triples(context);
+      }
 
       if(content_end != NULL)
       {

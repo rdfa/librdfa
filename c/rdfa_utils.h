@@ -63,11 +63,13 @@ typedef enum
 typedef enum
 {
    RDFALIST_FLAG_NONE = 0,
-   RDFALIST_FLAG_FORWARD = (1 << 1),
-   RDFALIST_FLAG_REVERSE = (1 << 2),
-   RDFALIST_FLAG_TEXT = (1 << 3),
-   RDFALIST_FLAG_CONTEXT = (1 << 4),
-   RDFALIST_FLAG_LAST = (1 << 5)
+   RDFALIST_FLAG_DIR_NONE = (1 << 1),
+   RDFALIST_FLAG_DIR_FORWARD  = (1 << 2),
+   RDFALIST_FLAG_DIR_REVERSE = (1 << 3),
+   RDFALIST_FLAG_TEXT = (1 << 4),
+   RDFALIST_FLAG_CONTEXT = (1 << 5),
+   RDFALIST_FLAG_TRIPLE = (1 << 6),
+   RDFALIST_FLAG_LAST = (1 << 7)
 } liflag_t;
 
 /*
@@ -107,6 +109,38 @@ typedef void (*free_mapping_value_fp)(void*);
  * @return an initialized void**, with all of the elements set to NULL.
  */
 void** rdfa_create_mapping(size_t elements);
+
+/**
+ * Adds a list to a mapping given a key to create. The result will be a
+ * zero-item list associated with the given key in the mapping.
+ *
+ * @param mapping the mapping to modify.
+ * @param key the key to add to the mapping.
+ */
+void rdfa_create_list_mapping(
+   rdfacontext* context, void** mapping, const char* key);
+
+/**
+ * Replaces an old list value in a mapping with the new value that is given.
+ * This is typically used by the rdfa_create_list_mapping function and should
+ * probably not be used by any developer code.
+ *
+ * @param mapping the mapping to modify.
+ * @param key the key to add to the mapping.
+ *
+ * @return a pointer to the new list
+ */
+rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list);
+
+/**
+ * Adds an item to the end of the list that is associated with the given
+ * key in the mapping.
+ *
+ * @param mapping the mapping to modify.
+ * @param key the key to use when looking up the list value.
+ * @param value the value to append to the end of the list.
+ */
+void rdfa_append_to_list_mapping(void** mapping, const char* key, void* value);
 
 /**
  * Copies the entire contents of a mapping verbatim and returns a
@@ -321,6 +355,13 @@ rdftriple* rdfa_create_triple(const char* subject, const char* predicate,
 void rdfa_print_triple(rdftriple* triple);
 
 /**
+ * Prints a list of triples in a human readable form.
+ *
+ * @triple the triple to display.
+ */
+void rdfa_print_triple_list(rdfalist* list);
+
+/**
  * Frees the memory associated with a triple.
  */
 void rdfa_free_triple(rdftriple* triple);
@@ -381,12 +422,15 @@ void rdfa_establish_new_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const rdfalist* type_of);
 void rdfa_complete_incomplete_triples(rdfacontext* context);
+void rdfa_save_incomplete_list_triples(
+   rdfacontext* context, const rdfalist* rel);
 void rdfa_complete_type_triples(rdfacontext* context, const rdfalist* type_of);
 void rdfa_complete_relrev_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 void rdfa_save_incomplete_triples(
    rdfacontext* context, const rdfalist* rel, const rdfalist* rev);
 void rdfa_complete_object_literal_triples(rdfacontext* context);
+void rdfa_complete_current_property_value_triples(rdfacontext* context);
 
 /* Declarations needed by namespace.c */
 void rdfa_generate_namespace_triple(
@@ -395,6 +439,8 @@ void rdfa_processor_triples(
    rdfacontext* context, const char* type, const char* msg);
 
 /* Declarations needed by rdfa.c */
+void rdfa_establish_new_inlist_triples(
+   rdfacontext* context, rdfalist* rel, rdfresource_t object_type);
 rdfacontext* rdfa_create_context(const char* base);
 void rdfa_init_context(rdfacontext* context);
 rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack);

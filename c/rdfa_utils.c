@@ -174,6 +174,25 @@ void rdfa_print_list(rdfalist* list)
    printf(" ]\n");
 }
 
+void rdfa_print_triple_list(rdfalist* list)
+{
+   unsigned int i;
+
+   printf("[ ");
+
+   for(i = 0; i < list->num_items; i++)
+   {
+      if(i != 0)
+      {
+         printf(", ");
+      }
+
+      rdfa_print_triple((rdftriple*)list->items[i]->data);
+   }
+
+   printf(" ]\n");
+}
+
 void rdfa_free_list(rdfalist* list)
 {
    if(list != NULL)
@@ -216,7 +235,7 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
 
    item->data = NULL;
 
-   if(flags & RDFALIST_FLAG_CONTEXT)
+   if((flags & RDFALIST_FLAG_CONTEXT) || (flags & RDFALIST_FLAG_TRIPLE))
    {
       item->data = data;
    }
@@ -252,6 +271,39 @@ void** rdfa_create_mapping(size_t elements)
    }
 
    return mapping;
+}
+
+rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list)
+{
+   return new_list;
+}
+
+void rdfa_create_list_mapping(
+   rdfacontext* context, void** mapping, const char* key)
+{
+   const void* value = rdfa_get_mapping(mapping, key);
+
+   if(value == NULL)
+   {
+      // create the mapping
+      rdfalist* value = rdfa_create_list(MAX_LIST_ITEMS);
+      rdfa_update_mapping(mapping, key, value,
+         (update_mapping_value_fp)rdfa_replace_list);
+
+      // add the first item in the list as the bnode for the list
+      char* list_bnode = rdfa_create_bnode(context);
+      rdftriple* triple = rdfa_create_triple(list_bnode,
+         list_bnode, list_bnode, RDF_TYPE_IRI, NULL, NULL);
+      rdfa_append_to_list_mapping(
+         context->local_list_mappings, key, (void*)triple);
+      free(list_bnode);
+   }
+}
+
+void rdfa_append_to_list_mapping(void** mapping, const char* key, void* value)
+{
+   rdfalist* list = (rdfalist*)rdfa_get_mapping(mapping, key);
+   rdfa_add_item(list, value, RDFALIST_FLAG_TRIPLE);
 }
 
 void** rdfa_copy_mapping(
