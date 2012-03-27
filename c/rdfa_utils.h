@@ -441,6 +441,7 @@ void rdfa_processor_triples(
 /* Declarations needed by rdfa.c */
 void rdfa_establish_new_inlist_triples(
    rdfacontext* context, rdfalist* rel, rdfresource_t object_type);
+void rdfa_complete_list_triples(rdfacontext* context);
 rdfacontext* rdfa_create_context(const char* base);
 void rdfa_init_context(rdfacontext* context);
 rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack);

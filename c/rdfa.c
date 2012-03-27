@@ -1046,6 +1046,19 @@ static void end_element(void* parser_context, const char* name,
       rdfa_complete_incomplete_triples(context);
    }
 
+   // 14. Once all the child elements have been traversed, list triples are
+   // generated, if necessary.
+   if(context->rdfa_version == RDFA_VERSION_1_1)
+   {
+      rdfa_complete_list_triples(context);
+
+      // copy the current mapping to the parent mapping
+      rdfa_free_mapping(
+         parent_context->list_mappings, (free_mapping_value_fp)rdfa_free_list);
+      parent_context->list_mappings = context->local_list_mappings;
+      context->local_list_mappings = NULL;
+   }
+
    // free the context
    rdfa_free_context(context);
 }

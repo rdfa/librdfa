@@ -208,6 +208,9 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->uri_mappings =
       rdfa_copy_mapping((void**)parent_context->uri_mappings,
          (copy_mapping_value_fp)rdfa_replace_string);
+   rval->list_mappings =
+      rdfa_copy_mapping((void**)parent_context->local_list_mappings,
+         (copy_mapping_value_fp)rdfa_copy_mapping);
 #endif
 
    // inherit the parent context's RDFa processor mode

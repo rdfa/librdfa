@@ -286,7 +286,17 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
       rdfalist* incomplete_triples = context->incomplete_triples;
       rdfalistitem* incomplete_triple = incomplete_triples->items[i];
 
-      if(incomplete_triple->flags & RDFALIST_FLAG_DIR_FORWARD)
+      if(incomplete_triple->flags & RDFALIST_FLAG_DIR_NONE)
+      {
+         // If direction is 'none', the new subject is added to the list
+         // from the iterated incomplete triple.
+         const char* predicate = (const char*)incomplete_triple->data;
+         rdftriple* triple = rdfa_create_triple(context->parent_subject,
+            predicate, context->new_subject, RDF_TYPE_IRI, NULL, NULL);
+         rdfa_append_to_list_mapping(
+            context->local_list_mappings, predicate, (void*)triple);
+      }
+      else if(incomplete_triple->flags & RDFALIST_FLAG_DIR_FORWARD)
       {
          // If [direction] is 'forward' then the following triple is generated:
          //
