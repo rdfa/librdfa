@@ -413,7 +413,7 @@ void rdfa_update_language(rdfacontext* context, const char* lang);
 
 char* rdfa_create_bnode(rdfacontext* context);
 
-// All functions that rdfa.c needs.
+/* All functions that rdfa.c needs. */
 void rdfa_update_uri_mappings(rdfacontext* context, const char* attr, const char* value);
 void rdfa_establish_new_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,

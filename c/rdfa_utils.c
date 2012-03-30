@@ -20,11 +20,16 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with librdfa. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "stdlib.h"
-#include "string.h"
-#include "stdio.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "rdfa_utils.h"
 #include "rdfa.h"
+#include "strtok_r.h"
 
 #define RDFA_WHITESPACE_CHARACTERS " \a\b\t\n\v\f\r"
 
@@ -59,10 +64,10 @@ char* rdfa_replace_string(char* old_string, const char* new_string)
 
    if(new_string != NULL)
    {
-      // free the memory associated with the old string
+      /* free the memory associated with the old string */
       free(old_string);
 
-      // copy the new string
+      /* copy the new string */
       rval = strdup(new_string);
    }
 
@@ -79,7 +84,7 @@ char* rdfa_canonicalize_string(const char* str)
 
    working_string = rdfa_replace_string(working_string, str);
 
-   // split on any whitespace character that we may find
+   /* split on any whitespace character that we may find */
    token = strtok_r(working_string, RDFA_WHITESPACE_CHARACTERS, &wptr);
    while(token != NULL)
    {
@@ -119,13 +124,13 @@ rdfalist* rdfa_copy_list(rdfalist* list)
    rdfalist* rval = (rdfalist*)malloc(sizeof(rdfalist));
    unsigned int i;
 
-   // copy the base list variables over
+   /* copy the base list variables over */
    rval->max_items = list->max_items;
    rval->num_items = list->num_items;
    rval->items = (rdfalistitem**)malloc(sizeof(void*) * rval->max_items);
 
-   // copy the data of every list member along with all of the flags
-   // for each list member.
+   /* copy the data of every list member along with all of the flags
+    * for each list member. */
    for(i = 0; i < list->max_items; i++)
    {
       if(i < list->num_items)
@@ -134,17 +139,16 @@ rdfalist* rdfa_copy_list(rdfalist* list)
          rval->items[i]->data = NULL;
          rval->items[i]->flags = list->items[i]->flags;
 
-         // copy specific data type
+         /* copy specific data type */
          if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
          {
             rval->items[i]->data = (char*)rdfa_replace_string(
                NULL, (const char*)list->items[i]->data);
          }
-         /*
-         else if(flags & RDFALIST_FLAG_CONTEXT)
+         else if(list->items[i]->flags & RDFALIST_FLAG_CONTEXT)
          {
-            // TODO: Implement the copy for context, if it is needed.
-         }*/
+            /* TODO: Implement the copy for context, if it is needed. */
+         }
       }
       else
       {
@@ -264,7 +268,7 @@ void** rdfa_create_mapping(size_t elements)
    size_t mapping_size = sizeof(void*) * MAX_URI_MAPPINGS * 2;
    void** mapping = malloc(mapping_size);
 
-   // only initialize the mapping if it is not null.
+   /* only initialize the mapping if it is not null. */
    if(mapping != NULL)
    {
       memset(mapping, 0, mapping_size);
@@ -282,17 +286,20 @@ void rdfa_create_list_mapping(
    rdfacontext* context, void** mapping, const char* key)
 {
    const void* value = rdfa_get_mapping(mapping, key);
+   rdfalist* value2;
+   char* list_bnode;
+   rdftriple* triple;
 
    if(value == NULL)
    {
-      // create the mapping
-      rdfalist* value = rdfa_create_list(MAX_LIST_ITEMS);
-      rdfa_update_mapping(mapping, key, value,
+      /* create the mapping */
+      value2 = rdfa_create_list(MAX_LIST_ITEMS);
+      rdfa_update_mapping(mapping, key, value2,
          (update_mapping_value_fp)rdfa_replace_list);
 
-      // add the first item in the list as the bnode for the list
-      char* list_bnode = rdfa_create_bnode(context);
-      rdftriple* triple = rdfa_create_triple(list_bnode,
+      /* add the first item in the list as the bnode for the list */
+      list_bnode = rdfa_create_bnode(context);
+      triple = rdfa_create_triple(list_bnode,
          list_bnode, list_bnode, RDF_TYPE_IRI, NULL, NULL);
       rdfa_append_to_list_mapping(
          context->local_list_mappings, key, (void*)triple);
@@ -314,18 +321,18 @@ void** rdfa_copy_mapping(
    void** mptr = mapping;
    void** rptr = rval;
 
-   // initialize the mapping
+   /* initialize the mapping */
    memset(rval, 0, mapping_size);
 
-   // copy each element of the old mapping to the new mapping.
+   /* copy each element of the old mapping to the new mapping. */
    while(*mptr != NULL)
    {
-      // copy the key
+      /* copy the key */
       *rptr = rdfa_replace_string(*rptr, *mptr);
       rptr++;
       mptr++;
 
-      // copy the value
+      /* copy the value */
       *rptr = copy_mapping_value(*rptr, *mptr);
       rptr++;
       mptr++;
@@ -340,7 +347,7 @@ void rdfa_update_mapping(void** mapping, const char* key, const void* value,
    int found = 0;
    void** mptr = mapping;
 
-   // search the current mapping to see if the key exists in the mapping
+   /* search the current mapping to see if the key exists in the mapping */
    while(!found && (*mptr != NULL))
    {
       if(strcmp((char*)*mptr, key) == 0)
@@ -356,8 +363,8 @@ void rdfa_update_mapping(void** mapping, const char* key, const void* value,
       mptr++;
    }
 
-   // if we made it through the entire URI mapping and the key was not
-   // found, create a new key-value pair.
+   /* if we made it through the entire URI mapping and the key was not
+    * found, create a new key-value pair. */
    if(!found)
    {
       *mptr = rdfa_replace_string(*mptr, key);
@@ -371,7 +378,7 @@ const void* rdfa_get_mapping(void** mapping, const char* key)
    const void* rval = NULL;
    void** mptr = mapping;
 
-   // search the current mapping to see if the key exists in the mapping.
+   /* search the current mapping to see if the key exists in the mapping. */
    while(*mptr != NULL)
    {
       if(strcmp(*mptr, key) == 0)
@@ -439,7 +446,7 @@ void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value)
 
    if(mapping != NULL)
    {
-      // free all of the memory in the mapping
+      /* free all of the memory in the mapping */
       while(*mptr != NULL)
       {
          free_value(*mptr);

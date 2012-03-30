@@ -76,7 +76,7 @@
 #include <stdlib.h>
 #include <libxml/SAX2.h>
 
-// Activate the stupid Windows DLL exporting mechanism if we're building for Windows
+/* Activate the stupid Windows DLL exporting mechanism if we're building for Windows */
 #ifdef WIN32
 #define DLLEXPORT __declspec(dllexport)
 #else
@@ -93,9 +93,7 @@
 #endif
 #include "raptor.h"
 #include "raptor_internal.h"
-#else
-#include <expat.h>
-#endif
+#endif /* LIBRDFA_IN_RAPTOR */
 
 #ifdef __cplusplus
 extern "C"
@@ -104,17 +102,17 @@ extern "C"
 
 #define DEBUG 1
 
-// RDFa version numbers
+/* RDFa version numbers */
 #define RDFA_VERSION_1_0 1
 #define RDFA_VERSION_1_1 2
 
-// parse process return types
+/* parse process return types */
 #define RDFA_PARSE_WARNING -2
 #define RDFA_PARSE_FAILED -1
 #define RDFA_PARSE_UNKNOWN 0
 #define RDFA_PARSE_SUCCESS 1
 
-// maximum list lengths
+/* maximum list lengths */
 #define MAX_LOCAL_LIST_MAPPINGS 32
 #define MAX_LIST_MAPPINGS 32
 #define MAX_LIST_ITEMS 16
@@ -122,16 +120,16 @@ extern "C"
 #define MAX_URI_MAPPINGS 128
 #define MAX_INCOMPLETE_TRIPLES 128
 
-// host language definitions
+/* host language definitions */
 #define HOST_LANGUAGE_NONE 0
 #define HOST_LANGUAGE_XML1 1
 #define HOST_LANGUAGE_XHTML1 2
 #define HOST_LANGUAGE_HTML 3
 
-// default mapping key for xmlns
+/* default mapping key for xmlns */
 #define XMLNS_DEFAULT_MAPPING "XMLNS_DEFAULT"
 
-// whitespace characters for RDFa Core 1.1
+/* whitespace characters for RDFa Core 1.1 */
 #define RDFA_WHITESPACE " \t\n\v\f\r"
 
 /**

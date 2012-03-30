@@ -36,6 +36,10 @@
  *
  * @author Manu Sporny
  */
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +47,7 @@
 #include <libxml/SAX2.h>
 #include "rdfa_utils.h"
 #include "rdfa.h"
+#include "strtok_r.h"
 
 #define READ_BUFFER_SIZE 4096
 #define RDFA_DOCTYPE_STRING_LENGTH 103
@@ -71,9 +76,9 @@ static size_t rdfa_init_base(
       needed_size = (offset + bytes_read) - *working_buffer_size;
    }
 
-   // search for the end of <head>, stop if <head> was found
+   /* search for the end of <head>, stop if <head> was found */
 
-   // extend the working buffer size
+   /* extend the working buffer size */
    if(needed_size > 0)
    {
       size_t temp_buffer_size = sizeof(char) * READ_BUFFER_SIZE;
@@ -81,22 +86,22 @@ static size_t rdfa_init_base(
          temp_buffer_size += needed_size;
 
       *working_buffer_size += temp_buffer_size;
-      // +1 for NUL at end, to allow strstr() etc. to work
+      /* +1 for NUL at end, to allow strstr() etc. to work */
       *working_buffer = (char*)realloc(*working_buffer, *working_buffer_size + 1);
    }
 
-   // append to the working buffer
+   /* append to the working buffer */
    memmove(*working_buffer + offset, temp_buffer, bytes_read);
-   // ensure the buffer is a NUL-terminated string
+   /* ensure the buffer is a NUL-terminated string */
    *(*working_buffer + offset + bytes_read) = '\0';
 
-   // search for an RDFa 1.0 DOCTYPE string to set the version
+   /* search for an RDFa 1.0 DOCTYPE string to set the version */
    if(strstr(*working_buffer, "-//W3C//DTD XHTML+RDFa 1.0//EN") != NULL)
    {
       context->rdfa_version = RDFA_VERSION_1_0;
    }
 
-   // search for the end of </head> in
+   /* search for the end of </head> in */
    head_end = strstr(*working_buffer, "</head>");
    if(head_end == NULL)
       head_end = strstr(*working_buffer, "</HEAD>");
@@ -106,7 +111,7 @@ static size_t rdfa_init_base(
    if(head_end == NULL)
       return bytes_read;
 
-   // if </head> was found, search for <base and extract the base URI
+   /* if </head> was found, search for <base and extract the base URI */
    if(head_end != NULL)
    {
       char* base_start = strstr(*working_buffer, "<base ");
@@ -130,16 +135,16 @@ static size_t rdfa_init_base(
                strncpy(temp_uri, uri_start, uri_size);
                temp_uri[uri_size] = '\0';
 
-               // TODO: This isn't in the processing rules, should it
-               //       be? Setting current_object_resource will make
-               //       sure that the BASE element is inherited by all
-               //       subcontexts.
+               /* TODO: This isn't in the processing rules, should it
+                *       be? Setting current_object_resource will make
+                *       sure that the BASE element is inherited by all
+                *       subcontexts. */
 	       cleaned_base = rdfa_iri_get_base(temp_uri);
                context->current_object_resource =
                   rdfa_replace_string(
                      context->current_object_resource, cleaned_base);
 
-	       // clean up the base context
+	       /* clean up the base context */
                context->base =
                   rdfa_replace_string(context->base, cleaned_base);
                free(cleaned_base);
@@ -190,7 +195,7 @@ static void start_element(void *parser_context, const char* name,
    {
       int i;
 
-      // dump all arguments sent to this callback
+      /* dump all arguments sent to this callback */
       fprintf(stdout, "SAX.startElementNs(%s", (char *) name);
       if (prefix == NULL)
           fprintf(stdout, ", NULL");
@@ -202,7 +207,7 @@ static void start_element(void *parser_context, const char* name,
           fprintf(stdout, ", '%s'", (char *) URI);
       fprintf(stdout, ", %d", nb_namespaces);
 
-      // dump all namespaces
+      /* dump all namespaces */
       if (namespaces != NULL) {
           for (i = 0;i < nb_namespaces * 2;i++) {
               fprintf(stdout, ", xmlns");
@@ -213,7 +218,7 @@ static void start_element(void *parser_context, const char* name,
           }
       }
 
-      // dump all attributes
+      /* dump all attributes */
       fprintf(stdout, ", %d, %d", nb_attributes, nb_defaulted);
       if (attributes != NULL) {
           for (i = 0;i < nb_attributes * 5;i += 5) {
@@ -229,7 +234,7 @@ static void start_element(void *parser_context, const char* name,
       fprintf(stdout, ")\n");
    }
 
-   // start the XML Literal text
+   /* start the XML Literal text */
    if(context->xml_literal == NULL)
    {
       context->xml_literal = rdfa_replace_string(context->xml_literal, "<");
@@ -246,7 +251,7 @@ static void start_element(void *parser_context, const char* name,
 
    if(!context->xml_literal_namespaces_defined)
    {
-      // append namespaces to XML Literal
+      /* append namespaces to XML Literal */
 #ifdef LIBRDFA_IN_RAPTOR
       raptor_namespace_stack* nstack = &context->sax2->namespaces;
       raptor_namespace* ns;
@@ -258,7 +263,7 @@ static void start_element(void *parser_context, const char* name,
       char* umap_key = NULL;
       void* umap_value = NULL;
 
-      // if the namespaces are not defined, then neither is the xml:lang
+      /* if the namespaces are not defined, then neither is the xml:lang */
       context->xml_literal_xml_lang_defined = 0;
 
 #ifdef LIBRDFA_IN_RAPTOR
@@ -275,7 +280,7 @@ static void start_element(void *parser_context, const char* name,
          unsigned char insert_xmlns_definition = 1;
          const char* attr = NULL;
 
-         // get the next mapping to process
+         /* get the next mapping to process */
 #ifdef LIBRDFA_IN_RAPTOR
          ns=ns_list[--ns_size];
 
@@ -288,8 +293,8 @@ static void start_element(void *parser_context, const char* name,
          umap++;
 #endif
 
-         // check to make sure that the namespace isn't already
-         // defined in the current element.
+         /* check to make sure that the namespace isn't already
+          * defined in the current element. */
          if(attributes != NULL)
          {
             const char** attrs = attributes;
@@ -297,8 +302,8 @@ static void start_element(void *parser_context, const char* name,
             {
                attr = *attrs++;
 
-               // if the attribute is a umap_key, skip the definition
-               // of the attribute.
+               /* if the attribute is a umap_key, skip the definition
+                * of the attribute. */
                if(strcmp(attr, umap_key) == 0)
                {
                   insert_xmlns_definition = 0;
@@ -306,17 +311,17 @@ static void start_element(void *parser_context, const char* name,
             }
          }
 
-         // if the namespace isn't already defined on the element,
-         // copy it to the XML Literal string.
+         /* if the namespace isn't already defined on the element,
+          * copy it to the XML Literal string. */
          if(insert_xmlns_definition)
          {
-            // append the namespace attribute to the XML Literal
+            /* append the namespace attribute to the XML Literal */
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size,
                " xmlns", strlen(" xmlns"));
 
-            // check to see if we're dumping the standard XHTML namespace or
-            // a user-defined XML namespace
+            /* check to see if we're dumping the standard XHTML namespace or
+             * a user-defined XML namespace */
             if(strcmp(umap_key, XMLNS_DEFAULT_MAPPING) != 0)
             {
                context->xml_literal = rdfa_n_append_string(
@@ -326,7 +331,7 @@ static void start_element(void *parser_context, const char* name,
                   umap_key, strlen(umap_key));
             }
 
-            // append the namespace value
+            /* append the namespace value */
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size, "=\"", 2);
             context->xml_literal = rdfa_n_append_string(
@@ -345,13 +350,13 @@ static void start_element(void *parser_context, const char* name,
 #endif
    } /* end if namespaces inserted */
 
-   // 3. For backward compatibility, RDFa Processors should also permit the
-   // definition of mappings via @xmlns. In this case, the value to be mapped
-   // is set by the XML namespace prefix, and the value to map is the value of
-   // the attribute - an IRI. (Note that prefix mapping via @xmlns is
-   // deprecated, and may be removed in a future version of this
-   // specification.) When xmlns is supported, such mappings must be processed
-   // before processing any mappings from @prefix on the same element.
+   /* 3. For backward compatibility, RDFa Processors should also permit the
+    * definition of mappings via @xmlns. In this case, the value to be mapped
+    * is set by the XML namespace prefix, and the value to map is the value of
+    * the attribute - an IRI. (Note that prefix mapping via @xmlns is
+    * deprecated, and may be removed in a future version of this
+    * specification.) When xmlns is supported, such mappings must be processed
+    * before processing any mappings from @prefix on the same element. */
    if(namespaces != NULL)
    {
       int ni;
@@ -360,14 +365,14 @@ static void start_element(void *parser_context, const char* name,
       {
          const char* ns = namespaces[ni];
          const char* value = namespaces[ni + 1];
-         // Regardless of how the mapping is declared, the value to be mapped
-         // must be converted to lower case, and the IRI is not processed in
-         // any way; in particular if it is a relative path it must not be
-         // resolved against the current base.
+         /* Regardless of how the mapping is declared, the value to be mapped
+          * must be converted to lower case, and the IRI is not processed in
+          * any way; in particular if it is a relative path it must not be
+          * resolved against the current base. */
          char* lcns = NULL;
          if(ns != NULL)
          {
-            // convert the namespace string to lowercase
+            /* convert the namespace string to lowercase */
             int i;
             int ns_length = strlen(ns);
             lcns = (char*)malloc(ns_length + 1);
@@ -377,7 +382,7 @@ static void start_element(void *parser_context, const char* name,
             }
          }
 
-         // update the URI mappings
+         /* update the URI mappings */
          rdfa_update_uri_mappings(context, lcns, value);
 
          if(lcns != NULL)
@@ -387,12 +392,12 @@ static void start_element(void *parser_context, const char* name,
       }
    }
 
-   // detect the RDFa version of the document, if specified
+   /* detect the RDFa version of the document, if specified */
    if(attributes != NULL)
    {
       int ci;
 
-      // search for a version attribute
+      /* search for a version attribute */
       for(ci = 0; ci < nb_attributes * 5; ci += 5)
       {
          const char* attr;
@@ -404,7 +409,7 @@ static void start_element(void *parser_context, const char* name,
 
          if(strcmp(attr, "version") == 0)
          {
-            // append the attribute-value pair to the XML literal
+            /* append the attribute-value pair to the XML literal */
             value = (char*)malloc(value_length + 1);
             snprintf(value, value_length, "%s", attributes[ci + 3]);
             if(strstr(value, "RDFa 1.0") != NULL)
@@ -421,15 +426,15 @@ static void start_element(void *parser_context, const char* name,
       }
    }
 
-   // prepare all of the RDFa-specific attributes we are looking for.
-   // scan all of the attributes for the RDFa-specific attributes
+   /* prepare all of the RDFa-specific attributes we are looking for.
+    * scan all of the attributes for the RDFa-specific attributes */
    if(attributes != NULL)
    {
       int ci;
 
       if(context->rdfa_version == RDFA_VERSION_1_1)
       {
-         // process all vocab and prefix attributes
+         /* process all vocab and prefix attributes */
          for(ci = 0; ci < nb_attributes * 5; ci += 5)
          {
             const char* attr;
@@ -439,33 +444,36 @@ static void start_element(void *parser_context, const char* name,
             attr = attributes[ci];
             value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
 
-            // append the attribute-value pair to the XML literal
+            /* append the attribute-value pair to the XML literal */
             value = (char*)malloc(value_length + 1);
             snprintf(value, value_length, "%s", attributes[ci + 3]);
 
-            // 2. Next the current element is examined for any change to the
-            // default vocabulary via @vocab.
+            /* 2. Next the current element is examined for any change to the
+             * default vocabulary via @vocab. */
             if(strcmp(attr, "vocab") == 0)
             {
                if(strlen(value) < 1)
                {
-                  // If the value is empty, then the local default vocabulary
-                  // must be reset to the Host Language defined default
-                  // (if any).
+                  /* If the value is empty, then the local default vocabulary
+                   * must be reset to the Host Language defined default
+                   * (if any). */
                   free(context->default_vocabulary);
                   context->default_vocabulary = NULL;
                }
                else
                {
-                  // If @vocab is present and contains a value, the local
-                  // default vocabulary is updated according to the
-                  // section on CURIE and IRI Processing.
-                  char* resolved_uri = rdfa_resolve_uri(context, value);
+                  char* resolved_uri;
+		  rdftriple* triple;
+
+                  /* If @vocab is present and contains a value, the local
+                   * default vocabulary is updated according to the
+                   * section on CURIE and IRI Processing. */
+                  resolved_uri = rdfa_resolve_uri(context, value);
                   context->default_vocabulary = rdfa_replace_string(
                      context->default_vocabulary, resolved_uri);
 
-                  // The value of @vocab is used to generate a triple
-                  rdftriple* triple = rdfa_create_triple(
+                  /* The value of @vocab is used to generate a triple */
+                  triple = rdfa_create_triple(
                      context->base, "http://www.w3.org/ns/rdfa#usesVocabulary",
                      resolved_uri, RDF_TYPE_IRI, NULL, NULL);
                   context->default_graph_triple_callback(
@@ -476,7 +484,7 @@ static void start_element(void *parser_context, const char* name,
             }
             else if(strcmp(attr, "prefix") == 0)
             {
-               // Mappings are defined via @prefix.
+               /* Mappings are defined via @prefix. */
                char* working_string = NULL;
                char* prefix = NULL;
                char* iri = NULL;
@@ -484,12 +492,12 @@ static void start_element(void *parser_context, const char* name,
 
                working_string = rdfa_replace_string(working_string, value);
 
-               // Values in this attribute are evaluated from beginning to
-               // end (e.g., left to right in typical documents).
+               /* Values in this attribute are evaluated from beginning to
+                * end (e.g., left to right in typical documents). */
                prefix = strtok_r(working_string, ":", &saveptr);
                while(prefix != NULL)
                {
-                  // find the prefix and IRI mappings while skipping whitespace
+                  /* find the prefix and IRI mappings while skipping whitespace */
                   while((*saveptr == ' ' || *saveptr == '\n' ||
                      *saveptr == '\r' || *saveptr == '\t' || *saveptr == '\f' ||
                      *saveptr == '\v') && *saveptr != '\0')
@@ -504,10 +512,10 @@ static void start_element(void *parser_context, const char* name,
                      saveptr++;
                   }
 
-                  // update the prefix mappings
+                  /* update the prefix mappings */
                   rdfa_update_uri_mappings(context, prefix, iri);
 
-                  // get the next prefix to process
+                  /* get the next prefix to process */
                   prefix = strtok_r(NULL, ":", &saveptr);
                }
 
@@ -521,7 +529,7 @@ static void start_element(void *parser_context, const char* name,
          }
       }
 
-      // resolve all of the other RDFa values
+      /* resolve all of the other RDFa values */
       for(ci = 0; ci < nb_attributes * 5; ci += 5)
       {
          const char* attr;
@@ -534,7 +542,7 @@ static void start_element(void *parser_context, const char* name,
          attrns = (char*)attributes[ci + 1];
          value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
 
-         // append the attribute-value pair to the XML literal
+         /* append the attribute-value pair to the XML literal */
          value = (char*)malloc(value_length + 1);
          literal_text = (char*)malloc(strlen(attr) + value_length + 5);
          snprintf(value, value_length, "%s", attributes[ci + 3]);
@@ -545,14 +553,14 @@ static void start_element(void *parser_context, const char* name,
             literal_text, strlen(literal_text));
          free(literal_text);
 
-         // if xml:lang is defined, ensure that it is not overwritten
+         /* if xml:lang is defined, ensure that it is not overwritten */
          if(attrns != NULL && strcmp(attrns, "xml") == 0 &&
             strcmp(attr, "lang") == 0)
          {
             context->xml_literal_xml_lang_defined = 1;
          }
 
-         // process all of the RDFa attributes
+         /* process all of the RDFa attributes */
          if(strcmp(attr, "about") == 0)
          {
             about_curie = value;
@@ -642,9 +650,9 @@ static void start_element(void *parser_context, const char* name,
         xml_lang = "";
    }
 #endif
-   // check to see if we should append an xml:lang to the XML Literal
-   // if one is defined in the context and does not exist on the
-   // element.
+   /* check to see if we should append an xml:lang to the XML Literal
+    * if one is defined in the context and does not exist on the
+    * element. */
    if((xml_lang == NULL) && (context->language != NULL) &&
       !context->xml_literal_xml_lang_defined)
    {
@@ -657,17 +665,17 @@ static void start_element(void *parser_context, const char* name,
       context->xml_literal = rdfa_n_append_string(
          context->xml_literal, &context->xml_literal_size, "\"", 1);
 
-      // ensure that the lang isn't set in a subtree (unless it's overwritten)
+      /* ensure that the lang isn't set in a subtree (unless it's overwritten) */
       context->xml_literal_xml_lang_defined = 1;
    }
 
-   // close the XML Literal value
+   /* close the XML Literal value */
    context->xml_literal = rdfa_n_append_string(
       context->xml_literal, &context->xml_literal_size, ">", 1);
 
-   // 3. The [current element] is also parsed for any language
-   //    information, and [language] is set in the [current
-   //    evaluation context];
+   /* 3. The [current element] is also parsed for any language
+    *    information, and [language] is set in the [current
+    *    evaluation context]; */
    rdfa_update_language(context, xml_lang);
 
    /***************** FOR DEBUGGING PURPOSES ONLY ******************/
@@ -727,8 +735,8 @@ static void start_element(void *parser_context, const char* name,
       }
    }
 
-   // TODO: This isn't part of the processing model, it needs to be
-   // included and is a correction for the last item in step #4.
+   /* TODO: This isn't part of the processing model, it needs to be
+    * included and is a correction for the last item in step #4. */
    if((about == NULL) && (src == NULL) && (type_of == NULL) &&
       (rel == NULL) && (rev == NULL) && (property == NULL) &&
       (resource == NULL) && (href == NULL))
@@ -738,20 +746,20 @@ static void start_element(void *parser_context, const char* name,
 
    if((rel == NULL) && (rev == NULL))
    {
-      // 4. If the [current element] contains no valid @rel or @rev
-      // URI, obtained according to the section on CURIE and URI
-      // Processing, then the next step is to establish a value for
-      // [new subject]. Any of the attributes that can carry a
-      // resource can set [new subject];
+      /* 4. If the [current element] contains no valid @rel or @rev
+       * URI, obtained according to the section on CURIE and URI
+       * Processing, then the next step is to establish a value for
+       * [new subject]. Any of the attributes that can carry a
+       * resource can set [new subject]; */
       rdfa_establish_new_subject(
          context, name, about, src, resource, href, type_of);
    }
    else
    {
-      // 5. If the [current element] does contain a valid @rel or @rev
-      // URI, obtained according to the section on CURIE and URI
-      // Processing, then the next step is to establish both a value
-      // for [new subject] and a value for [current object resource]:
+      /* 5. If the [current element] does contain a valid @rel or @rev
+       * URI, obtained according to the section on CURIE and URI
+       * Processing, then the next step is to establish both a value
+       * for [new subject] and a value for [current object resource]: */
       rdfa_establish_new_subject_with_relrev(
          context, name, about, src, resource, href, type_of);
    }
@@ -763,29 +771,29 @@ static void start_element(void *parser_context, const char* name,
          printf("DEBUG: new_subject = %s\n", context->new_subject);
       }
 
-      // 6. If in any of the previous steps a [new subject] was set to
-      // a non-null value,
+      /* 6. If in any of the previous steps a [new subject] was set to
+       * a non-null value, */
 
-      // it is now used to provide a subject for type values;
+      /* it is now used to provide a subject for type values; */
       if(type_of != NULL)
       {
          rdfa_complete_type_triples(context, type_of);
       }
 
-      // Note that none of this block is executed if there is no
-      // [new subject] value, i.e., [new subject] remains null.
+      /* Note that none of this block is executed if there is no
+       * [new subject] value, i.e., [new subject] remains null. */
    }
 
    if(context->current_object_resource != NULL)
    {
-      // If the element contains both the @inlist and the @rel attributes:
-      // the @rel may contain one or more resources, obtained according to
-      // the section on CURIE and IRI Processing each of which is used to
-      // add an entry to the list mapping as follows:
-      // if the local list mapping does not contain a list associated with
-      // the IRI, instantiate a new list and add to local list mappings
-      // add the current object resource to the list associated with the
-      // resource in the local list mapping
+      /* If the element contains both the @inlist and the @rel attributes:
+       * the @rel may contain one or more resources, obtained according to
+       * the section on CURIE and IRI Processing each of which is used to
+       * add an entry to the list mapping as follows:
+       * if the local list mapping does not contain a list associated with
+       * the IRI, instantiate a new list and add to local list mappings
+       * add the current object resource to the list associated with the
+       * resource in the local list mapping */
       if(context->rdfa_version == RDFA_VERSION_1_1 && (rel != NULL) &&
          context->inlist_present)
       {
@@ -801,8 +809,8 @@ static void start_element(void *parser_context, const char* name,
          rdfa_establish_new_inlist_triples(context, rel, object_type);
       }
 
-      // 7. If in any of the previous steps a [current object  resource]
-      // was set to a non-null value, it is now used to generate triples
+      /* 7. If in any of the previous steps a [current object  resource]
+       * was set to a non-null value, it is now used to generate triples */
       rdfa_complete_relrev_triples(context, rel, rev);
    }
 
@@ -814,22 +822,22 @@ static void start_element(void *parser_context, const char* name,
    }
    else if((rel != NULL) || (rev != NULL))
    {
-      // 8. If however [current object resource] was set to null, but
-      // there are predicates present, then they must be stored as
-      // [incomplete triple]s, pending the discovery of a subject that
-      // can be used as the object. Also, [current object resource]
-      // should be set to a newly created [bnode]
+      /* 8. If however [current object resource] was set to null, but
+       * there are predicates present, then they must be stored as
+       * [incomplete triple]s, pending the discovery of a subject that
+       * can be used as the object. Also, [current object resource]
+       * should be set to a newly created [bnode] */
       rdfa_save_incomplete_triples(context, rel, rev);
    }
 
-   // Ensure to re-insert XML Literal namespace information from this
-   // point on...
+   /* Ensure to re-insert XML Literal namespace information from this
+    * point on... */
    if(property != NULL)
    {
       context->xml_literal_namespaces_defined = 0;
    }
 
-   // save these for processing steps #9 and #10
+   /* save these for processing steps #9 and #10 */
    context->about = rdfa_replace_string(context->about, about);
    context->resource = rdfa_replace_string(context->resource, resource);
    context->href = rdfa_replace_string(context->href, href);
@@ -838,7 +846,7 @@ static void start_element(void *parser_context, const char* name,
    context->datatype = rdfa_replace_string(context->datatype, datatype);
    context->property = property;
 
-   // free the resolved CURIEs
+   /* free the resolved CURIEs */
    free(about);
    free(src);
    rdfa_free_list(type_of);
@@ -854,7 +862,7 @@ static void start_element(void *parser_context, const char* name,
 static void character_data(
       void *parser_context, const xmlChar *s, int len)
 {
-   //xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;
+   /*xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;*/
    rdfalist* context_stack =
       (rdfalist*)((rdfacontext*)parser_context)->context_stack;
    rdfacontext* context = (rdfacontext*)
@@ -864,7 +872,7 @@ static void character_data(
    memset(buffer, 0, len + 1);
    memcpy(buffer, s, len);
 
-   // append the text to the current context's plain literal
+   /* append the text to the current context's plain literal */
    if(context->plain_literal == NULL)
    {
       context->plain_literal =
@@ -877,7 +885,7 @@ static void character_data(
          context->plain_literal, &context->plain_literal_size, buffer, len);
    }
 
-   // append the text to the current context's XML literal
+   /* append the text to the current context's XML literal */
    if(context->xml_literal == NULL)
    {
       context->xml_literal =
@@ -890,8 +898,8 @@ static void character_data(
          context->xml_literal, &context->xml_literal_size, buffer, len);
   }
 
-   //printf("plain_literal: %s\n", context->plain_literal);
-   //printf("xml_literal: %s\n", context->xml_literal);
+   /*printf("plain_literal: %s\n", context->plain_literal);*/
+   /*printf("xml_literal: %s\n", context->xml_literal);*/
 
    free(buffer);
 }
@@ -899,14 +907,14 @@ static void character_data(
 static void end_element(void* parser_context, const char* name,
    const char* prefix,const xmlChar* URI)
 {
-   //xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;
+   /*xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;*/
    rdfalist* context_stack =
       (rdfalist*)((rdfacontext*)parser_context)->context_stack;
    rdfacontext* context = (rdfacontext*)rdfa_pop_item(context_stack);
    rdfacontext* parent_context = (rdfacontext*)
       context_stack->items[context_stack->num_items - 1]->data;
 
-   // append the text to the current context's XML literal
+   /* append the text to the current context's XML literal */
    char* buffer = (char*)malloc(strlen(name) + 4);
 
    if(DEBUG)
@@ -929,44 +937,44 @@ static void end_element(void* parser_context, const char* name,
    }
    free(buffer);
 
-   // 9. The next step of the iteration is to establish any
-   // [current object literal];
+   /* 9. The next step of the iteration is to establish any
+    * [current object literal]; */
 
-   // generate the complete object literal triples
+   /* generate the complete object literal triples */
    if(context->property != NULL)
    {
-      // save the current xml literal
+      /* save the current xml literal */
       char* saved_xml_literal = context->xml_literal;
       char* content_start = NULL;
       char* content_end = NULL;
 
-      // ensure to mark only the inner-content of the XML node for
-      // processing the object literal.
+      /* ensure to mark only the inner-content of the XML node for
+       * processing the object literal. */
       buffer = NULL;
 
       if(context->xml_literal != NULL)
       {
-         // get the data between the first tag and the last tag
+         /* get the data between the first tag and the last tag */
          content_start = strchr(context->xml_literal, '>');
          content_end = strrchr(context->xml_literal, '<');
 
          if((content_start != NULL) && (content_end != NULL))
          {
-            // set content end to null terminator
+            /* set content end to null terminator */
             context->xml_literal = ++content_start;
             *content_end = '\0';
          }
       }
 
-      // update the plain literal if the XML Literal is an empty string
+      /* update the plain literal if the XML Literal is an empty string */
       if(strlen(context->xml_literal) == 0)
       {
          context->plain_literal =
             rdfa_replace_string(context->plain_literal, "");
       }
 
-      // process data between first tag and last tag
-      // this needs the xml literal to be null terminated
+      /* process data between first tag and last tag
+       * this needs the xml literal to be null terminated */
       if(context->rdfa_version == RDFA_VERSION_1_0)
       {
          rdfa_complete_object_literal_triples(context);
@@ -978,21 +986,21 @@ static void end_element(void* parser_context, const char* name,
 
       if(content_end != NULL)
       {
-         // set content end back
+         /* set content end back */
          *content_end = '<';
       }
 
       if(saved_xml_literal != NULL)
       {
-         // restore xml literal
+         /* restore xml literal */
          context->xml_literal = saved_xml_literal;
       }
    }
 
-   //printf(context->plain_literal);
+   /*printf(context->plain_literal);*/
 
-   // append the XML literal and plain text literals to the parent
-   // literals
+   /* append the XML literal and plain text literals to the parent
+    * literals */
    if(context->xml_literal != NULL)
    {
       if(parent_context->xml_literal == NULL)
@@ -1010,7 +1018,7 @@ static void end_element(void* parser_context, const char* name,
                context->xml_literal, context->xml_literal_size);
       }
 
-      // if there is an XML literal, there is probably a plain literal
+      /* if there is an XML literal, there is probably a plain literal */
       if(context->plain_literal != NULL)
       {
          if(parent_context->plain_literal == NULL)
@@ -1032,34 +1040,34 @@ static void end_element(void* parser_context, const char* name,
       }
    }
 
-   // preserve the bnode count by copying it to the parent_context
+   /* preserve the bnode count by copying it to the parent_context */
    parent_context->bnode_count = context->bnode_count;
    parent_context->underscore_colon_bnode_name = \
       rdfa_replace_string(parent_context->underscore_colon_bnode_name,
                           context->underscore_colon_bnode_name);
 
-   // 10. If the [ skip element ] flag is 'false', and [ new subject ]
-   // was set to a non-null value, then any [ incomplete triple ]s
-   // within the current context should be completed:
+   /* 10. If the [ skip element ] flag is 'false', and [ new subject ]
+    * was set to a non-null value, then any [ incomplete triple ]s
+    * within the current context should be completed: */
    if((context->skip_element == 0) && (context->new_subject != NULL))
    {
       rdfa_complete_incomplete_triples(context);
    }
 
-   // 14. Once all the child elements have been traversed, list triples are
-   // generated, if necessary.
+   /* 14. Once all the child elements have been traversed, list triples are
+    * generated, if necessary. */
    if(context->rdfa_version == RDFA_VERSION_1_1)
    {
       rdfa_complete_list_triples(context);
 
-      // copy the current mapping to the parent mapping
+      /* copy the current mapping to the parent mapping */
       rdfa_free_mapping(
          parent_context->list_mappings, (free_mapping_value_fp)rdfa_free_list);
       parent_context->list_mappings = context->local_list_mappings;
       context->local_list_mappings = NULL;
    }
 
-   // free the context
+   /* free the context */
    rdfa_free_context(context);
 }
 
@@ -1089,10 +1097,10 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
    vfprintf(stdout, msg, args);
    va_end(args);
 
-   //xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;
-   //rdfacontext* context = (rdfacontext*)parser->userData;
+   /*xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;*/
+   /*rdfacontext* context = (rdfacontext*)parser->userData;*/
 
-   /*
+#if 0
    snprintf(buffer, 2<<12, "XML parsing error: %s at line %d, column %d.",
       XML_ErrorString(XML_GetErrorCode(context->parser)),
       (int)XML_GetCurrentLineNumber(context->parser),
@@ -1103,33 +1111,33 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
       char* error_subject = rdfa_create_bnode(context);
       char* pointer_subject = rdfa_create_bnode(context);
 
-      // generate the RDFa Processing Graph error type triple
+      /* generate the RDFa Processing Graph error type triple */
       rdftriple* triple = rdfa_create_triple(
          error_subject, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
          "http://www.w3.org/ns/rdfa_processing_graph#Error",
          RDF_TYPE_IRI, NULL, NULL);
       context->processor_graph_triple_callback(triple, context->callback_data);
 
-      // generate the error description
+      /* generate the error description */
       triple = rdfa_create_triple(
          error_subject, "http://purl.org/dc/terms/description", buffer,
          RDF_TYPE_PLAIN_LITERAL, NULL, "en");
       context->processor_graph_triple_callback(triple, context->callback_data);
 
-      // generate the context triple for the error
+      /* generate the context triple for the error */
       triple = rdfa_create_triple(
          error_subject, "http://www.w3.org/ns/rdfa_processing_graph#context",
          pointer_subject, RDF_TYPE_IRI, NULL, NULL);
       context->processor_graph_triple_callback(triple, context->callback_data);
 
-      // generate the type for the context triple
+      /* generate the type for the context triple */
       triple = rdfa_create_triple(
          pointer_subject, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
          "http://www.w3.org/2009/pointers#LineCharPointer",
          RDF_TYPE_IRI, NULL, NULL);
       context->processor_graph_triple_callback(triple, context->callback_data);
 
-      // generate the line number
+      /* generate the line number */
       snprintf(buffer, 2<<12, "%d",
          (int)XML_GetCurrentLineNumber(context->parser));
       triple = rdfa_create_triple(
@@ -1138,7 +1146,7 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
          "http://www.w3.org/2001/XMLSchema#positiveInteger", NULL);
       context->processor_graph_triple_callback(triple, context->callback_data);
 
-      // generate the column number
+      /* generate the column number */
       snprintf(buffer, 2<<12, "%d",
          (int)XML_GetCurrentColumnNumber(context->parser));
       triple = rdfa_create_triple(
@@ -1154,24 +1162,24 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
    {
       printf("librdfa processor error: %s\n", buffer);
    }
-   */
+#endif /* 0 */
 }
 #endif
 
 int rdfa_parse_start(rdfacontext* context)
 {
-   // create the buffers and expat parser
+   /* create the buffers and expat parser */
    int rval = RDFA_PARSE_SUCCESS;
 
    context->wb_allocated = sizeof(char) * READ_BUFFER_SIZE;
-   // +1 for NUL at end, to allow strstr() etc. to work
-   // malloc - only the first char needs to be NUL
+   /* +1 for NUL at end, to allow strstr() etc. to work
+    * malloc - only the first char needs to be NUL */
    context->working_buffer = (char*)malloc(context->wb_allocated + 1);
    *context->working_buffer = '\0';
    context->done = 0;
    context->context_stack = rdfa_create_list(32);
 
-   // initialize the context stack
+   /* initialize the context stack */
    rdfa_push_item(context->context_stack, context, RDFALIST_FLAG_CONTEXT);
 
 #ifdef LIBRDFA_IN_RAPTOR
@@ -1180,7 +1188,7 @@ int rdfa_parse_start(rdfacontext* context)
 #else
 #endif
 
-   // set up the context stack
+   /* set up the context stack */
 #ifdef LIBRDFA_IN_RAPTOR
    raptor_sax2_set_start_element_handler(context->sax2,
                                          raptor_rdfa_start_element);
@@ -1204,8 +1212,10 @@ int rdfa_parse_start(rdfacontext* context)
 
 int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 {
+   xmlSAXHandler handler;
+   xmlParserCtxtPtr parser;
 
-   // it is an error to call this before rdfa_parse_start()
+   /* it is an error to call this before rdfa_parse_start() */
    if(context->done)
    {
       return RDFA_PARSE_FAILED;
@@ -1213,12 +1223,12 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 
    if(!context->preread)
    {
-      // search for the <base> tag and use the href contained therein to
-      // set the parsing context.
+      /* search for the <base> tag and use the href contained therein to
+       * set the parsing context. */
       context->wb_preread = rdfa_init_base(context,
          &context->working_buffer, &context->wb_allocated, data, wblen);
 
-      // continue looking if in first 131072 bytes of data
+      /* continue looking if in first 131072 bytes of data */
       if(!context->base && context->wb_preread < (1<<17))
          return RDFA_PARSE_SUCCESS;
 
@@ -1231,8 +1241,7 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
          return RDFA_PARSE_FAILED;
       }
 #else
-      // create the SAX2 handler structure
-      xmlSAXHandler handler;
+      /* create the SAX2 handler structure */
       memset(&handler, 0, sizeof(xmlSAXHandler));
       handler.initialized = XML_SAX2_MAGIC;
       handler.startElementNs = (startElementNsSAX2Func)start_element;
@@ -1240,12 +1249,12 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       handler.characters = (charactersSAXFunc)character_data;
       handler.error = (errorSAXFunc)rdfa_report_error;
 
-      // create a push-based parser
-      xmlParserCtxtPtr parser = xmlCreatePushParserCtxt(
+      /* create a push-based parser */
+      parser = xmlCreatePushParserCtxt(
          &handler, context, (const char*)context->working_buffer,
          context->wb_position, NULL);
 
-      // ensure that entity substitution is turned on by default
+      /* ensure that entity substitution is turned on by default */
       xmlSubstituteEntitiesDefault(1);
 
       context->parser = parser;
@@ -1255,7 +1264,7 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       return RDFA_PARSE_SUCCESS;
    }
 
-   // otherwise just parse the block passed in
+   /* otherwise just parse the block passed in */
 #ifdef LIBRDFA_IN_RAPTOR
    if(raptor_sax2_parse_chunk(context->sax2, (const unsigned char*)data, wblen, done))
    {
@@ -1273,17 +1282,17 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 
 void rdfa_parse_end(rdfacontext* context)
 {
-   // free context stack
+   /* free context stack */
    rdfa_free_context_stack(context);
 
-   // Free the expat parser and the like
+   /* Free the expat parser and the like */
 #ifdef LIBRDFA_IN_RAPTOR
    if(context->base_uri)
       raptor_free_uri(context->base_uri);
    raptor_free_sax2(context->sax2);
    context->sax2=NULL;
 #else
-   // free parser
+   /* free parser */
    xmlFreeParserCtxt(context->parser);
    xmlCleanupParser();
 #endif

@@ -18,187 +18,118 @@
 # 
 # Author: Manu Sporny
 
-AC_INIT(librdfa, 1.1, support@digitalbazaar.com)
-AC_CONFIG_AUX_DIR(setup)
+AC_PREREQ([2.67])
+AC_INIT([LibRDFa], [1.1], [support@digitalbazaar.com], [librdfa])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_SRCDIR([c/rdfa.c])
+AC_CONFIG_AUX_DIR([setup])
+AC_CONFIG_MACRO_DIR([setup])
 
-# Setup standard build environment variables
-RDFADIR=`pwd`
-RELEASE=`date +%Y%m%d`
+AM_INIT_AUTOMAKE([1.11.1 foreign])
+AM_MAINTAINER_MODE
 
-# Check for particular build options
-# Check for particular build options
-AC_ARG_ENABLE([linux],
-   AS_HELP_STRING([--enable-linux], [compile for linux [[yes]]]),
-   [
-      case "${enableval}" in
-         yes) BUILD_FOR_LINUX=yes ;;
-         no) BUILD_FOR_LINUX=no ;;
-         *) AC_MSG_ERROR(bad value ${enableval} for --enable-linux) ;;
-      esac
-   ], [BUILD_FOR_LINUX=yes])  dnl Default value
-
-AC_ARG_ENABLE([windows],
-   AS_HELP_STRING([--enable-windows], [compile for windows [[no]]]),
-   [
-      case "${enableval}" in
-         yes) BUILD_FOR_WINDOWS=yes ;;
-         no) BUILD_FOR_WINDOWS=no ;;
-         *) AC_MSG_ERROR(bad value ${enableval} for --enable-windows) ;;
-      esac
-   ], [BUILD_FOR_WINDOWS=no])  dnl Default value
-
-AC_ARG_ENABLE([macos],
-   AS_HELP_STRING([--enable-macos], [compile for MacOS [[no]]]),
-   [
-      case "${enableval}" in
-         yes) BUILD_FOR_MACOS=yes ;;
-         no) BUILD_FOR_MACOS=no ;;
-         *) AC_MSG_ERROR(bad value ${enableval} for --enable-macos) ;;
-      esac
-   ], [BUILD_FOR_MACOS=no])  dnl Default value
+LIBRDFA_SO_VERSION="`echo $VERSION | tr . :`"
+AC_SUBST([LIBRDFA_SO_VERSION])
 
 AC_ARG_ENABLE([libxml2],
-               AC_HELP_STRING([--enable-libxml2],
-                              [enable libxml2 as the default parser (default is YES)]),
-              [ac_enable_parser_libxml2=yes], [ac_enable_parser_libxml2=yes])
+              [AS_HELP_STRING([--enable-libxml2],
+                              [enable libxml2 as the default parser [default=yes]])],
+              [enable_parser_libxml2=$enableval], [enable_parser_libxml2=yes])
 
 AC_ARG_ENABLE([raptor],
-               AC_HELP_STRING([--enable-raptor],
-                              [enable raptor as the default parser (default is NO)]),
-              [ac_enable_parser_raptor=yes], [ac_enable_parser_raptor=no])
+              [AS_HELP_STRING([--enable-raptor],
+                              [enable raptor as the default parser [default=no]])],
+              [enable_parser_raptor=$enableval], [enable_parser_raptor=no])
 
 AC_ARG_ENABLE([python],
-               AC_HELP_STRING([--enable-python],
-                              [compile extensions for Python (default is NO)]),
-              [ac_enable_python_build=yes], [ac_enable_python_build=no])
+              [AS_HELP_STRING([--enable-python],
+                              [compile extensions for Python [default=no]])],
+              [enable_python_build=$enableval], [enable_python_build=no])
 
 AC_ARG_ENABLE([docs],
-               AC_HELP_STRING([--enable-docs],
-                              [build documentation (default is NO)]),
-              [ac_enable_docs_build=yes], [ac_enable_docs_build=no])
+              [AS_HELP_STRING([--enable-docs],
+                              [build documentation [default=no]])],
+              [enable_docs_build=$enableval], [enable_docs_build=no])
 
-echo -e "\n--------- Configuring librdfa Build Environment -----------"
-
-# Check the system type
-AC_CANONICAL_BUILD()
-AC_CANONICAL_HOST()
-AC_CANONICAL_SYSTEM()
-OS="$build_os"
+AC_ARG_ENABLE([strict],
+              [AS_HELP_STRING([--enable-strict],
+                              [enable extra-strict flags for GCC [default=no]])],
+              [enable_strict_build=$enableval], [enable_strict_build=no])
 
 # Checking for standard build tools
-#AC_LANG(C++)
-AC_PROG_INSTALL()
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_PROG_LN_S
+LT_INIT
+PKG_PROG_PKG_CONFIG([0.23])
 
-# The default parser environment
-PARSER="libxml2"
-
-# Conditional setup for Windows build
-if test "$BUILD_FOR_WINDOWS" = "yes" ; then
-   BUILD_FOR_LINUX="no"
-   BUILD_FOR_MACOS="no"
-   AC_CHECK_PROGS(CC, i586-mingw32msvc-gcc gcc, not found)
-   AC_CHECK_PROGS(AR, i586-mingw32msvc-ar ar, not found)
-   AC_CHECK_PROGS(AS, i586-mingw32msvc-as as, not found)
-   LIBXML2_INCLUDE_DIRECTORY="$RDFADIR/3rdparty/libxml2/include"
-   LIBXML2_LIB_DIRECTORY="$RDFADIR/3rdparty/libxml2"
-   OS="mingw32"
-fi
-
-# Conditional setup for MacOS build
-if test "$BUILD_FOR_MACOS" = "yes" ; then
-   BUILD_FOR_LINUX="no"
-   BUILD_FOR_WINDOWS="no"
-   AC_PROG_CC()
-   AC_CHECK_PROG(AR, ar, ar, not found)
-   AC_CHECK_PROG(AS, as, as, not found)
-   LIBXML2_INCLUDE_DIRECTORY="/opt/local/include"
-   LIBXML2_LIB_DIRECTORY="/opt/local/lib"
-   OS="macos"
-fi
-
-# Conditional setup for Linux build
-if test "$BUILD_FOR_LINUX" = "yes" ; then
-   AC_PROG_CC()
-   AC_CHECK_PROG(AR, ar, ar, not found)
-   AC_CHECK_PROG(AS, as, as, not found)
-   LIBXML2_INCLUDE_DIRECTORY="/usr/include/libxml2"
-   LIBXML2_LIB_DIRECTORY="/usr/lib"
-fi
-
-CC="$CC"
+AC_CANONICAL_HOST
+mingw=no
+case "$host" in
+	*-*-mingw*) mingw32=yes ;;
+esac
+AM_CONDITIONAL([MINGW32], [test "$mingw32" = "yes"])
 
 # Check to see if we need to build the Python modules
-if test "$ac_enable_python_build" = "yes" ; then
-   # guess default python version
-   PY_DEFAULT=["`python -c \"import platform; print '.'.join(platform.python_version_tuple()[:2])\"`"]
-   if test "x$PY_DEFAULT" = "x"; then
-      AC_MSG_ERROR([No default Python found])
+have_swig=no
+if test "_$enable_python_build" = "_yes" ; then
+   AX_PYTHON_DEVEL([>= '2.5'])
+   AX_PKG_SWIG([2.0.0], [have_swig=yes])
+   if test "$have_swig" = "yes"
+   then
+      AX_SWIG_ENABLE_CXX
+      AX_SWIG_PYTHON([yes])
    fi
-
-   # check all versions
-   PY_POTENTIAL_VERSIONS="2.4 2.5 2.6 2.7"
-   PY_VERSIONS=""
-   for v in $PY_POTENTIAL_VERSIONS; do
-      AC_CHECK_FILE(/usr/include/python$v/Python.h, [PY_VERSIONS="$PY_VERSIONS $v"])
-   done
-   # error if no verions found
-   if test "x$PY_VERSIONS" = "x"; then
-      AC_MSG_ERROR([No Python headers found (checked $PY_POTENTIAL_VERSIONS)])
-   fi
-
-   AC_SUBST(PY_DEFAULT)
-   AC_SUBST(PY_VERSIONS)
-
-   BUILD_FOR_PYTHON="yes"
 fi
+AM_CONDITIONAL([BUILD_PYTHON], [test "$have_swig" = "yes"])
 
 # Check default parser
-if test "$ac_enable_parser_libxml2" = "yes"; then
-   # Make sure the proper libraries exist
-   if test "$BUILD_FOR_WINDOWS" = "no" ; then
-      AC_CHECK_LIB(xml2, main, [], AC_MSG_ERROR(could not find libxml2 library), -L$LIBXML2_LIB_DIRECTORY)
-   fi
+if test "_$enable_parser_libxml2" = "_yes"; then
    PARSER="libxml2"
-   AC_SUBST(LIBXML2_LIB_DIRECTORY)
-   AC_SUBST(LIBXML2_INCLUDE_DIRECTORY)
-elif test "$ac_enable_parser_raptor" = "yes"; then
+   dnl AM_PATH_XML2([2.6.26], , [AC_MSG_ERROR([Cannot find libxml2])])
+   PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6.26])
+elif test "_$enable_parser_raptor" = "_yes"; then
    PARSER="raptor"
+   PKG_CHECK_MODULES([RAPTOR2], [raptor2 >= 2.0.6])
+else
+   AC_MSG_ERROR([no parser has been enabled])
 fi
 
+AM_CONDITIONAL([PARSER_LIBXML2], [test "$PARSER" = "libxml2"])
+AM_CONDITIONAL([PARSER_RAPTOR],  [test "$PARSER" = "raptor"])
+
 # Check doc build tools
-if test "$ac_enable_docs_build" = "yes"; then
-   AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
-   AC_SUBST(HAVE_DOXYGEN)
+if test "_$enable_docs_build" = "_yes"; then
+   AC_CHECK_PROG([DOXYGEN], [doxygen], [doxygen], [false])
 fi
+AM_CONDITIONAL([BUILD_DOCS], [test "_$enable_docs_build" = "_yes" -a "$DOXYGEN" != "false"])
 
 # Perform compilation environment tests
 #AC_CHECK_HEADERS(iostream)
 
-# Make all the proper substitutions
-AC_SUBST(RDFADIR)
+# Check functions
+AC_CHECK_FUNCS([strtok_r])
 
-# Make all the proper substitutions
-VERSION="$PACKAGE_VERSION"
-AC_SUBST(VERSION)
-AC_SUBST(RELEASE)
+AM_CONDITIONAL([NEED_STRTOK_R], [test "$ac_cv_func_strtok_r" = "no"])
 
-AC_SUBST(BUILD_FOR_LINUX)
-AC_SUBST(BUILD_FOR_WINDOWS)
-AC_SUBST(BUILD_FOR_PYTHON)
+# Check extra-strict compiler flags for GCC
+if test "_$enable_strict_build" = "_yes"; then
+   if test "$GCC" != "yes"; then
+      AC_MSG_ERROR([strict build is only supported for GCC])
+   fi
+   CFLAGS="-ansi -pedantic -fno-common -Wall -Wextra -Waggregate-return -Wcast-align -Wcast-qual -Wdeclaration-after-statement -Wdisabled-optimization -Wformat=2 -Winit-self -Winvalid-pch -Wlogical-op -Wmissing-declarations -Wnested-externs -Wold-style-definition -Wpointer-arith -Wstrict-prototypes -Wundef -Werror -Wno-error=cast-qual -Wno-error=overlength-strings -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable $CFLAGS"
+fi
 
-AC_SUBST(CC)
-AC_SUBST(AR)
-AC_SUBST(AS)
-
-AC_SUBST(OS)
-
-AC_SUBST(PARSER)
+# add newlines to internal output file list
+backslash_n='\n'
+CONFIGURE_GENERATED_FILES=`echo $ac_config_files | tr ' ' "$backslash_n"`
+AC_SUBST([CONFIGURE_GENERATED_FILES])
 
 # Generating files
 AC_CONFIG_FILES([
    .gitignore
    Makefile
-   setup/Makefile.base
    c/Makefile
    python/Makefile
    docs/Makefile
@@ -208,27 +139,24 @@ AC_CONFIG_FILES([
    librdfa-uninstalled.pc
 ])
 
-# add newlines to internal output file list
-CONFIGURE_GENERATED_FILES="`echo $ac_config_files | tr ' ' '\n'`"
-AC_SUBST(CONFIGURE_GENERATED_FILES)
-
 AC_OUTPUT
 
 # Dump the build configuration for the developer
-echo -e "\n--------- librdfa Build Environment -----------"
-echo "Product        : $PACKAGE_STRING-$RELEASE"
-echo "Build host     : $build_cpu-$build_vendor-$build_os"
-echo "Build target   : $OS"
-echo "C compiler     : $CC"
-echo "Archiver       : $AR"
-echo "Assembler      : $AS"
+cat <<EOF
+--------- librdfa Build Environment -----------
+Product        : $PACKAGE_STRING
+Build host     : $build_cpu-$build_vendor-$build_os
+C compiler     : $CC
+Archiver       : $AR
+Default parser : $PARSER
+EOF
 
-if test "$BUILD_FOR_PYTHON" = "yes"; then
-   echo "Python modules : enabled (versions: $PY_VERSIONS, default: $PY_DEFAULT)"
+if test "_$enable_python_build" = "_yes"; then
+   echo "Python modules : enabled"
 else
    echo "Python modules : disabled (use --enable-python to enable)"
 fi
-if test "$ac_enable_docs_build" = "yes"; then
+if test "_$enable_docs_build" = "_yes"; then
    echo "Documentation  : enabled"
 else
    echo "Documentation  : disabled (use --enable-docs to enable)"

@@ -32,16 +32,17 @@ void rdfa_establish_new_inlist_triples(rdfacontext* context, rdfalist* rel,
    rdfresource_t object_type)
 {
    int i = 0;
-   for(i = 0; i < rel->num_items; i++)
+   for(i = 0; i < (int)rel->num_items; i++)
    {
       const char* value = (const char*)rel->items[i]->data;
       char* resolved_curie = rdfa_resolve_relrev_curie(context, value);
-      // ensure the list mapping exists
+      rdftriple* triple;
+      /* ensure the list mapping exists */
       rdfa_create_list_mapping(
          context, context->local_list_mappings, resolved_curie);
 
-      // add an incomplete triple for each list mapping
-      rdftriple* triple = rdfa_create_triple(context->new_subject,
+      /* add an incomplete triple for each list mapping */
+      triple = rdfa_create_triple(context->new_subject,
          resolved_curie, context->current_object_resource, object_type,
          context->datatype, context->language);
       rdfa_append_to_list_mapping(context->local_list_mappings, value, triple);
@@ -65,15 +66,17 @@ void rdfa_save_incomplete_list_triples(
    {
       const char* curie = (const char*)rel->items[i]->data;
       char* resolved_curie = rdfa_resolve_relrev_curie(context, curie);
+      rdfalist* list;
+      rdftriple* triple;
 
-      // ensure the list mapping exists
+      /* ensure the list mapping exists */
       rdfa_create_list_mapping(
          context, context->local_list_mappings, resolved_curie);
 
-      // get the list name
-      rdfalist* list = (rdfalist*)rdfa_get_mapping(
+      /* get the list name */
+      list = (rdfalist*)rdfa_get_mapping(
          context->local_list_mappings, resolved_curie);
-      rdftriple* triple = list->items[0]->data;
+      triple = list->items[0]->data;
       rdfa_add_item(
          context->local_incomplete_triples, triple->subject,
          (liflag_t)(RDFALIST_FLAG_DIR_NONE | RDFALIST_FLAG_TEXT));
@@ -90,13 +93,9 @@ void rdfa_save_incomplete_list_triples(
 
 void rdfa_complete_list_triples(rdfacontext* context)
 {
-   printf("local_list_mappings: ");
-   rdfa_print_mapping(context->local_list_mappings,
-      rdfa_print_triple_list);
-
-   // For each IRI in the local list mapping, if the equivalent list does
-   // not exist in the evaluation context, indicating that the list was
-   // originally instantiated on the current element, use the list as follows:
+   /* For each IRI in the local list mapping, if the equivalent list does
+    * not exist in the evaluation context, indicating that the list was
+    * originally instantiated on the current element, use the list as follows: */
    rdfacontext* parent_context = NULL;
    int i;
    rdfalist* list;
@@ -104,6 +103,10 @@ void rdfa_complete_list_triples(rdfacontext* context)
    void** mptr = context->local_list_mappings;
    char* key = NULL;
    void* value = NULL;
+
+   printf("local_list_mappings: ");
+   rdfa_print_mapping(context->local_list_mappings,
+      (print_mapping_value_fp)rdfa_print_triple_list);
 
    if(context->context_stack != NULL)
    {
@@ -123,7 +126,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
       {
          if(list->num_items == 1)
          {
-            // the list is empty, generate an empty list triple
+            /* the list is empty, generate an empty list triple */
             triple = (rdftriple*)list->items[0]->data;
             triple->subject =
                rdfa_replace_string(triple->subject, context->new_subject);
@@ -141,20 +144,21 @@ void rdfa_complete_list_triples(rdfacontext* context)
             char* bnode = NULL;
             triple = (rdftriple*)list->items[0]->data;
             bnode = rdfa_replace_string(bnode, triple->subject);
-            for(i = 1; i < list->num_items; i++)
+            for(i = 1; i < (int)list->num_items; i++)
             {
+               char* next = NULL;
                triple = (rdftriple*)list->items[i]->data;
-               // Create a new 'bnode' array containing newly created bnodes,
-               // one for each item in the list
-               // For each bnode-(IRI or literal) pair from the list the
-               // following triple is generated:
-               //
-               // subject
-               //   bnode
-               // predicate
-               //   http://www.w3.org/1999/02/22-rdf-syntax-ns#first
-               // object
-               //   full IRI or literal
+               /* Create a new 'bnode' array containing newly created bnodes,
+                * one for each item in the list
+                * For each bnode-(IRI or literal) pair from the list the
+                * following triple is generated:
+                *
+                * subject
+                *   bnode
+                * predicate
+                *   http://www.w3.org/1999/02/22-rdf-syntax-ns#first
+                * object
+                *   full IRI or literal */
                triple->subject =
                   rdfa_replace_string(triple->subject, bnode);
                triple->predicate =
@@ -163,18 +167,17 @@ void rdfa_complete_list_triples(rdfacontext* context)
                context->default_graph_triple_callback(
                               triple, context->callback_data);
 
-               // For each item in the 'bnode' array the following triple is
-               // generated:
-               //
-               // subject
-               //   bnode
-               // predicate
-               //   http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
-               // object
-               //   next item in the 'bnode' array or, if that does not exist,
-               //   http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
-               char* next = NULL;
-               if(i < list->num_items)
+               /* For each item in the 'bnode' array the following triple is
+                * generated:
+                *
+                * subject
+                *   bnode
+                * predicate
+                *   http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
+                * object
+                *   next item in the 'bnode' array or, if that does not exist,
+                *   http://www.w3.org/1999/02/22-rdf-syntax-ns#nil */
+               if(i < (int)list->num_items)
                {
                   next = rdfa_create_bnode(context);
                }
@@ -192,13 +195,13 @@ void rdfa_complete_list_triples(rdfacontext* context)
                bnode = next;
             }
 
-            // A single additional triple is generated:
-            // subject
-            //   current subject
-            // predicate
-            //   full IRI of the local list mapping associated with this list
-            // object
-            //   first item of the 'bnode' array
+            /* A single additional triple is generated:
+             * subject
+             *   current subject
+             * predicate
+             *   full IRI of the local list mapping associated with this list
+             * object
+             *   first item of the 'bnode' array */
             triple = (rdftriple*)list->items[0]->data;
             triple->subject =
                rdfa_replace_string(triple->subject, context->new_subject);
@@ -207,7 +210,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
             context->default_graph_triple_callback(
                triple, context->callback_data);
 
-            // clear the entry from the mapping
+            /* clear the entry from the mapping */
             rdfa_replace_string(key, "<DELETED_MAPPING_ENTRY>");
             free(value);
          }

@@ -25,3 +25,4 @@
  * data without breaking a sweat.
  */
 
+typedef int blah; /* "ISO C forbids an empty translation unit" */

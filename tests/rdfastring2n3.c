@@ -94,7 +94,7 @@ int main(int argc, char** argv)
       char* filename;
 
       g_xhtml_file = fopen(argv[1], "r");
-      filename = rindex(argv[1], '/');
+      filename = strrchr(argv[1], '/');
       if(filename == NULL)
       {
          filename = argv[1];
@@ -112,17 +112,17 @@ int main(int argc, char** argv)
          rdfacontext* context = rdfa_create_context(base_uri);         
          buffer_status* status = malloc(sizeof(buffer_status));
 
-         // get all of the buffer text
+         /* get all of the buffer text */
          fread(buffer, sizeof(char), buffer_length, g_xhtml_file);
          fclose(g_xhtml_file);
 
-         // initialize the callback data
+         /* initialize the callback data */
          status->buffer = buffer;
          status->current_offset = 0;
          status->total_length = strlen(buffer);
          context->callback_data = status;
 
-         // setup the parser
+         /* setup the parser */
          rdfa_set_default_graph_triple_handler(
             context, &default_graph_triple);
          rdfa_set_processor_graph_triple_handler(

@@ -20,6 +20,10 @@
  * This file implements mapping data structure memory management as
  * well as updating URI mappings.
  */
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,18 +41,18 @@
 void rdfa_update_uri_mappings(
    rdfacontext* context, const char* attr, const char* value)
 {
-   // * the [current element] is parsed for [URI mappings] and these
-   // are added to the [list of URI mappings]. Note that a [URI
-   // mapping] will simply overwrite any current mapping in the list
-   // that has the same name;
+   /* * the [current element] is parsed for [URI mappings] and these
+    * are added to the [list of URI mappings]. Note that a [URI
+    * mapping] will simply overwrite any current mapping in the list
+    * that has the same name; */
 
-   // Mappings are provided by @xmlns. The value to be mapped is set
-   // by the XML namespace prefix, and the value to map is the value
-   // of the attribute -- a URI. Note that the URI is not processed
-   // in any way; in particular if it is a relative path it is not
-   // resolved against the [current base]. Authors are advised to
-   // follow best practice for using namespaces, which includes not
-   // using relative paths.
+   /* Mappings are provided by @xmlns. The value to be mapped is set
+    * by the XML namespace prefix, and the value to map is the value
+    * of the attribute -- a URI. Note that the URI is not processed
+    * in any way; in particular if it is a relative path it is not
+    * resolved against the [current base]. Authors are advised to
+    * follow best practice for using namespaces, which includes not
+    * using relative paths. */
 
    if(attr == NULL)
    {
@@ -71,7 +75,7 @@ void rdfa_update_uri_mappings(
          (update_mapping_value_fp)rdfa_replace_string);
    }
 
-   // print the current mapping
+   /* print the current mapping */
    if(DEBUG)
    {
       printf("DEBUG: PREFIX MAPPINGS:");

@@ -28,19 +28,19 @@
 #define BASE_URI \
    "http://rdfa.info/test-suite/tests-cases/rdfa1.0/xhtml/"
 
-void process_default_triple(rdftriple* triple, void* callback_data)
+static void process_default_triple(rdftriple* triple, void* callback_data)
 {
    rdfa_print_triple(triple);
    rdfa_free_triple(triple);
 }
 
-void process_processor_triple(rdftriple* triple, void* callback_data)
+static void process_processor_triple(rdftriple* triple, void* callback_data)
 {
    rdfa_print_triple(triple);
    rdfa_free_triple(triple);
 }
 
-size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
+static size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
 {
    FILE* xhtml_file = (FILE*)callback_data;
    size_t rval = fread(buffer, sizeof(char), buffer_length, xhtml_file);
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
    else
    {
       FILE* xhtml_file = fopen(argv[1], "r");
-      char* filename = rindex(argv[1], '/');
+      char* filename = strrchr(argv[1], '/');
       filename++;
 
       if(xhtml_file != NULL)

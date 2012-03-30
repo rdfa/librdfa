@@ -31,24 +31,25 @@ int g_iteration = 0;
 rdfacontext* g_context = NULL;
 unsigned long long g_bytes_processed = 0;
 
-void process_triple(rdftriple* triple, void* callback_data)
+static void process_triple(rdftriple* triple, void* callback_data)
 {
    rdfa_free_triple(triple);
 }
 
-size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
+static size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
 {
-   // short-circuit last iteration
+   char* data = NULL;
+   size_t data_length = buffer_length;
+
+   /* short-circuit last iteration */
    if(g_iteration == MAX_ITERATIONS + 1)
    {
       return 0;
    }
 
-   char* data = NULL;
-   size_t data_length = buffer_length;
    memset(buffer, ' ', buffer_length);
 
-   // Note: code assumes data length < buffer length
+   /* Note: code assumes data length < buffer length */
    if(g_iteration == 0)
    {
       data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -69,36 +70,41 @@ size_t fill_buffer(char* buffer, size_t buffer_length, void* callback_data)
    {
       data = "</p></body></html>";
 
-      // update data_length because this is the end of the stream, no
-      // whitespace after it
+      /* update data_length because this is the end of the stream, no
+       * whitespace after it */
       data_length = strlen(data);
       memcpy(buffer, data, data_length);
    }
 
    g_iteration++;
    g_bytes_processed += data_length;
-   //buffer[buffer_length - 1] = 0;
+   /*buffer[buffer_length - 1] = 0;*/
 
-   //printf("%s", buffer);
+   /*printf("%s", buffer);*/
 
    return data_length;
 }
 
 int main(int argc, char** argv)
 {
+   clock_t stime;
+   clock_t etime;
+   rdfacontext* g_context;
+   float delta;
+
    printf("Speed test...\n");
 
-   clock_t stime = clock();
+   stime = clock();
 
-   rdfacontext* g_context = rdfa_create_context("http://example.org/speed");
+   g_context = rdfa_create_context("http://example.org/speed");
    rdfa_set_default_graph_triple_handler(g_context, &process_triple);
    rdfa_set_buffer_filler(g_context, &fill_buffer);
    rdfa_parse(g_context);
    rdfa_free_context(g_context);
 
-   clock_t etime = clock();
+   etime = clock();
 
-   float delta = etime - stime;
+   delta = etime - stime;
    printf("Processed %1.2f triples per second from %lli bytes of data.\n",
           (MAX_ITERATIONS / (delta / CLOCKS_PER_SEC)), g_bytes_processed);
 

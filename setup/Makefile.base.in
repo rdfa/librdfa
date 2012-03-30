@@ -17,31 +17,39 @@ CC = @CC@
 AR = @AR@
 OS = @OS@
 
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+
+CC_IS_GCC = @CC_IS_GCC@
+
+LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
+LIBXML2_LIBS = @LIBXML2_LIBS@
+
 # General flags
 LIB_DIR = $(RDFA)/libs
-LDFLAGS = -L$(LIB_DIR)
+LDFLAGS = -L$(LIB_DIR) $(LIBXML2_LIBS)
+ifeq ($(CC_IS_GCC),yes)
 CC_FLAGS = -Wall -fPIC -g
-INCLUDES = -I/usr/include -I$(RDFA)/c -I$(RDFA)/tests
+CC_DEP_FLAGS = -MD
+else
+CC_FLAGS =
+CC_DEP_FLAGS =
+endif
+INCLUDES = -I$(RDFA)/c -I$(RDFA)/tests $(CPPFLAGS) $(LIBXML2_CFLAGS)
 AR_FLAGS = cr
 
 # Windows flags
 ifeq ($(OS),mingw32)
-CC_FLAGS = -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
+CC_FLAGS += -Wall -g -D_WIN32_WINNT=0x0501 -DRDFA_API_EXPORT
 INCLUDES += -I$(RDFA)/3rdparty/libxml2/include
 LDFLAGS += -L$(RDFA)/3rdparty/libxml2
 endif
 
 # Mac OS flags
 ifeq ($(OS),macos)
-INCLUDES += -I@LIBXML2_INCLUDE_DIRECTORY@
-LDFLAGS += -L@LIBXML2_LIB_DIRECTORY@
 endif
 
-# Linux flags
-ifeq ($(OS),linux-gnu)
-INCLUDES += -I@LIBXML2_INCLUDE_DIRECTORY@
-LDFLAGS += -L@LIBXML2_LIB_DIRECTORY@
-endif
+CC_FLAGS += $(CFLAGS)
 
 # Dependencies and objects
 DEPENDENCIES := $(patsubst %.c,$(BUILD_DIR)/%.P, $(SOURCES))
@@ -55,8 +63,10 @@ ALL_SOURCES += $(patsubst %,$(BUILD_DIR)/%.c, $(EXECUTABLES))
 ALL_DEPENDENCIES += $(DEPENDENCIES)
 ALL_OBJECTS += $(OBJECTS)
 
-ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.so, $(LIBRARIES)) 
-ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/lib%.a, $(LIBRARIES)) 
+ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/lib%.a, $(LIBRARIES))
+ifeq ($(CC_IS_GCC),yes)
+ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/lib%.so, $(LIBRARIES))
+endif
 ifeq ($(OS),mingw32)
 ALL_LIBRARIES := $(patsubst %,$(DIST_DIR)/%.lib, $(LIBRARIES))
 ALL_LIBRARIES += $(patsubst %,$(DIST_DIR)/%.dll, $(LIBRARIES))
@@ -88,10 +98,12 @@ $(ALL_SOURCES):
 
 %.o %.P: %.c
 	@echo "Building $(basename $@).o..."
-	@$(CC) $(CC_FLAGS) -c -MD -o $(basename $@).o $(INCLUDES) -I. $<
-	@cp $(basename $@).d $(basename $@).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' -e '/^$$/ d' -e 's/$$/ :/' < $(basename $@).d >> $(basename $@).P; \
-		rm -f $(basename $@).d
+	@$(CC) $(CC_FLAGS) -c $(CC_DEP_FLAGS) -o $(basename $@).o $(INCLUDES) -I. $<
+ifeq ($(CC_IS_GCC),yes)
+	@cp $(basename $@).d $(basename $@).P
+	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' -e '/^$$/ d' -e 's/$$/ :/' < $(basename $@).d >> $(basename $@).P
+	@rm -f $(basename $@).d
+endif
 
 %.so: $(OBJECTS)
 	@echo "Building $@..."

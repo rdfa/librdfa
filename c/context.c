@@ -32,7 +32,7 @@ rdfacontext* rdfa_create_context(const char* base)
    rdfacontext* rval = NULL;
    size_t base_length = strlen(base);
 
-   // if the base isn't specified, don't create a context
+   /* if the base isn't specified, don't create a context */
    if(base_length > 0)
    {
       char* cleaned_base;
@@ -42,7 +42,7 @@ rdfacontext* rdfa_create_context(const char* base)
       rval->base = rdfa_replace_string(rval->base, cleaned_base);
       free(cleaned_base);
 
-      // no callbacks set yet
+      /* no callbacks set yet */
       rval->default_graph_triple_callback = NULL;
       rval->buffer_filler_callback = NULL;
       rval->processor_graph_triple_callback = NULL;
@@ -77,10 +77,10 @@ rdfacontext* rdfa_create_context(const char* base)
 
 void rdfa_init_context(rdfacontext* context)
 {
-   // assume the RDFa processing rules are RDFa 1.1 unless otherwise specified
+   /* assume the RDFa processing rules are RDFa 1.1 unless otherwise specified */
    context->rdfa_version = RDFA_VERSION_1_1;
 
-   // the [parent subject] is set to the [base] value;
+   /* the [parent subject] is set to the [base] value; */
    context->parent_subject = NULL;
    if(context->base != NULL)
    {
@@ -90,76 +90,76 @@ void rdfa_init_context(rdfacontext* context)
       free(cleaned_base);
    }
 
-   // the [parent object] is set to null;
+   /* the [parent object] is set to null; */
    context->parent_object = NULL;
 
 #ifndef LIBRDFA_IN_RAPTOR
-   // the [list of URI mappings] is cleared;
+   /* the [list of URI mappings] is cleared; */
    context->uri_mappings = rdfa_create_mapping(MAX_URI_MAPPINGS);
 #endif
 
-   // the [list of incomplete triples] is cleared;
+   /* the [list of incomplete triples] is cleared; */
    context->incomplete_triples = rdfa_create_list(3);
 
-   // the [language] is set to null.
+   /* the [language] is set to null. */
    context->language = NULL;
 
-   // set the [current object resource] to null;
+   /* set the [current object resource] to null; */
    context->current_object_resource = NULL;
 
-   // the list of term mappings is set to null
-   // (or a list defined in the initial context of the Host Language).
+   /* the list of term mappings is set to null
+    * (or a list defined in the initial context of the Host Language). */
    context->term_mappings = rdfa_create_mapping(MAX_TERM_MAPPINGS);
 
-   // the maximum number of list mappings
+   /* the maximum number of list mappings */
    context->list_mappings = rdfa_create_mapping(MAX_LIST_MAPPINGS);
 
-   // the maximum number of local list mappings
+   /* the maximum number of local list mappings */
    context->local_list_mappings =
       rdfa_create_mapping(MAX_LOCAL_LIST_MAPPINGS);
 
-   // the default vocabulary is set to null
-   // (or a IRI defined in the initial context of the Host Language).
+   /* the default vocabulary is set to null
+    * (or a IRI defined in the initial context of the Host Language). */
    context->default_vocabulary = NULL;
 
-   // whether or not the @inlist attribute is present on the current element
+   /* whether or not the @inlist attribute is present on the current element */
    context->inlist_present = 0;
 
-   // whether or not the @rel attribute is present on the current element
+   /* whether or not the @rel attribute is present on the current element */
    context->rel_present = 0;
 
-   // whether or not the @rev attribute is present on the current element
+   /* whether or not the @rev attribute is present on the current element */
    context->rev_present = 0;
 
-   // 1. First, the local values are initialized, as follows:
-   //
-   // * the [recurse] flag is set to 'true';
+   /* 1. First, the local values are initialized, as follows:
+    *
+    * * the [recurse] flag is set to 'true'; */
    context->recurse = 1;
 
-   // * the [skip element] flag is set to 'false';
+   /* * the [skip element] flag is set to 'false'; */
    context->skip_element = 0;
 
-   // * [new subject] is set to null;
+   /* * [new subject] is set to null; */
    context->new_subject = NULL;
 
-   // * [current object resource] is set to null;
+   /* * [current object resource] is set to null; */
    context->current_object_resource = NULL;
 
-   // * the [local list of URI mappings] is set to the list of URI
-   //   mappings from the [evaluation context];
-   //   NOTE: This step is done in rdfa_create_new_element_context()
+   /* * the [local list of URI mappings] is set to the list of URI
+    *   mappings from the [evaluation context];
+    *   NOTE: This step is done in rdfa_create_new_element_context() */
 
-   // FIXME: Initialize the term mappings and URI mappings based on Host Language
+   /* FIXME: Initialize the term mappings and URI mappings based on Host Language */
 
-   // * the [local list of incomplete triples] is set to null;
+   /* * the [local list of incomplete triples] is set to null; */
    context->local_incomplete_triples = rdfa_create_list(3);
 
-   // * the [current language] value is set to the [language] value
-   //   from the [evaluation context].
-   //   NOTE: This step is done in rdfa_create_new_element_context()
+   /* * the [current language] value is set to the [language] value
+    *   from the [evaluation context].
+    *   NOTE: This step is done in rdfa_create_new_element_context() */
 
-   // The next set of variables are initialized to make the C compiler
-   // and valgrind happy - they are not a part of the RDFa spec.
+   /* The next set of variables are initialized to make the C compiler
+    * and valgrind happy - they are not a part of the RDFa spec. */
    context->bnode_count = 0;
    context->underscore_colon_bnode_name = NULL;
    context->xml_literal_namespaces_defined = 0;
@@ -177,9 +177,9 @@ void rdfa_init_context(rdfacontext* context)
    context->plain_literal_size = 0;
    context->xml_literal = NULL;
    context->xml_literal_size = 0;
-   // FIXME: completing incomplete triples always happens now, change
-   //        all of the code to reflect that.
-   //context->callback_data = NULL;
+   /* FIXME: completing incomplete triples always happens now, change
+    *        all of the code to reflect that. */
+   /*context->callback_data = NULL;*/
 }
 
 /**
@@ -195,14 +195,14 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
       context_stack->items[context_stack->num_items - 1]->data;
    rdfacontext* rval = rdfa_create_context(parent_context->base);
 
-   // * Otherwise, the values are:
+   /* * Otherwise, the values are: */
 
-   // * the [ base ] is set to the [ base ] value of the current
-   //   [ evaluation context ];
+   /* * the [ base ] is set to the [ base ] value of the current
+    *   [ evaluation context ]; */
    rval->base = rdfa_replace_string(rval->base, parent_context->base);
    rdfa_init_context(rval);
 
-   // copy the URI mappings
+   /* copy the URI mappings */
 #ifndef LIBRDFA_IN_RAPTOR
    rdfa_free_mapping(rval->uri_mappings, (free_mapping_value_fp)free);
    rval->uri_mappings =
@@ -213,32 +213,32 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          (copy_mapping_value_fp)rdfa_copy_mapping);
 #endif
 
-   // inherit the parent context's RDFa processor mode
+   /* inherit the parent context's RDFa processor mode */
    rval->rdfa_version = parent_context->rdfa_version;
 
-   // inherit the parent context's language
+   /* inherit the parent context's language */
    if(parent_context->language != NULL)
    {
       rval->language =
          rdfa_replace_string(rval->language, parent_context->language);
    }
 
-   // inherit the parent context's default vocabulary
+   /* inherit the parent context's default vocabulary */
    if(parent_context->default_vocabulary != NULL)
    {
       rval->default_vocabulary = rdfa_replace_string(
          rval->default_vocabulary, parent_context->default_vocabulary);
    }
 
-   // set the callbacks callback
+   /* set the callbacks callback */
    rval->default_graph_triple_callback =
       parent_context->default_graph_triple_callback;
    rval->processor_graph_triple_callback =
       parent_context->processor_graph_triple_callback;
    rval->buffer_filler_callback = parent_context->buffer_filler_callback;
 
-   // inherit the bnode count, _: bnode name, recurse flag, and state
-   // of the xml_literal_namespace_insertion
+   /* inherit the bnode count, _: bnode name, recurse flag, and state
+    * of the xml_literal_namespace_insertion */
    rval->bnode_count = parent_context->bnode_count;
    rval->underscore_colon_bnode_name =
       rdfa_replace_string(rval->underscore_colon_bnode_name,
@@ -251,19 +251,21 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->xml_literal_xml_lang_defined =
       parent_context->xml_literal_xml_lang_defined;
 
-   // inherit the parent context's new_subject
-   // TODO: This is not anywhere in the syntax processing document
-   //if(parent_context->new_subject != NULL)
-   //{
-   //   rval->new_subject = rdfa_replace_string(
-   //      rval->new_subject, parent_context->new_subject);
-   //}
+#if 0
+   /* inherit the parent context's new_subject
+    * TODO: This is not anywhere in the syntax processing document */
+   if(parent_context->new_subject != NULL)
+   {
+      rval->new_subject = rdfa_replace_string(
+         rval->new_subject, parent_context->new_subject);
+   }
+#endif
 
    if(parent_context->skip_element == 0)
    {
-      // o the [ parent subject ] is set to the value of [ new subject ],
-      //   if non-null, or the value of the [ parent subject ] of the
-      //   current [ evaluation context ];
+      /* o the [ parent subject ] is set to the value of [ new subject ],
+       *   if non-null, or the value of the [ parent subject ] of the
+       *   current [ evaluation context ]; */
       if(parent_context->new_subject != NULL)
       {
          rval->parent_subject = rdfa_replace_string(
@@ -275,10 +277,10 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
             rval->parent_subject, parent_context->parent_subject);
       }
 
-      // o the [ parent object ] is set to value of [ current object
-      //   resource ], if non-null, or the value of [ new subject ], if
-      //   non-null, or the value of the [ parent subject ] of the
-      //   current [ evaluation context ];
+      /* o the [ parent object ] is set to value of [ current object
+       *   resource ], if non-null, or the value of [ new subject ], if
+       *   non-null, or the value of the [ parent subject ] of the
+       *   current [ evaluation context ]; */
       if(parent_context->current_object_resource != NULL)
       {
          rval->parent_object =
@@ -298,14 +300,14 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
                rval->parent_object, parent_context->parent_subject);
       }
 
-      // copy the incomplete triples
+      /* copy the incomplete triples */
       if(rval->incomplete_triples != NULL)
       {
          rdfa_free_list(rval->incomplete_triples);
       }
 
-      // o the [ list of incomplete triples ] is set to the [ local list
-      //   of incomplete triples ];
+      /* o the [ list of incomplete triples ] is set to the [ local list
+       *   of incomplete triples ]; */
       rval->incomplete_triples =
          rdfa_copy_list(parent_context->local_incomplete_triples);
    }
@@ -316,12 +318,12 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
       rval->parent_object = rdfa_replace_string(
          rval->parent_object, parent_context->parent_object);
 
-      // copy the incomplete triples
+      /* copy the incomplete triples */
       rdfa_free_list(rval->incomplete_triples);
       rval->incomplete_triples =
          rdfa_copy_list(parent_context->incomplete_triples);
 
-      // copy the local list of incomplete triples
+      /* copy the local list of incomplete triples */
       rdfa_free_list(rval->local_incomplete_triples);
       rval->local_incomplete_triples =
          rdfa_copy_list(parent_context->local_incomplete_triples);
@@ -339,12 +341,12 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
 
 void rdfa_free_context_stack(rdfacontext* context)
 {
-   // this field is not NULL only on the rdfacontext* at the top of the stack
+   /* this field is not NULL only on the rdfacontext* at the top of the stack */
    if(context->context_stack != NULL)
    {
       void* rval;
-      // free the stack ensuring that we do not delete this context if
-      // it is in the list (which it may be, if parsing ended on error)
+      /* free the stack ensuring that we do not delete this context if
+       * it is in the list (which it may be, if parsing ended on error) */
       do
       {
          rval = rdfa_pop_item(context->context_stack);
@@ -387,7 +389,7 @@ void rdfa_free_context(rdfacontext* context)
    free(context->plain_literal);
    free(context->xml_literal);
 
-   // TODO: These should be moved into their own data structure
+   /* TODO: These should be moved into their own data structure */
    rdfa_free_list(context->local_incomplete_triples);
 
    rdfa_free_context_stack(context);
