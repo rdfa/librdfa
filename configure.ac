@@ -121,11 +121,6 @@ if test "_$enable_strict_build" = "_yes"; then
    CFLAGS="-ansi -pedantic -fno-common -Wall -Wextra -Waggregate-return -Wcast-align -Wcast-qual -Wdeclaration-after-statement -Wdisabled-optimization -Wformat=2 -Winit-self -Winvalid-pch -Wlogical-op -Wmissing-declarations -Wnested-externs -Wold-style-definition -Wpointer-arith -Wstrict-prototypes -Wundef -Werror -Wno-error=cast-qual -Wno-error=overlength-strings -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable $CFLAGS"
 fi
 
-# add newlines to internal output file list
-backslash_n='\n'
-CONFIGURE_GENERATED_FILES=`echo $ac_config_files | tr ' ' "$backslash_n"`
-AC_SUBST([CONFIGURE_GENERATED_FILES])
-
 # Generating files
 AC_CONFIG_FILES([
    .gitignore
@@ -138,6 +133,12 @@ AC_CONFIG_FILES([
    librdfa.pc
    librdfa-uninstalled.pc
 ])
+
+# add newlines to internal output file list
+backslash_n='\n'
+CONFIGURE_GENERATED_FILES=`echo $ac_config_files | tr ' ' "$backslash_n"`
+AC_SUBST([CONFIGURE_GENERATED_FILES])
+AM_SUBST_NOTMAKE([CONFIGURE_GENERATED_FILES])
 
 AC_OUTPUT
 
