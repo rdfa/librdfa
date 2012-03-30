@@ -1,4 +1,9 @@
-Manu Sporny <msporny@digitalbazaar.com>
-Dave Beckett <dave@dajobe.org>
-Dave Longley <dlongley@digitalbazaar.com>
-David I. Lehn <dlehn@digitalbazaar.com>
+Core Maintainers: 
+   Manu Sporny <msporny@digitalbazaar.com>
+Raptor Integration:
+   Dave Beckett <dave@dajobe.org>
+Performance/Memory Tuning:
+   Dave Longley <dlongley@digitalbazaar.com>
+Build System:
+   David I. Lehn <dlehn@digitalbazaar.com>
+   Daniel Richard G. <skunk@iSKUNK.ORG>
