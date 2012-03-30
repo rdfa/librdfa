@@ -28,26 +28,26 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
-void rdfa_establish_new_inlist_triples(rdfacontext* context, rdfalist* rel,
-   rdfresource_t object_type)
+void rdfa_establish_new_inlist_triples(rdfacontext* context,
+   rdfalist* predicates, const char* object, rdfresource_t object_type)
 {
    int i = 0;
-   for(i = 0; i < (int)rel->num_items; i++)
+   for(i = 0; i < (int)predicates->num_items; i++)
    {
-      const char* value = (const char*)rel->items[i]->data;
-      char* resolved_curie = rdfa_resolve_relrev_curie(context, value);
+      const char* predicate = (const char*)predicates->items[i]->data;
+      char* resolved_predicate = rdfa_resolve_relrev_curie(context, predicate);
       rdftriple* triple;
       /* ensure the list mapping exists */
       rdfa_create_list_mapping(
-         context, context->local_list_mappings, resolved_curie);
+         context, context->local_list_mappings, resolved_predicate);
 
       /* add an incomplete triple for each list mapping */
-      triple = rdfa_create_triple(context->new_subject,
-         resolved_curie, context->current_object_resource, object_type,
-         context->datatype, context->language);
-      rdfa_append_to_list_mapping(context->local_list_mappings, value, triple);
+      triple = rdfa_create_triple(context->new_subject, resolved_predicate,
+         object, object_type, context->datatype, context->language);
+      rdfa_append_to_list_mapping(
+         context->local_list_mappings, resolved_predicate, triple);
 
-      free(resolved_curie);
+      free(resolved_predicate);
    }
 
    if(DEBUG)

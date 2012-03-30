@@ -205,12 +205,13 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    /* copy the URI mappings */
 #ifndef LIBRDFA_IN_RAPTOR
    rdfa_free_mapping(rval->uri_mappings, (free_mapping_value_fp)free);
+   rdfa_free_mapping(rval->list_mappings, (free_mapping_value_fp)rdfa_free_list);
    rval->uri_mappings =
       rdfa_copy_mapping((void**)parent_context->uri_mappings,
          (copy_mapping_value_fp)rdfa_replace_string);
    rval->list_mappings =
       rdfa_copy_mapping((void**)parent_context->local_list_mappings,
-         (copy_mapping_value_fp)rdfa_copy_mapping);
+         (copy_mapping_value_fp)rdfa_copy_list);
 #endif
 
    /* inherit the parent context's RDFa processor mode */

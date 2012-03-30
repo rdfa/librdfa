@@ -31,6 +31,11 @@ AM_MAINTAINER_MODE
 LIBRDFA_SO_VERSION="`echo $VERSION | tr . :`"
 AC_SUBST([LIBRDFA_SO_VERSION])
 
+AC_ARG_ENABLE([debug],
+              [AS_HELP_STRING([--enable-debug],
+                              [enable debug mode (no optimization) [default=yes ]])],
+              [enable_debug=$enableval], [enable_debug=yes])
+
 AC_ARG_ENABLE([libxml2],
               [AS_HELP_STRING([--enable-libxml2],
                               [enable libxml2 as the default parser [default=yes]])],
@@ -112,6 +117,11 @@ AM_CONDITIONAL([BUILD_DOCS], [test "_$enable_docs_build" = "_yes" -a "$DOXYGEN" 
 AC_CHECK_FUNCS([strtok_r])
 
 AM_CONDITIONAL([NEED_STRTOK_R], [test "$ac_cv_func_strtok_r" = "no"])
+
+# Set debug flags if specified
+if test "_$enable_debug" = "_yes"; then
+   CFLAGS="$CFLAGS -O0 -g"
+fi
 
 # Check extra-strict compiler flags for GCC
 if test "_$enable_strict_build" = "_yes"; then

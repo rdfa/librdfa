@@ -302,6 +302,12 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
          const char* predicate = (const char*)incomplete_triple->data;
          rdftriple* triple = rdfa_create_triple(context->parent_subject,
             predicate, context->new_subject, RDF_TYPE_IRI, NULL, NULL);
+
+         /* ensure the list mapping exists */
+         rdfa_create_list_mapping(
+            context, context->local_list_mappings, predicate);
+
+         /* add the predicate to the list mapping */
          rdfa_append_to_list_mapping(
             context->local_list_mappings, predicate, (void*)triple);
       }
@@ -747,6 +753,12 @@ void rdfa_complete_current_property_value_triples(rdfacontext* context)
          current_property_value = context->typed_resource;
          type = RDF_TYPE_IRI;
       }
+      else
+      {
+         /* otherwise as a plain literal. */
+         current_property_value = context->plain_literal;
+         type = RDF_TYPE_PLAIN_LITERAL;
+      }
    }
    else
    {
@@ -774,7 +786,8 @@ void rdfa_complete_current_property_value_triples(rdfacontext* context)
        * the predicate IRI, instantiate a new list and add to local list
        * mappings add the current property value to the list associated
        * with the predicate IRI in the local list mapping */
-      rdfa_establish_new_inlist_triples(context, context->property, type);
+      rdfa_establish_new_inlist_triples(
+         context, context->property, current_property_value, type);
    }
    else
    {

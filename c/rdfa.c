@@ -806,7 +806,8 @@ static void start_element(void *parser_context, const char* name,
                object_type = RDF_TYPE_TYPED_LITERAL;
             }
          }
-         rdfa_establish_new_inlist_triples(context, rel, object_type);
+         rdfa_establish_new_inlist_triples(
+            context, rel, context->current_object_resource, object_type);
       }
 
       /* 7. If in any of the previous steps a [current object  resource]

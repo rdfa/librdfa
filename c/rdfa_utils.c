@@ -121,38 +121,43 @@ rdfalist* rdfa_create_list(size_t size)
 
 rdfalist* rdfa_copy_list(rdfalist* list)
 {
-   rdfalist* rval = (rdfalist*)malloc(sizeof(rdfalist));
-   unsigned int i;
+   rdfalist* rval = NULL;
 
-   /* copy the base list variables over */
-   rval->max_items = list->max_items;
-   rval->num_items = list->num_items;
-   rval->items = (rdfalistitem**)malloc(sizeof(void*) * rval->max_items);
-
-   /* copy the data of every list member along with all of the flags
-    * for each list member. */
-   for(i = 0; i < list->max_items; i++)
+   if(list != NULL)
    {
-      if(i < list->num_items)
-      {
-         rval->items[i] = (rdfalistitem*)malloc(sizeof(rdfalistitem));
-         rval->items[i]->data = NULL;
-         rval->items[i]->flags = list->items[i]->flags;
+      rval = (rdfalist*)malloc(sizeof(rdfalist));
+      unsigned int i;
 
-         /* copy specific data type */
-         if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
-         {
-            rval->items[i]->data = (char*)rdfa_replace_string(
-               NULL, (const char*)list->items[i]->data);
-         }
-         else if(list->items[i]->flags & RDFALIST_FLAG_CONTEXT)
-         {
-            /* TODO: Implement the copy for context, if it is needed. */
-         }
-      }
-      else
+      /* copy the base list variables over */
+      rval->max_items = list->max_items;
+      rval->num_items = list->num_items;
+      rval->items = (rdfalistitem**)malloc(sizeof(void*) * rval->max_items);
+
+      /* copy the data of every list member along with all of the flags
+       * for each list member. */
+      for(i = 0; i < list->max_items; i++)
       {
-         rval->items[i] = NULL;
+         if(i < list->num_items)
+         {
+            rval->items[i] = (rdfalistitem*)malloc(sizeof(rdfalistitem));
+            rval->items[i]->data = NULL;
+            rval->items[i]->flags = list->items[i]->flags;
+
+            /* copy specific data type */
+            if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
+            {
+               rval->items[i]->data = (char*)rdfa_replace_string(
+                  NULL, (const char*)list->items[i]->data);
+            }
+            else if(list->items[i]->flags & RDFALIST_FLAG_CONTEXT)
+            {
+               /* TODO: Implement the copy for context, if it is needed. */
+            }
+         }
+         else
+         {
+            rval->items[i] = NULL;
+         }
       }
    }
 
@@ -449,6 +454,9 @@ void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value)
       /* free all of the memory in the mapping */
       while(*mptr != NULL)
       {
+         printf("FREEING: %s\n", *mptr);
+         free(*mptr);
+         mptr++;
          free_value(*mptr);
          mptr++;
       }
