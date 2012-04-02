@@ -103,6 +103,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
    void** mptr = context->local_list_mappings;
    char* key = NULL;
    void* value = NULL;
+   unsigned int list_depth = 0;
 
    printf("local_list_mappings: ");
    rdfa_print_mapping(context->local_list_mappings,
@@ -118,11 +119,12 @@ void rdfa_complete_list_triples(rdfacontext* context)
    {
       rdfa_next_mapping(mptr++, &key, &value);
       list = (rdfalist*)value;
+      list_depth = list->user_data;
       mptr++;
-      printf("LIST TRIPLES for key: %s\n", key);
+      printf("LIST TRIPLES for key (%u/%u): %s\n", context->depth, list_depth, key);
 
-      if(parent_context == NULL ||
-         rdfa_get_mapping(parent_context->list_mappings, key) == NULL)
+      if(((context->depth) < list_depth) &&
+         rdfa_get_mapping(context->list_mappings, key) == NULL)
       {
          if(list->num_items == 1)
          {
@@ -177,7 +179,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
                 * object
                 *   next item in the 'bnode' array or, if that does not exist,
                 *   http://www.w3.org/1999/02/22-rdf-syntax-ns#nil */
-               if(i < (int)list->num_items)
+               if(i < (int)list->num_items - 1)
                {
                   next = rdfa_create_bnode(context);
                }

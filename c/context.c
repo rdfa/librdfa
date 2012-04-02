@@ -38,6 +38,7 @@ rdfacontext* rdfa_create_context(const char* base)
       char* cleaned_base;
       rval = (rdfacontext*)malloc(sizeof(rdfacontext));
       rval->base = NULL;
+      rval->depth = 0;
       cleaned_base = rdfa_iri_get_base(base);
       rval->base = rdfa_replace_string(rval->base, cleaned_base);
       free(cleaned_base);
@@ -202,14 +203,21 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->base = rdfa_replace_string(rval->base, parent_context->base);
    rdfa_init_context(rval);
 
+   /* Set the processing depth as parent + 1 */
+   rval->depth = parent_context->depth + 1;
+
    /* copy the URI mappings */
 #ifndef LIBRDFA_IN_RAPTOR
    rdfa_free_mapping(rval->uri_mappings, (free_mapping_value_fp)free);
    rdfa_free_mapping(rval->list_mappings, (free_mapping_value_fp)rdfa_free_list);
+   rdfa_free_mapping(rval->local_list_mappings, (free_mapping_value_fp)rdfa_free_list);
    rval->uri_mappings =
       rdfa_copy_mapping((void**)parent_context->uri_mappings,
          (copy_mapping_value_fp)rdfa_replace_string);
    rval->list_mappings =
+      rdfa_copy_mapping((void**)parent_context->local_list_mappings,
+         (copy_mapping_value_fp)rdfa_copy_list);
+   rval->local_list_mappings =
       rdfa_copy_mapping((void**)parent_context->local_list_mappings,
          (copy_mapping_value_fp)rdfa_copy_list);
 #endif

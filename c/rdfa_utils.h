@@ -114,8 +114,10 @@ void** rdfa_create_mapping(size_t elements);
  * Adds a list to a mapping given a key to create. The result will be a
  * zero-item list associated with the given key in the mapping.
  *
+ * @param context the current active context.
  * @param mapping the mapping to modify.
  * @param key the key to add to the mapping.
+ * @param user_data the user-defined data to store with the list information.
  */
 void rdfa_create_list_mapping(
    rdfacontext* context, void** mapping, const char* key);

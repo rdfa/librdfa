@@ -195,6 +195,7 @@ typedef struct rdfalist
    rdfalistitem** items;
    size_t num_items;
    size_t max_items;
+   unsigned int user_data;
 } rdfalist;
 
 /**
@@ -271,6 +272,7 @@ typedef struct rdfacontext
    rdfalist* context_stack;
    size_t wb_preread;
    int preread;
+   int depth;
 } rdfacontext;
 
 /**

@@ -187,19 +187,26 @@ void rdfa_print_triple_list(rdfalist* list)
 {
    unsigned int i;
 
-   printf("[ ");
-
-   for(i = 0; i < list->num_items; i++)
+   if(list != NULL)
    {
-      if(i != 0)
+      printf("[ ");
+
+      for(i = 0; i < list->num_items; i++)
       {
-         printf(", ");
+         if(i != 0)
+         {
+            printf(", ");
+         }
+
+         rdfa_print_triple((rdftriple*)list->items[i]->data);
       }
 
-      rdfa_print_triple((rdftriple*)list->items[i]->data);
+      printf(" ]\n");
    }
-
-   printf(" ]\n");
+   else
+   {
+      printf("NULL\n");
+   }
 }
 
 void rdfa_free_list(rdfalist* list)
@@ -299,6 +306,7 @@ void rdfa_create_list_mapping(
    {
       /* create the mapping */
       value2 = rdfa_create_list(MAX_LIST_ITEMS);
+      value2->user_data = context->depth;
       rdfa_update_mapping(mapping, key, value2,
          (update_mapping_value_fp)rdfa_replace_list);
 

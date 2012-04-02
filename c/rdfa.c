@@ -681,6 +681,7 @@ static void start_element(void *parser_context, const char* name,
    /***************** FOR DEBUGGING PURPOSES ONLY ******************/
    if(DEBUG)
    {
+      printf("DEBUG: depth = %u\n", context->depth);
       if(about != NULL)
       {
          printf("DEBUG: @about = %s\n", about);
@@ -1061,11 +1062,17 @@ static void end_element(void* parser_context, const char* name,
    {
       rdfa_complete_list_triples(context);
 
-      /* copy the current mapping to the parent mapping */
-      rdfa_free_mapping(
-         parent_context->list_mappings, (free_mapping_value_fp)rdfa_free_list);
-      parent_context->list_mappings = context->local_list_mappings;
-      context->local_list_mappings = NULL;
+      if(parent_context != NULL)
+      {
+         /* copy the current mapping to the parent mapping */
+         /*
+         rdfa_free_mapping(parent_context->local_list_mappings,
+            (free_mapping_value_fp)rdfa_free_list);
+         parent_context->local_list_mappings = rdfa_copy_mapping(
+            context->local_list_mappings,
+            (free_mapping_value_fp)rdfa_copy_list);
+         */
+      }
    }
 
    /* free the context */
