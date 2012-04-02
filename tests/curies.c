@@ -49,7 +49,6 @@ static const char*
  * calling it directly, but since this is a unit test, that's okay. */
 void rdfa_init_context(rdfacontext* context);
 char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri);
-char* rdfa_resolve_property_curie(rdfacontext* context, const char* uri);
 
 /* typedef for 3 argument CURIE processing function pointer */
 typedef char* (*curie_func_three_arg)(rdfacontext*, const char*, curieparse_t);

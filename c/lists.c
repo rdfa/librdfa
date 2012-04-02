@@ -102,6 +102,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
    rdftriple* triple;
    void** mptr = context->local_list_mappings;
    char* key = NULL;
+   void** kptr = NULL;
    void* value = NULL;
    unsigned int list_depth = 0;
 
@@ -117,14 +118,16 @@ void rdfa_complete_list_triples(rdfacontext* context)
 
    while(*mptr != NULL)
    {
+      kptr = mptr;
       rdfa_next_mapping(mptr++, &key, &value);
       list = (rdfalist*)value;
       list_depth = list->user_data;
       mptr++;
       printf("LIST TRIPLES for key (%u/%u): %s\n", context->depth, list_depth, key);
 
-      if(((context->depth) < list_depth) &&
-         rdfa_get_mapping(context->list_mappings, key) == NULL)
+      if((context->depth < list_depth) &&
+         (rdfa_get_mapping(context->list_mappings, key) == NULL) &&
+         (strcmp(key, RDFA_MAPPING_DELETED_KEY) != 0))
       {
          if(list->num_items == 1)
          {
@@ -138,6 +141,10 @@ void rdfa_complete_list_triples(rdfacontext* context)
                rdfa_replace_string(triple->object,
                   "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil");
             triple->object_type = RDF_TYPE_IRI;
+
+            triple = rdfa_create_triple(context->new_subject, key,
+               "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil",
+               RDF_TYPE_IRI, NULL, NULL);
             context->default_graph_triple_callback(
                triple, context->callback_data);
          }
@@ -211,11 +218,10 @@ void rdfa_complete_list_triples(rdfacontext* context)
                rdfa_replace_string(triple->predicate, key);
             context->default_graph_triple_callback(
                triple, context->callback_data);
-
-            /* clear the entry from the mapping */
-            rdfa_replace_string(key, "<DELETED_MAPPING_ENTRY>");
-            free(value);
          }
+         /* clear the entry from the mapping */
+         *kptr = rdfa_replace_string(*kptr, RDFA_MAPPING_DELETED_KEY);
+         list->num_items = 0;
       }
    }
 }

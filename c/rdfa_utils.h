@@ -79,6 +79,9 @@ typedef enum
 #define RDFA_PROCESSOR_WARNING "http://www.w3.org/ns/rdfa#Warning"
 #define RDFA_PROCESSOR_ERROR "http://www.w3.org/ns/rdfa#Error"
 
+/* key establishing a deleted mapping entry */
+#define RDFA_MAPPING_DELETED_KEY "<DELETED-KEY>"
+
 /**
  * A function pointer that will be used to copy mapping values.
  */
@@ -121,18 +124,6 @@ void** rdfa_create_mapping(size_t elements);
  */
 void rdfa_create_list_mapping(
    rdfacontext* context, void** mapping, const char* key);
-
-/**
- * Replaces an old list value in a mapping with the new value that is given.
- * This is typically used by the rdfa_create_list_mapping function and should
- * probably not be used by any developer code.
- *
- * @param mapping the mapping to modify.
- * @param key the key to add to the mapping.
- *
- * @return a pointer to the new list
- */
-rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list);
 
 /**
  * Adds an item to the end of the list that is associated with the given
@@ -225,6 +216,20 @@ rdfalist* rdfa_create_list(size_t size);
  *         the returned list once you are done with it.
  */
 rdfalist* rdfa_copy_list(rdfalist* list);
+
+/**
+ * Replaced the old_list by free'ing the memory associated with it. A
+ * copy is made of the new list and then returned.
+ *
+ * @param old_list the list to replace. The memory associated with this list
+ *                 is freed.
+ * @param new_list the new list to copy in replacement of the old list. A
+ *                 deep copy is performed on the new list.
+ *
+ * @return the copied list. You MUST free the memory associated with
+ *         the returned list once you are done with it.
+ */
+rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list);
 
 /**
  * Adds an item to the end of the list.

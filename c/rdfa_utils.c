@@ -119,6 +119,22 @@ rdfalist* rdfa_create_list(size_t size)
    return rval;
 }
 
+rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list)
+{
+   rdfalist* rval = NULL;
+
+   if(new_list != NULL)
+   {
+      /* free the memory associated with the old list */
+      free(old_list);
+
+      /* copy the new list */
+      rval = rdfa_copy_list(new_list);
+   }
+
+   return rval;
+}
+
 rdfalist* rdfa_copy_list(rdfalist* list)
 {
    rdfalist* rval = NULL;
@@ -131,6 +147,7 @@ rdfalist* rdfa_copy_list(rdfalist* list)
       /* copy the base list variables over */
       rval->max_items = list->max_items;
       rval->num_items = list->num_items;
+      rval->user_data = list->user_data;
       rval->items = (rdfalistitem**)malloc(sizeof(void*) * rval->max_items);
 
       /* copy the data of every list member along with all of the flags
@@ -148,6 +165,13 @@ rdfalist* rdfa_copy_list(rdfalist* list)
             {
                rval->items[i]->data = (char*)rdfa_replace_string(
                   NULL, (const char*)list->items[i]->data);
+            }
+            else if(list->items[i]->flags & RDFALIST_FLAG_TRIPLE)
+            {
+               rdftriple* t = (rdftriple*)list->items[i]->data;
+               rval->items[i]->data =
+                  rdfa_create_triple(t->subject, t->predicate, t->object,
+                     t->object_type, t->datatype, t->language);
             }
             else if(list->items[i]->flags & RDFALIST_FLAG_CONTEXT)
             {
@@ -287,11 +311,6 @@ void** rdfa_create_mapping(size_t elements)
    }
 
    return mapping;
-}
-
-rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list)
-{
-   return new_list;
 }
 
 void rdfa_create_list_mapping(

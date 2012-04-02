@@ -81,7 +81,8 @@ cont:
 			}
 		} while (sc != 0);
 	}
-	/* NOTREACHED */
+	/* NOTREACHED -- but specify to placate gcc compiler warnings */
+	return NULL;
 }
 
 int strcasecmp(const char* s1, const char* s2)
