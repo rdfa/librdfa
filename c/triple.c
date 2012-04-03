@@ -305,11 +305,12 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
 
          /* ensure the list mapping exists */
          rdfa_create_list_mapping(
-            context, context->local_list_mappings, predicate);
+            context, context->local_list_mappings,
+            context->parent_subject, predicate);
 
          /* add the predicate to the list mapping */
-         rdfa_append_to_list_mapping(
-            context->local_list_mappings, predicate, (void*)triple);
+         rdfa_append_to_list_mapping(context->local_list_mappings,
+            context->parent_subject, predicate, (void*)triple);
       }
       else if(incomplete_triple->flags & RDFALIST_FLAG_DIR_FORWARD)
       {

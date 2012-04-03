@@ -119,21 +119,38 @@ void** rdfa_create_mapping(size_t elements);
  *
  * @param context the current active context.
  * @param mapping the mapping to modify.
+ * @param subject the current active subject.
  * @param key the key to add to the mapping.
  * @param user_data the user-defined data to store with the list information.
  */
 void rdfa_create_list_mapping(
-   rdfacontext* context, void** mapping, const char* key);
+   rdfacontext* context, void** mapping, const char* subject, const char* key);
 
 /**
  * Adds an item to the end of the list that is associated with the given
  * key in the mapping.
  *
  * @param mapping the mapping to modify.
+ * @param subject the current active subject.
  * @param key the key to use when looking up the list value.
  * @param value the value to append to the end of the list.
  */
-void rdfa_append_to_list_mapping(void** mapping, const char* key, void* value);
+void rdfa_append_to_list_mapping(
+   void** mapping, const char* subject, const char* key, void* value);
+
+/**
+ * Gets the value for a given list mapping when presented with a subject
+ * and a key. If the subject-key combo doesn't exist in the mapping,
+ * NULL is returned.
+ *
+ * @param mapping the mapping to search.
+ * @param subject the current active subject.
+ * @param key the key.
+ *
+ * @return value the value in the mapping for the given key.
+ */
+const void* rdfa_get_list_mapping(
+   void** mapping, const char* subject, const char* key);
 
 /**
  * Copies the entire contents of a mapping verbatim and returns a

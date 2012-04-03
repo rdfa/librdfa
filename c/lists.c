@@ -39,13 +39,14 @@ void rdfa_establish_new_inlist_triples(rdfacontext* context,
       rdftriple* triple;
       /* ensure the list mapping exists */
       rdfa_create_list_mapping(
-         context, context->local_list_mappings, resolved_predicate);
+         context, context->local_list_mappings,
+         context->new_subject, resolved_predicate);
 
       /* add an incomplete triple for each list mapping */
       triple = rdfa_create_triple(context->new_subject, resolved_predicate,
          object, object_type, context->datatype, context->language);
-      rdfa_append_to_list_mapping(
-         context->local_list_mappings, resolved_predicate, triple);
+      rdfa_append_to_list_mapping(context->local_list_mappings,
+         context->new_subject, resolved_predicate, triple);
 
       free(resolved_predicate);
    }
@@ -71,14 +72,15 @@ void rdfa_save_incomplete_list_triples(
 
       /* ensure the list mapping exists */
       rdfa_create_list_mapping(
-         context, context->local_list_mappings, resolved_curie);
+         context, context->local_list_mappings,
+         context->new_subject, resolved_curie);
 
       /* get the list name */
-      list = (rdfalist*)rdfa_get_mapping(
-         context->local_list_mappings, resolved_curie);
+      list = (rdfalist*)rdfa_get_list_mapping(
+         context->local_list_mappings, context->new_subject, resolved_curie);
       triple = list->items[0]->data;
       rdfa_add_item(
-         context->local_incomplete_triples, triple->subject,
+         context->local_incomplete_triples, resolved_curie,
          (liflag_t)(RDFALIST_FLAG_DIR_NONE | RDFALIST_FLAG_TEXT));
 
       free(resolved_curie);
@@ -133,7 +135,8 @@ void rdfa_complete_list_triples(rdfacontext* context)
       }
 
       if((context->depth < list_depth) &&
-         (rdfa_get_mapping(context->list_mappings, key) == NULL) &&
+         (rdfa_get_list_mapping(
+            context->list_mappings, context->new_subject, key) == NULL) &&
          (strcmp(key, RDFA_MAPPING_DELETED_KEY) != 0))
       {
          if(list->num_items == 1)
