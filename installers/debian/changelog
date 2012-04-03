@@ -1,0 +1,5 @@
+librdfa (1.1-20120402) stable; urgency=low
+
+  * Debian-ized version of librdfa.
+
+ -- Manu Sporny <msporny@digitalbazaar.com>  Tue, 5 Feb 2012 09:34:19 -0400
