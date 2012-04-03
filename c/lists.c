@@ -106,9 +106,12 @@ void rdfa_complete_list_triples(rdfacontext* context)
    void* value = NULL;
    unsigned int list_depth = 0;
 
-   printf("local_list_mappings: ");
-   rdfa_print_mapping(context->local_list_mappings,
-      (print_mapping_value_fp)rdfa_print_triple_list);
+   if(DEBUG)
+   {
+      printf("local_list_mappings: ");
+      rdfa_print_mapping(context->local_list_mappings,
+         (print_mapping_value_fp)rdfa_print_triple_list);
+   }
 
    if(context->context_stack != NULL)
    {
@@ -123,7 +126,11 @@ void rdfa_complete_list_triples(rdfacontext* context)
       list = (rdfalist*)value;
       list_depth = list->user_data;
       mptr++;
-      printf("LIST TRIPLES for key (%u/%u): %s\n", context->depth, list_depth, key);
+      if(DEBUG)
+      {
+         printf("LIST TRIPLES for key (%u/%u): %s\n",
+            context->depth, list_depth, key);
+      }
 
       if((context->depth < list_depth) &&
          (rdfa_get_mapping(context->list_mappings, key) == NULL) &&

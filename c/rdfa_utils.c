@@ -481,7 +481,6 @@ void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value)
       /* free all of the memory in the mapping */
       while(*mptr != NULL)
       {
-         printf("FREEING: %s\n", *mptr);
          free(*mptr);
          mptr++;
          free_value(*mptr);

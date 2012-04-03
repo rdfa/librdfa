@@ -144,7 +144,6 @@ AC_CONFIG_FILES([
    python/Makefile
    docs/Makefile
    tests/Makefile
-   installers/debian/changelog
    librdfa.pc
    librdfa-uninstalled.pc
 ])

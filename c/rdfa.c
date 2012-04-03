@@ -922,11 +922,10 @@ static void end_element(void* parser_context, const char* name,
    if(DEBUG)
    {
       printf("DEBUG: </%s>\n", name);
+      printf("context->local_list_mappings (start of end_element): ");
+      rdfa_print_mapping(context->local_list_mappings,
+         (print_mapping_value_fp)rdfa_print_triple_list);
    }
-
-   printf("context->local_list_mappings (start of end_element): ");
-   rdfa_print_mapping(context->local_list_mappings,
-      (print_mapping_value_fp)rdfa_print_triple_list);
 
    sprintf(buffer, "</%s>", name);
    if(context->xml_literal == NULL)
@@ -1064,26 +1063,21 @@ static void end_element(void* parser_context, const char* name,
     * generated, if necessary. */
    if(context->rdfa_version == RDFA_VERSION_1_1)
    {
-      printf("context->local_list_mappings (before clt): ");
-      rdfa_print_mapping(context->local_list_mappings,
-         (print_mapping_value_fp)rdfa_print_triple_list);
-
       rdfa_complete_list_triples(context);
 
       if(parent_context != NULL)
       {
          /* copy the current mapping to the parent mapping */
-         printf("parent_context->local_list_mappings (before copy): ");
-         rdfa_print_mapping(parent_context->local_list_mappings,
-            (print_mapping_value_fp)rdfa_print_triple_list);
-
          parent_context->local_list_mappings = rdfa_copy_mapping(
             context->local_list_mappings,
             (copy_mapping_value_fp)rdfa_replace_list);
 
-         printf("parent_context->local_list_mappings (after copy): ");
-         rdfa_print_mapping(context->local_list_mappings,
-            (print_mapping_value_fp)rdfa_print_triple_list);
+         if(DEBUG)
+         {
+            printf("parent_context->local_list_mappings (after copy): ");
+            rdfa_print_mapping(context->local_list_mappings,
+               (print_mapping_value_fp)rdfa_print_triple_list);
+         }
          context->local_list_mappings = NULL;
       }
    }

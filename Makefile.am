@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I setup
 
-SUBDIRS = c python tests docs
+SUBDIRS = c python tests
 
 pkgconfigdir = $(libdir)/pkgconfig
 
@@ -24,14 +24,15 @@ EXTRA_DIST = \
 
 packages:
 	@echo "Generating Debian packages..."
+	rm -f debian
 	$(LN_S) installers/debian debian
 	dpkg-buildpackage -us -uc -rfakeroot
 	mkdir -p installers/packages
-	mv ../*rdfa$(VERSION).deb installers/packages
-	@echo "Generating RPM packages..."
-	cd installers/packages && fakeroot alien --to-rpm -k --scripts *.deb
-	@echo "Generating TGZ packages..."
-	cd installers/packages && fakeroot alien --to-tgz -k --scripts *.deb
+	mv ../*rdfa*$(VERSION)*.deb installers/packages
+#	@echo "Generating RPM packages..."
+#	cd installers/packages && fakeroot alien --to-rpm -k --scripts *.deb
+#	@echo "Generating TGZ packages..."
+#	cd installers/packages && fakeroot alien --to-tgz -k --scripts *.deb
 
 zip-windows:
 	@echo "Generating Windows ZIP release..."
@@ -60,6 +61,5 @@ zip-macos:
 clean-local:
 	rm -rf installers/librdfa-*
 	rm -rf installers/packages
-	rm -f debian
 
 ## end librdfa/Makefile.am
