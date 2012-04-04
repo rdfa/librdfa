@@ -314,19 +314,27 @@ void** rdfa_create_mapping(size_t elements)
 }
 
 void rdfa_create_list_mapping(
-   rdfacontext* context, void** mapping, const char* key)
+   rdfacontext* context, void** mapping, const char* subject, const char* key)
 {
-   const void* value = rdfa_get_mapping(mapping, key);
+   char* realkey = NULL;
+   int str_size = 0;
+   const void* value = NULL;
    rdfalist* value2;
    char* list_bnode;
    rdftriple* triple;
+
+   // generate the real list mapping key
+   realkey = rdfa_replace_string(realkey, subject);
+   realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
+   realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));
+   value = rdfa_get_mapping(mapping, realkey);
 
    if(value == NULL)
    {
       /* create the mapping */
       value2 = rdfa_create_list(MAX_LIST_ITEMS);
       value2->user_data = context->depth;
-      rdfa_update_mapping(mapping, key, value2,
+      rdfa_update_mapping(mapping, realkey, value2,
          (update_mapping_value_fp)rdfa_replace_list);
 
       /* add the first item in the list as the bnode for the list */
@@ -334,14 +342,17 @@ void rdfa_create_list_mapping(
       triple = rdfa_create_triple(list_bnode,
          list_bnode, list_bnode, RDF_TYPE_IRI, NULL, NULL);
       rdfa_append_to_list_mapping(
-         context->local_list_mappings, key, (void*)triple);
+         context->local_list_mappings, subject, key, (void*)triple);
       free(list_bnode);
    }
+
+   free(realkey);
 }
 
-void rdfa_append_to_list_mapping(void** mapping, const char* key, void* value)
+void rdfa_append_to_list_mapping(
+   void** mapping, const char* subject, const char* key, void* value)
 {
-   rdfalist* list = (rdfalist*)rdfa_get_mapping(mapping, key);
+   rdfalist* list = (rdfalist*)rdfa_get_list_mapping(mapping, subject, key);
    rdfa_add_item(list, value, RDFALIST_FLAG_TRIPLE);
 }
 
@@ -426,6 +437,23 @@ const void* rdfa_get_mapping(void** mapping, const char* key)
    }
 
    return rval;
+}
+
+const void* rdfa_get_list_mapping(
+   void** mapping, const char* subject, const char* key)
+{
+   void* rval;
+   char* realkey = NULL;
+   int str_size = 0;
+
+   // generate the real list mapping key and retrieve it from the mapping
+   realkey = rdfa_replace_string(realkey, subject);
+   realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
+   realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));
+   rval = (void*)rdfa_get_mapping(mapping, realkey);
+   free(realkey);
+
+   return (const void*)rval;
 }
 
 void rdfa_next_mapping(void** mapping, char** key, void** value)
