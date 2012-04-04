@@ -463,6 +463,7 @@ void rdfa_processor_triples(
    rdfacontext* context, const char* type, const char* msg);
 
 /* Declarations needed by rdfa.c */
+void rdfa_setup_initial_context(rdfacontext* context);
 void rdfa_establish_new_inlist_triples(
    rdfacontext* context, rdfalist* predicates, const char* object,
    rdfresource_t object_type);

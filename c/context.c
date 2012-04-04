@@ -81,6 +81,9 @@ void rdfa_init_context(rdfacontext* context)
    /* assume the RDFa processing rules are RDFa 1.1 unless otherwise specified */
    context->rdfa_version = RDFA_VERSION_1_1;
 
+   /* assume the default host language is XML1 */
+   context->host_language = HOST_LANGUAGE_XML1;
+
    /* the [parent subject] is set to the [base] value; */
    context->parent_subject = NULL;
    if(context->base != NULL)
@@ -183,6 +186,201 @@ void rdfa_init_context(rdfacontext* context)
    /*context->callback_data = NULL;*/
 }
 
+rdfa_setup_initial_context(rdfacontext* context)
+{
+   /* Setup the base RDFa 1.1 prefix and term mappings */
+   if(context->rdfa_version == RDFA_VERSION_1_1)
+   {
+      /* Setup the base RDFa 1.1 prefix mappings */
+      rdfa_update_mapping(context->uri_mappings,
+         "grddl", "http://www.w3.org/2003/g/data-view#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "ma", "http://www.w3.org/ns/ma-ont#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "owl", "http://www.w3.org/2002/07/owl#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "rdfa", "http://www.w3.org/ns/rdfa#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "rdfs", "http://www.w3.org/2000/01/rdf-schema#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "rif", "http://www.w3.org/2007/rif#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "skos", "http://www.w3.org/2004/02/skos/core#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "skosxl", "http://www.w3.org/2008/05/skos-xl#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "wdr", "http://www.w3.org/2007/05/powder#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "void", "http://rdfs.org/ns/void#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "wdrs", "http://www.w3.org/2007/05/powder-s#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "xhv", "http://www.w3.org/1999/xhtml/vocab#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "xml", "http://www.w3.org/XML/1998/namespace",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "xsd", "http://www.w3.org/2001/XMLSchema#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "cc", "http://creativecommons.org/ns#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "ctag", "http://commontag.org/ns#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "dc", "http://purl.org/dc/terms/",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "dcterms", "http://purl.org/dc/terms/",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "foaf", "http://xmlns.com/foaf/0.1/",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "gr", "http://purl.org/goodrelations/v1#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "ical", "http://www.w3.org/2002/12/cal/icaltzd#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "og", "http://ogp.me/ns#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "rev", "http://purl.org/stuff/rev#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "sioc", "http://rdfs.org/sioc/ns#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "v", "http://rdf.data-vocabulary.org/#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "vcard", "http://www.w3.org/2006/vcard/ns#",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->uri_mappings,
+         "schema", "http://schema.org/",
+         (update_mapping_value_fp)rdfa_replace_string);
+
+      /* Setup the base RDFa 1.1 term mappings */
+      rdfa_update_mapping(context->term_mappings,
+         "describedby", "http://www.w3.org/2007/05/powder-s#describedby",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "license", "http://www.w3.org/1999/xhtml/vocab#license",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "role", "http://www.w3.org/1999/xhtml/vocab#role",
+         (update_mapping_value_fp)rdfa_replace_string);
+   }
+
+   /* Setup the term mappings for XHTML1 */
+   if(context->host_language == HOST_LANGUAGE_XHTML1)
+   {
+      rdfa_update_mapping(context->term_mappings,
+         "alternate", "http://www.w3.org/1999/xhtml/vocab#alternate",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "appendix", "http://www.w3.org/1999/xhtml/vocab#appendix",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "cite", "http://www.w3.org/1999/xhtml/vocab#cite",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "bookmark", "http://www.w3.org/1999/xhtml/vocab#bookmark",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "contents", "http://www.w3.org/1999/xhtml/vocab#contents",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "chapter", "http://www.w3.org/1999/xhtml/vocab#chapter",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "copyright", "http://www.w3.org/1999/xhtml/vocab#copyright",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "first", "http://www.w3.org/1999/xhtml/vocab#first",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "glossary", "http://www.w3.org/1999/xhtml/vocab#glossary",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "help", "http://www.w3.org/1999/xhtml/vocab#help",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "icon", "http://www.w3.org/1999/xhtml/vocab#icon",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "index", "http://www.w3.org/1999/xhtml/vocab#index",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "last", "http://www.w3.org/1999/xhtml/vocab#last",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "license", "http://www.w3.org/1999/xhtml/vocab#license",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "meta", "http://www.w3.org/1999/xhtml/vocab#meta",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "next", "http://www.w3.org/1999/xhtml/vocab#next",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "prev", "http://www.w3.org/1999/xhtml/vocab#prev",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "previous", "http://www.w3.org/1999/xhtml/vocab#previous",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "section", "http://www.w3.org/1999/xhtml/vocab#section",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "start", "http://www.w3.org/1999/xhtml/vocab#start",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "stylesheet", "http://www.w3.org/1999/xhtml/vocab#stylesheet",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "subsection", "http://www.w3.org/1999/xhtml/vocab#subsection",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "top", "http://www.w3.org/1999/xhtml/vocab#top",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "up", "http://www.w3.org/1999/xhtml/vocab#up",
+         (update_mapping_value_fp)rdfa_replace_string);
+      rdfa_update_mapping(context->term_mappings,
+         "p3pv1", "http://www.w3.org/1999/xhtml/vocab#p3pv1",
+         (update_mapping_value_fp)rdfa_replace_string);
+
+      /* From the role attribute module */
+      rdfa_update_mapping(context->term_mappings,
+         "role", "http://www.w3.org/1999/xhtml/vocab#role",
+         (update_mapping_value_fp)rdfa_replace_string);
+   }
+
+   /* Setup the prefix and term mappings for HTML4 and HTML5 */
+   if(context->host_language == HOST_LANGUAGE_HTML)
+   {
+      /* No term or prefix mappings as of 2012-04-04 */
+   }
+}
+
 /**
  * Creates a new context for the current element by cloning certain
  * parts of the old context on the top of the given stack.
@@ -209,10 +407,14 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    /* copy the URI mappings */
 #ifndef LIBRDFA_IN_RAPTOR
    rdfa_free_mapping(rval->uri_mappings, (free_mapping_value_fp)free);
+   rdfa_free_mapping(rval->term_mappings, (free_mapping_value_fp)free);
    rdfa_free_mapping(rval->list_mappings, (free_mapping_value_fp)rdfa_free_list);
    rdfa_free_mapping(rval->local_list_mappings, (free_mapping_value_fp)rdfa_free_list);
    rval->uri_mappings =
       rdfa_copy_mapping((void**)parent_context->uri_mappings,
+         (copy_mapping_value_fp)rdfa_replace_string);
+   rval->term_mappings =
+      rdfa_copy_mapping((void**)parent_context->term_mappings,
          (copy_mapping_value_fp)rdfa_replace_string);
    rval->list_mappings =
       rdfa_copy_mapping((void**)parent_context->local_list_mappings,
@@ -222,7 +424,8 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          (copy_mapping_value_fp)rdfa_replace_list);
 #endif
 
-   /* inherit the parent context's RDFa processor mode */
+   /* inherit the parent context's host language and RDFa processor mode */
+   rval->host_language = parent_context->host_language;
    rval->rdfa_version = parent_context->rdfa_version;
 
    /* inherit the parent context's language */

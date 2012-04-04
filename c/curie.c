@@ -34,17 +34,6 @@
 #include "rdfa.h"
 #include "strtok_r.h"
 
-/* These are all of the @rel/@rev reserved words in XHTML 1.1 that
- * should generate triples. */
-#define XHTML_RELREV_RESERVED_WORDS_SIZE 24
-static const char* const g_relrev_reserved_words[XHTML_RELREV_RESERVED_WORDS_SIZE] =
-{
-   "alternate", "appendix", "bookmark", "chapter", "cite", "contents",
-   "copyright", "first", "glossary", "help", "icon", "index",
-   "meta", "next", "p3pv1", "prev", "role",  "section",  "stylesheet",
-   "subsection",  "start", "license", "up", "last"
-};
-
 /* The base XHTML vocab URL is used to resolve URIs that are reserved
  * words. Any reserved listed above is appended to the URL below to
  * form a complete IRI. */
@@ -391,19 +380,6 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
       resource++;
    }
 
-   /* search all of the XHTML @rel/@rev reserved words for a
-    * case-insensitive match against the given URI */
-   for(i = 0; i < XHTML_RELREV_RESERVED_WORDS_SIZE; i++)
-   {
-      if(strcasecmp(g_relrev_reserved_words[i], resource) == 0)
-      {
-         /* since the URI is a reserved word for @rel/@rev, generate
-          * the full IRI and stop the loop. */
-         rval = rdfa_join_string(XHTML_VOCAB_URI, g_relrev_reserved_words[i]);
-         i = XHTML_RELREV_RESERVED_WORDS_SIZE;
-      }
-   }
-
    /* override reserved words if there is a default vocab defined
     * NOTE: Don't have to check for RDFa 1.1 mode because vocab is only defined
     * in RDFa 1.1 */
@@ -411,8 +387,36 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
    {
       rval = rdfa_resolve_curie(context, uri, CURIE_PARSE_RELREV);
    }
+   else if(context->host_language == HOST_LANGUAGE_XHTML1)
+   {
+      /* search all of the XHTML @rel/@rev reserved words for a
+       * case-insensitive match against the given URI */
+      char* term = strdup(resource);
+      char* ptr = NULL;
 
-   /* if none of the XHTML @rel/@rev reserved words were found,
+      for(ptr = term; *ptr; ptr++)
+      {
+         *ptr = tolower(*ptr);
+      }
+
+      rval = rdfa_get_mapping(context->term_mappings, term);
+      if(rval != NULL)
+      {
+         rval = strdup(rval);
+      }
+      free(term);
+   }
+   else
+   {
+      /* Search the term mappings for a match */
+      rval = rdfa_get_mapping(context->term_mappings, resource);
+      if(rval != NULL)
+      {
+         rval = strdup(rval);
+      }
+   }
+
+   /* if a search against the registered terms failed,
     * attempt to resolve the value as a standard CURIE */
    if(rval == NULL)
    {

@@ -95,10 +95,26 @@ static size_t rdfa_init_base(
    /* ensure the buffer is a NUL-terminated string */
    *(*working_buffer + offset + bytes_read) = '\0';
 
-   /* search for an RDFa 1.0 DOCTYPE string to set the version */
+   /* Sniff the beginning of the document for any document information */
    if(strstr(*working_buffer, "-//W3C//DTD XHTML+RDFa 1.0//EN") != NULL)
    {
+      context->host_language = HOST_LANGUAGE_XHTML1;
       context->rdfa_version = RDFA_VERSION_1_0;
+   }
+   else if(strstr(*working_buffer, "-//W3C//DTD XHTML+RDFa 1.1//EN") != NULL)
+   {
+      context->host_language = HOST_LANGUAGE_XHTML1;
+      context->rdfa_version = RDFA_VERSION_1_1;
+   }
+   else if(strstr(*working_buffer, "<html") != NULL)
+   {
+      context->host_language = HOST_LANGUAGE_HTML;
+      context->rdfa_version = RDFA_VERSION_1_1;
+   }
+   else
+   {
+      context->host_language = HOST_LANGUAGE_XML1;
+      context->rdfa_version = RDFA_VERSION_1_1;
    }
 
    /* search for the end of </head> in */
@@ -1280,6 +1296,8 @@ int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
       context->parser = parser;
 #endif
       context->preread = 1;
+
+      rdfa_setup_initial_context(context);
 
       return RDFA_PARSE_SUCCESS;
    }
