@@ -2,7 +2,7 @@
 
 if BUILD_PYTHON
 
-pythonsitedir = $(libdir)/python/dist-packages
+pythonsitedir = $(PYTHON_SITE_PKG)
 
 dist_pythonsite_DATA = rdfa.py
 
@@ -14,12 +14,13 @@ _rdfa_la_SOURCES = \
 	SwigRdfaParser.cpp
 
 BUILT_SOURCES = SwigRdfaParser.cpp
+CLEANFILES = $(BUILT_SOURCES)
 
 _rdfa_la_LIBADD = $(top_builddir)/c/librdfa.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/c \
-	$(PYTHON_CPPFLAGS) \
+	$(AX_SWIG_PYTHON_CPPFLAGS) \
 	$(LIBXML2_CFLAGS)
 
 AM_LDFLAGS = -avoid-version -export-dynamic -module
