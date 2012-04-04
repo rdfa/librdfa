@@ -3,8 +3,8 @@ Section: libs
 Priority: optional
 Maintainer: Manu Sporny <msporny@digitalbazaar.com>
 Homepage: http://rdfa.digitalbazaar.com/librdfa/
-Build-Depends: python-all-dev, libxml2-dev, python-central (>= 0.4.10), dh-buildinfo, debhelper (>= 7.0.0), swig
-XS-Python-Version: all
+Build-Depends: python-all-dev (>= 2.6.6-3~), libxml2-dev, dh-buildinfo, debhelper (>= 7.0.50), swig
+X-Python-Version: 2.7
 Standards-Version: 3.9.1
 
 Package: librdfa1
@@ -34,9 +34,8 @@ Description: RDFa parsing C library - development kit
 Package: python-rdfa
 Architecture: any
 Section: python
-Depends: ${shlibs:Depends}, ${python:Depends}, librdfa1 (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}, librdfa1 (= ${binary:Version})
 Provides: ${python:Provides}
-XB-Python-Version: ${python:Versions}
 Description: RDFa parsing Python library (Python bindings)
  The librdfa parser is used to extract RDF triples from XHTML+RDFa documents.
  It uses libxml2 for the underlying XML parser, is very small in size (19KB),
