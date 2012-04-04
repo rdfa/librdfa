@@ -17,7 +17,4 @@ LDADD = \
 
 EXTRA_DIST = test-cases/fetch-tests
 
-clean-local:
-	rm $(noinst_PROGRAMS)
-
 ## end librdfa/tests/Makefile.am
