@@ -451,7 +451,10 @@ void rdfa_save_incomplete_triples(
     * [incomplete triple]s, pending the discovery of a subject that
     * can be used as the object. Also, [current object resource]
     * should be set to a newly created [bnode] */
-   context->current_object_resource = rdfa_create_bnode(context);
+   if(context->current_object_resource == NULL)
+   {
+      context->current_object_resource = rdfa_create_bnode(context);
+   }
 
    /* If present, @rel must contain one or more URIs, obtained
     * according to the section on CURIE and URI Processing each of

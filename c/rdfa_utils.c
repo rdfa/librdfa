@@ -317,7 +317,7 @@ void rdfa_create_list_mapping(
    rdfacontext* context, void** mapping, const char* subject, const char* key)
 {
    char* realkey = NULL;
-   int str_size = 0;
+   int str_size = strlen(subject);
    const void* value = NULL;
    rdfalist* value2;
    char* list_bnode;
@@ -444,7 +444,7 @@ const void* rdfa_get_list_mapping(
 {
    void* rval;
    char* realkey = NULL;
-   int str_size = 0;
+   int str_size = strlen(subject);
 
    // generate the real list mapping key and retrieve it from the mapping
    realkey = rdfa_replace_string(realkey, subject);

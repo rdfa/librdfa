@@ -130,7 +130,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
       mptr++;
       if(DEBUG)
       {
-         printf("LIST TRIPLES for key (%u/%u): %s\n",
+         printf("LIST TRIPLES for key (%u/%u): KEY(%s)\n",
             context->depth, list_depth, key);
       }
 
@@ -139,6 +139,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
             context->list_mappings, context->new_subject, key) == NULL) &&
          (strcmp(key, RDFA_MAPPING_DELETED_KEY) != 0))
       {
+         char* predicate = strstr(key, " ") + 1;
          if(list->num_items == 1)
          {
             /* the list is empty, generate an empty list triple */
@@ -146,13 +147,13 @@ void rdfa_complete_list_triples(rdfacontext* context)
             triple->subject =
                rdfa_replace_string(triple->subject, context->new_subject);
             triple->predicate =
-               rdfa_replace_string(triple->predicate, key);
+               rdfa_replace_string(triple->predicate, predicate);
             triple->object =
                rdfa_replace_string(triple->object,
                   "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil");
             triple->object_type = RDF_TYPE_IRI;
 
-            triple = rdfa_create_triple(context->new_subject, key,
+            triple = rdfa_create_triple(context->new_subject, predicate,
                "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil",
                RDF_TYPE_IRI, NULL, NULL);
             context->default_graph_triple_callback(
@@ -225,7 +226,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
             triple->subject =
                rdfa_replace_string(triple->subject, context->new_subject);
             triple->predicate =
-               rdfa_replace_string(triple->predicate, key);
+               rdfa_replace_string(triple->predicate, predicate);
             context->default_graph_triple_callback(
                triple, context->callback_data);
          }

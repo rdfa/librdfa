@@ -1084,6 +1084,11 @@ static void end_element(void* parser_context, const char* name,
 
    /* free the context */
    rdfa_free_context(context);
+
+   if(DEBUG)
+   {
+      printf("-------------------------------------------------------------\n");
+   }
 }
 
 void rdfa_set_default_graph_triple_handler(
