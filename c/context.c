@@ -379,6 +379,17 @@ rdfa_setup_initial_context(rdfacontext* context)
    {
       /* No term or prefix mappings as of 2012-04-04 */
    }
+
+   /* Generate namespace triples for all values in the uri_mapping */
+   char* key = NULL;
+   char* value = NULL;
+   void** mptr = context->uri_mappings;
+   while(*mptr != NULL)
+   {
+      rdfa_next_mapping(mptr++, &key, &value);
+      mptr++;
+      rdfa_generate_namespace_triple(context, key, value);
+   }
 }
 
 /**

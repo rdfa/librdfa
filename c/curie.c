@@ -199,7 +199,8 @@ char* rdfa_resolve_curie(
    }
    else if((ctype == CURIE_TYPE_IRI_OR_UNSAFE) &&
            ((mode == CURIE_PARSE_HREF_SRC) ||
-            (mode == CURIE_PARSE_ABOUT_RESOURCE)))
+            (context->rdfa_version == RDFA_VERSION_1_0 &&
+               mode == CURIE_PARSE_ABOUT_RESOURCE)))
    {
       /* If we are parsing something that can take either a CURIE or a
        * URI, and the type is either IRI or UNSAFE, assume that it is
@@ -215,7 +216,9 @@ char* rdfa_resolve_curie(
          ((ctype == CURIE_TYPE_IRI_OR_UNSAFE) &&
           ((mode == CURIE_PARSE_INSTANCEOF_DATATYPE) ||
            (mode == CURIE_PARSE_PROPERTY) ||
-           (mode == CURIE_PARSE_RELREV))))
+           (mode == CURIE_PARSE_RELREV) ||
+           (context->rdfa_version == RDFA_VERSION_1_1 &&
+              mode == CURIE_PARSE_ABOUT_RESOURCE))))
    {
       char* working_copy = NULL;
       char* wcptr = NULL;
