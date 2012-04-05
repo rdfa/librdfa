@@ -340,7 +340,10 @@ char* rdfa_resolve_curie(
       else if(context->rdfa_version == RDFA_VERSION_1_1 &&
          (strcmp(uri, "[]") != 0))
       {
-         if((context->default_vocabulary != NULL) && (strstr(uri, ":") == NULL))
+         if((context->default_vocabulary != NULL) &&
+            ((mode == CURIE_PARSE_PROPERTY) || (mode == CURIE_PARSE_RELREV) ||
+               (mode == CURIE_PARSE_INSTANCEOF_DATATYPE)) &&
+            (strstr(uri, ":") == NULL))
          {
             rval = rdfa_join_string(context->default_vocabulary, uri);
          }
