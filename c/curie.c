@@ -344,7 +344,8 @@ char* rdfa_resolve_curie(
          {
             rval = rdfa_join_string(context->default_vocabulary, uri);
          }
-         else if((mode == CURIE_PARSE_PROPERTY) &&
+         else if(((mode == CURIE_PARSE_PROPERTY) ||
+            (mode == CURIE_PARSE_ABOUT_RESOURCE)) &&
             (strstr(uri, "_:") == NULL) && (strstr(uri, "[_:") == NULL))
          {
             rval = rdfa_resolve_uri(context, uri);
