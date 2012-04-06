@@ -446,7 +446,10 @@ void rdfa_establish_new_1_1_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const rdfalist* type_of,
    const rdfalist* property, const char* content, const char* datatype);
-void rdfa_establish_new_subject_with_relrev(
+void rdfa_establish_new_1_0_subject_with_relrev(
+   rdfacontext* context, const char* name, const char* about, const char* src,
+   const char* resource, const char* href, const rdfalist* type_of);
+void rdfa_establish_new_1_1_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const rdfalist* type_of);
 void rdfa_complete_incomplete_triples(rdfacontext* context);

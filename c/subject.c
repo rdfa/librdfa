@@ -193,48 +193,59 @@ void rdfa_establish_new_1_1_subject(
          {
             /* by using the resource from @about, if present, obtained
              * according to the section on CURIE and IRI Processing;
+             *
+             * NOTE: about is set to the document if this is the root
+             * element of the document, so the following rule is also applied
+             * in this case:
+             *
+             * otherwise, if the element is the root element of the
+             * document, then act as if there is an empty @about present
+             * and process it according to the previous rule;
              */
             context->typed_resource =
                rdfa_replace_string(context->typed_resource, about);
          }
-         else if(resource != NULL)
-         {
-            /* by using the resource from @resource, if present, obtained
-             * according to the section on CURIE and IRI Processing;
-             */
-            context->typed_resource =
-               rdfa_replace_string(context->typed_resource, resource);
-         }
-         else if(href != NULL)
-         {
-            /* otherwise, by using the IRI from @href, if present, obtained
-             * according to the section on CURIE and IRI Processing;
-             */
-            context->typed_resource =
-               rdfa_replace_string(context->typed_resource, href);
-         }
-         else if(src != NULL)
-         {
-            /* otherwise, by using the IRI from @src, if present, obtained
-             * according to the section on CURIE and IRI Processing;
-             */
-            context->typed_resource =
-               rdfa_replace_string(context->typed_resource, src);
-         }
          else
          {
-            /* otherwise, the value of typed resource is set to a newly
-             * created bnode.
-             */
-            context->typed_resource = rdfa_replace_string(context->new_subject,
-               rdfa_create_bnode(context));
-         }
+            if(resource != NULL)
+            {
+               /* by using the resource from @resource, if present, obtained
+                * according to the section on CURIE and IRI Processing;
+                */
+               context->typed_resource =
+                  rdfa_replace_string(context->typed_resource, resource);
+            }
+            else if(href != NULL)
+            {
+               /* otherwise, by using the IRI from @href, if present, obtained
+                * according to the section on CURIE and IRI Processing;
+                */
+               context->typed_resource =
+                  rdfa_replace_string(context->typed_resource, href);
+            }
+            else if(src != NULL)
+            {
+               /* otherwise, by using the IRI from @src, if present, obtained
+                * according to the section on CURIE and IRI Processing;
+                */
+               context->typed_resource =
+                  rdfa_replace_string(context->typed_resource, src);
+            }
+            else
+            {
+               /* otherwise, the value of typed resource is set to a newly
+                * created bnode.
+                */
+               context->typed_resource = rdfa_replace_string(
+                  context->new_subject, rdfa_create_bnode(context));
+            }
 
-         /* The value of the current object resource is then set to the value
-          * of typed resource.
-          */
-         context->current_object_resource =rdfa_replace_string(
-            context->current_object_resource, context->typed_resource);
+            /* The value of the current object resource is then set to the value
+             * of typed resource.
+             */
+            context->current_object_resource = rdfa_replace_string(
+               context->current_object_resource, context->typed_resource);
+         }
       }
    }
    else
@@ -322,7 +333,8 @@ void rdfa_establish_new_1_1_subject(
          /* Finally, if @typeof is present, set the typed resource to the value
           * of new subject.
           */
-         context->typed_resource = context->new_subject;
+         context->typed_resource = rdfa_replace_string(context->typed_resource,
+            context->new_subject);
       }
    }
 }
@@ -340,7 +352,7 @@ void rdfa_establish_new_1_1_subject(
  * @param type_of the list of IRIs for type_of, or NULL if type_of
  *                wasn't specified on the current element.
  */
-void rdfa_establish_new_subject_with_relrev(
+void rdfa_establish_new_1_0_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const rdfalist* type_of)
 {
@@ -415,4 +427,53 @@ void rdfa_establish_new_subject_with_relrev(
 
    /* Note that final value of the [current object resource] will
     * either be null, or a full URI. */
+}
+
+/**
+ * Establishes a new subject for the given context when @rel or @rev
+ * is present. The given context's new_subject and
+ * current_object_resource values are updated if a new subject is found.
+ *
+ * @param context the RDFa context.
+ * @param about the full IRI for about, or NULL if there isn't one.
+ * @param src the full IRI for src, or NULL if there isn't one.
+ * @param resource the full IRI for resource, or NULL if there isn't one.
+ * @param href the full IRI for href, or NULL if there isn't one.
+ * @param type_of the list of IRIs for type_of, or NULL if type_of
+ *                wasn't specified on the current element.
+ */
+void rdfa_establish_new_1_1_subject_with_relrev(
+   rdfacontext* context, const char* name, const char* about, const char* src,
+   const char* resource, const char* href, const rdfalist* type_of)
+{
+   /* If the current element does contain a @rel or @rev attribute, then
+    * the next step is to establish both a value for new subject and a
+    * value for current object resource:
+    */
+
+   /* new subject is set to the resource obtained from the first match from
+    * the following rules:
+    */
+
+   if(about != NULL)
+   {
+      /* by using the resource from @about, if present, obtained according
+       * to the section on CURIE and IRI Processing;
+       */
+      context->new_subject =
+         rdfa_replace_string(context->new_subject, about);
+   }
+   /*
+if the @typeof attribute is present, set typed resource to new subject.
+If no resource is provided then the first match from the following rules will apply:
+if the element is the root element of the document then act as if there is an empty @about present, and process it according to the rule for @about, above;
+otherwise, if parent object is present, new subject is set to that.
+Then the current object resource is set to the resource obtained from the first match from the following rules:
+by using the resource from @resource, if present, obtained according to the section on CURIE and IRI Processing;
+otherwise, by using the IRI from @href, if present, obtained according to the section on CURIE and IRI Processing;
+otherwise, by using the IRI from @src, if present, obtained according to the section on CURIE and IRI Processing;
+otherwise, if @typeof is present and @about is not, use a newly created bnode.
+If @typeof is present and @about is not, set typed resource to current object resource.
+Note that final value of the current object resource will either be null (from initialization) or a full IRI or bnode.
+    */
 }

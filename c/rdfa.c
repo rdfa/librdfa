@@ -577,7 +577,11 @@ static void start_element(void *parser_context, const char* name,
          }
 
          /* The root element has an implicit @about declaration */
-         if(context->depth == 1)
+         if(context->depth == 1 ||
+            ((context->host_language == HOST_LANGUAGE_XHTML1 ||
+               context->host_language == HOST_LANGUAGE_HTML) &&
+               (strcasecmp(name, "head") == 0 ||
+                  strcasecmp(name, "body") == 0)))
          {
             about_curie = "";
             about = rdfa_resolve_curie(
@@ -791,12 +795,20 @@ static void start_element(void *parser_context, const char* name,
    }
    else
    {
-      /* 5. If the [current element] does contain a valid @rel or @rev
-       * URI, obtained according to the section on CURIE and URI
-       * Processing, then the next step is to establish both a value
-       * for [new subject] and a value for [current object resource]: */
-      rdfa_establish_new_subject_with_relrev(
-         context, name, about, src, resource, href, type_of);
+      if(context->rdfa_version == RDFA_VERSION_1_0)
+      {
+         /* 5. If the [current element] does contain a valid @rel or @rev
+          * URI, obtained according to the section on CURIE and URI
+          * Processing, then the next step is to establish both a value
+          * for [new subject] and a value for [current object resource]: */
+         rdfa_establish_new_1_0_subject_with_relrev(
+            context, name, about, src, resource, href, type_of);
+      }
+      else
+      {
+         rdfa_establish_new_1_1_subject_with_relrev(
+            context, name, about, src, resource, href, type_of);
+      }
    }
 
    if(context->new_subject != NULL)
