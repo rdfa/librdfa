@@ -439,9 +439,13 @@ char* rdfa_create_bnode(rdfacontext* context);
 
 /* All functions that rdfa.c needs. */
 void rdfa_update_uri_mappings(rdfacontext* context, const char* attr, const char* value);
-void rdfa_establish_new_subject(
+void rdfa_establish_new_1_0_subject(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const rdfalist* type_of);
+void rdfa_establish_new_1_1_subject(
+   rdfacontext* context, const char* name, const char* about, const char* src,
+   const char* resource, const char* href, const rdfalist* type_of,
+   const rdfalist* property, const char* content, const char* datatype);
 void rdfa_establish_new_subject_with_relrev(
    rdfacontext* context, const char* name, const char* about, const char* src,
    const char* resource, const char* href, const rdfalist* type_of);

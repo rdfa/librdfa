@@ -764,20 +764,30 @@ static void start_element(void *parser_context, const char* name,
     * included and is a correction for the last item in step #4. */
    if((about == NULL) && (src == NULL) && (type_of == NULL) &&
       (rel == NULL) && (rev == NULL) && (property == NULL) &&
-      (resource == NULL) && (href == NULL))
+      (resource == NULL) && (href == NULL) &&
+      (context->default_vocabulary == NULL) && (prefix == NULL))
    {
       context->skip_element = 1;
    }
 
    if((rel == NULL) && (rev == NULL))
    {
-      /* 4. If the [current element] contains no valid @rel or @rev
-       * URI, obtained according to the section on CURIE and URI
-       * Processing, then the next step is to establish a value for
-       * [new subject]. Any of the attributes that can carry a
-       * resource can set [new subject]; */
-      rdfa_establish_new_subject(
-         context, name, about, src, resource, href, type_of);
+      if(context->rdfa_version == RDFA_VERSION_1_0)
+      {
+         /* 4. If the [current element] contains no valid @rel or @rev
+          * URI, obtained according to the section on CURIE and URI
+          * Processing, then the next step is to establish a value for
+          * [new subject]. Any of the attributes that can carry a
+          * resource can set [new subject]; */
+         rdfa_establish_new_1_0_subject(
+            context, name, about, src, resource, href, type_of);
+      }
+      else
+      {
+         rdfa_establish_new_1_1_subject(
+            context, name, about, src, resource, href, type_of, property,
+            content, datatype);
+      }
    }
    else
    {
