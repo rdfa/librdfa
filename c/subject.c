@@ -459,21 +459,79 @@ void rdfa_establish_new_1_1_subject_with_relrev(
    {
       /* by using the resource from @about, if present, obtained according
        * to the section on CURIE and IRI Processing;
+       *
+       * NOTE: This will also catch the following rule due to @about being
+       * set in the calling function:
+       *
+       * if the element is the root element of the document then act as if
+       * there is an empty @about present, and process it according to the
+       * rule for @about, above;
        */
       context->new_subject =
          rdfa_replace_string(context->new_subject, about);
    }
-   /*
-if the @typeof attribute is present, set typed resource to new subject.
-If no resource is provided then the first match from the following rules will apply:
-if the element is the root element of the document then act as if there is an empty @about present, and process it according to the rule for @about, above;
-otherwise, if parent object is present, new subject is set to that.
-Then the current object resource is set to the resource obtained from the first match from the following rules:
-by using the resource from @resource, if present, obtained according to the section on CURIE and IRI Processing;
-otherwise, by using the IRI from @href, if present, obtained according to the section on CURIE and IRI Processing;
-otherwise, by using the IRI from @src, if present, obtained according to the section on CURIE and IRI Processing;
-otherwise, if @typeof is present and @about is not, use a newly created bnode.
-If @typeof is present and @about is not, set typed resource to current object resource.
-Note that final value of the current object resource will either be null (from initialization) or a full IRI or bnode.
+
+   if(type_of != NULL)
+   {
+      /* if the @typeof attribute is present, set typed resource to
+       * new subject.
+       */
+      context->typed_resource =
+         rdfa_replace_string(context->typed_resource, context->new_subject);
+   }
+
+   /* If no resource is provided then the first match from the following rules
+    * will apply:
+    *
+    */
+   if(context->new_subject == NULL && context->parent_object != NULL)
+   {
+      /* otherwise, if parent object is present, new subject is set to that.
+       */
+      context->new_subject = rdfa_replace_string(
+         context->new_subject, context->parent_object);
+   }
+
+   /* Then the current object resource is set to the resource obtained from
+    * the first match from the following rules:
+    */
+
+   if(resource != NULL)
+   {
+      /* by using the resource from @resource, if present, obtained according
+       * to the section on CURIE and IRI Processing;
+       */
+      context->current_object_resource = rdfa_replace_string(
+         context->current_object_resource, );
+   }
+   else if(href != NULL)
+   {
+      /* otherwise, by using the IRI from @href, if present, obtained
+       * according to the section on CURIE and IRI Processing;
+       */
+   }
+   else if(src != NULL)
+   {
+      /* otherwise, by using the IRI from @src, if present, obtained
+       * according to the section on CURIE and IRI Processing;
+       */
+   }
+   else if(type_of != NULL && about == NULL)
+   {
+      /* otherwise, if @typeof is present and @about is not, use a
+       * newly created bnode.
+       */
+   }
+
+   if(type_of != NULL && about == NULL)
+   {
+      /* If @typeof is present and @about is not, set typed resource to current
+       * object resource.
+       */
+
+   }
+
+   /* Note that final value of the current object resource will either be
+    * null (from initialization) or a full IRI or bnode.
     */
 }
