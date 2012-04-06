@@ -576,6 +576,14 @@ static void start_element(void *parser_context, const char* name,
             context->xml_literal_xml_lang_defined = 1;
          }
 
+         /* The root element has an implicit @about declaration */
+         if(context->depth == 1)
+         {
+            about_curie = "";
+            about = rdfa_resolve_curie(
+               context, about_curie, CURIE_PARSE_ABOUT_RESOURCE);
+         }
+
          /* process all of the RDFa attributes */
          if(strcmp(attr, "about") == 0)
          {
