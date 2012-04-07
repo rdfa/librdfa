@@ -502,25 +502,31 @@ void rdfa_establish_new_1_1_subject_with_relrev(
        * to the section on CURIE and IRI Processing;
        */
       context->current_object_resource = rdfa_replace_string(
-         context->current_object_resource, );
+         context->current_object_resource, resource);
    }
    else if(href != NULL)
    {
       /* otherwise, by using the IRI from @href, if present, obtained
        * according to the section on CURIE and IRI Processing;
        */
+      context->current_object_resource = rdfa_replace_string(
+         context->current_object_resource, href);
    }
    else if(src != NULL)
    {
       /* otherwise, by using the IRI from @src, if present, obtained
        * according to the section on CURIE and IRI Processing;
        */
+      context->current_object_resource = rdfa_replace_string(
+         context->current_object_resource, src);
    }
    else if(type_of != NULL && about == NULL)
    {
       /* otherwise, if @typeof is present and @about is not, use a
        * newly created bnode.
        */
+      context->current_object_resource = rdfa_replace_string(
+         context->current_object_resource, rdfa_create_bnode(context));
    }
 
    if(type_of != NULL && about == NULL)
@@ -528,7 +534,8 @@ void rdfa_establish_new_1_1_subject_with_relrev(
       /* If @typeof is present and @about is not, set typed resource to current
        * object resource.
        */
-
+      context->typed_resource = rdfa_replace_string(
+         context->typed_resource, context->current_object_resource);
    }
 
    /* Note that final value of the current object resource will either be
