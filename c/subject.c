@@ -102,16 +102,6 @@ void rdfa_establish_new_1_0_subject(
       context->new_subject =
          rdfa_replace_string(context->new_subject, href);
    }
-   /* * If no URI is provided by a resource attribute, then the first
-    * match from the following rules will apply: */
-   else if((strcmp(name, "head") == 0) || (strcmp(name, "body") == 0))
-   {
-      /* * if the element is the head or body element then act as if
-       * there is an empty @about present, and process it according to
-       * the rule for @about, above; */
-      context->new_subject =
-         rdfa_replace_string(context->new_subject, context->base);
-   }
    else if((type_of != NULL) && (type_of->num_items > 0))
    {
       /* * if @type_of is present, obtained according to the
@@ -377,16 +367,6 @@ void rdfa_establish_new_1_0_subject_with_relrev(
        * according to the section on CURIE and URI Processing. */
       context->new_subject =
          rdfa_replace_string(context->new_subject, src);
-   }
-   /* * If no URI is provided then the first match from the following
-    * rules will apply: */
-   else if((strcmp(name, "head") == 0) || (strcmp(name, "body") == 0))
-   {
-      /* * if the element is the head or body element then act as if
-       * there is an empty @about present, and process it according to
-       * the rule for @about, above; */
-      context->new_subject =
-         rdfa_replace_string(context->new_subject, context->base);
    }
    else if((type_of != NULL) && (type_of->num_items > 0))
    {

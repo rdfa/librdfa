@@ -577,11 +577,7 @@ static void start_element(void *parser_context, const char* name,
          }
 
          /* The root element has an implicit @about declaration */
-         if(context->depth == 1 ||
-            ((context->host_language == HOST_LANGUAGE_XHTML1 ||
-               context->host_language == HOST_LANGUAGE_HTML) &&
-               (strcasecmp(name, "head") == 0 ||
-                  strcasecmp(name, "body") == 0)))
+         if(context->depth == 1)
          {
             about_curie = "";
             about = rdfa_resolve_curie(
@@ -678,6 +674,17 @@ static void start_element(void *parser_context, const char* name,
         xml_lang = "";
    }
 #endif
+
+   if(about == NULL && resource == NULL && href == NULL && src == NULL &&
+      type_of == NULL && ((context->host_language == HOST_LANGUAGE_XHTML1 ||
+      context->host_language == HOST_LANGUAGE_HTML) &&
+      (strcasecmp(name, "head") == 0 || strcasecmp(name, "body") == 0)))
+   {
+      about_curie = "";
+      about = rdfa_resolve_curie(
+         context, about_curie, CURIE_PARSE_ABOUT_RESOURCE);
+   }
+
    /* check to see if we should append an xml:lang to the XML Literal
     * if one is defined in the context and does not exist on the
     * element. */
