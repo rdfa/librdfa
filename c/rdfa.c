@@ -676,7 +676,7 @@ static void start_element(void *parser_context, const char* name,
 #endif
 
    if(about == NULL && resource == NULL && href == NULL && src == NULL &&
-      type_of == NULL && ((context->host_language == HOST_LANGUAGE_XHTML1 ||
+      ((context->host_language == HOST_LANGUAGE_XHTML1 ||
       context->host_language == HOST_LANGUAGE_HTML) &&
       (strcasecmp(name, "head") == 0 || strcasecmp(name, "body") == 0)))
    {
