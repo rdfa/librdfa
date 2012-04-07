@@ -352,27 +352,52 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
 void rdfa_complete_type_triples(
    rdfacontext* context, const rdfalist* type_of)
 {
-   /* 6.1 One or more 'types' for the [new subject] can be set by
-    * using @type_of. If present, the attribute must contain one or
-    * more URIs, obtained according to the section on URI and CURIE
-    * Processing, each of which is used to generate a triple as follows:
-    *
-    * subject
-    *    [new subject]
-    * predicate
-    *    http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-    * object
-    *    full URI of 'type' */
    unsigned int i;
-
    rdfalistitem** iptr = type_of->items;
+   const char* subject;
+   const char* type;
+
+   if(context->rdfa_version == RDFA_VERSION_1_0)
+   {
+      /* RDFa 1.0: 6.1 One or more 'types' for the [new subject] can be set by
+       * using @type_of. If present, the attribute must contain one or
+       * more URIs, obtained according to the section on URI and CURIE
+       * Processing, each of which is used to generate a triple as follows:
+       *
+       * subject
+       *    [new subject]
+       * predicate
+       *    http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+       * object
+       *    full URI of 'type'
+       */
+      subject = context->new_subject;
+   }
+   else
+   {
+      /* RDFa 1.1: 7. One or more 'types' for the typed resource can be set by
+       * using @typeof. If present, the attribute may contain one or more IRIs,
+       * obtained according to the section on CURIE and IRI Processing, each of
+       * which is used to generate a triple as follows:
+       *
+       * subject
+       *    typed resource
+       * predicate
+       *    http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+       * object
+       *    current full IRI of 'type' from typed resource
+       */
+      subject = context->typed_resource;
+   }
+
    for(i = 0; i < type_of->num_items; i++)
    {
-      rdfalistitem* curie = *iptr;
+      rdfalistitem* iri = *iptr;
+      type = (const char*)iri->data;
 
-      rdftriple* triple = rdfa_create_triple(context->new_subject,
-         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-         (const char*)curie->data, RDF_TYPE_IRI, NULL, NULL);
+      rdftriple* triple = rdfa_create_triple(subject,
+         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", type, RDF_TYPE_IRI,
+         NULL, NULL);
 
       context->default_graph_triple_callback(triple, context->callback_data);
       iptr++;

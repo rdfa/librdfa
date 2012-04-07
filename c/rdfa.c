@@ -818,10 +818,13 @@ static void start_element(void *parser_context, const char* name,
          printf("DEBUG: new_subject = %s\n", context->new_subject);
       }
 
-      /* 6. If in any of the previous steps a [new subject] was set to
-       * a non-null value, */
-
-      /* it is now used to provide a subject for type values; */
+      /* RDFa 1.0: 6. If in any of the previous steps a [new subject] was set
+       * to a non-null value, it is now used to provide a subject for
+       * type values; */
+      /* RDFa 1.1: 7. If in any of the previous steps a typed resource was set
+       * to a non-null value, it is now used to provide a subject for type
+       * values;
+       */
       if(type_of != NULL)
       {
          rdfa_complete_type_triples(context, type_of);
@@ -868,7 +871,8 @@ static void start_element(void *parser_context, const char* name,
    {
       rdfa_save_incomplete_list_triples(context, rel);
    }
-   else if((rel != NULL) || (rev != NULL))
+   else if((context->current_object_resource == NULL) &&
+      ((rel != NULL) || (rev != NULL)))
    {
       /* 8. If however [current object resource] was set to null, but
        * there are predicates present, then they must be stored as
