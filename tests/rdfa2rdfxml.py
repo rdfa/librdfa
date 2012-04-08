@@ -139,7 +139,7 @@ def getRdfXml(rdf, graph):
         # Add the triple to the graph
         g.add((s, p, o))
     
-    rdfxml = g.serialize(format="turtle")
+    rdfxml = g.serialize(format="nt")
 
     return rdfxml
 
