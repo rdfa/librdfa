@@ -234,13 +234,13 @@ char* rdfa_resolve_curie(
       {
          prefix = strtok_r(working_copy, "[:]", &wcptr);
          if(wcptr)
-            curie_reference = strtok_r(NULL, "[:]", &wcptr);
+            curie_reference = strtok_r(NULL, "[]", &wcptr);
       }
       else if(ctype == CURIE_TYPE_IRI_OR_UNSAFE)
       {
          prefix = strtok_r(working_copy, ":", &wcptr);
          if(wcptr)
-            curie_reference = strtok_r(NULL, ":", &wcptr);
+            curie_reference = strtok_r(NULL, "", &wcptr);
       }
 
       /* fully resolve the prefix and get its length */
