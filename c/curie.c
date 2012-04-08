@@ -208,17 +208,30 @@ char* rdfa_resolve_curie(
       rval = rdfa_resolve_uri(context, uri);
    }
 
+   /*
+    * Check to see if the value is a term.
+    */
+   if(ctype == CURIE_TYPE_IRI_OR_UNSAFE && mode == CURIE_PARSE_PROPERTY)
+   {
+      const char* term_iri;
+      term_iri = rdfa_get_mapping(context->term_mappings, uri);
+      if(term_iri != NULL)
+      {
+         rval = strdup(term_iri);
+      }
+   }
+
    /* if we are processing a safe CURIE OR
     * if we are parsing an unsafe CURIE that is an @type_of,
     * @datatype, @property, @rel, or @rev attribute, treat the curie
     * as not an IRI, but an unsafe CURIE */
-   if((ctype == CURIE_TYPE_SAFE) ||
+   if(rval == NULL && ((ctype == CURIE_TYPE_SAFE) ||
          ((ctype == CURIE_TYPE_IRI_OR_UNSAFE) &&
           ((mode == CURIE_PARSE_INSTANCEOF_DATATYPE) ||
            (mode == CURIE_PARSE_PROPERTY) ||
            (mode == CURIE_PARSE_RELREV) ||
            (context->rdfa_version == RDFA_VERSION_1_1 &&
-              mode == CURIE_PARSE_ABOUT_RESOURCE))))
+              mode == CURIE_PARSE_ABOUT_RESOURCE)))))
    {
       char* working_copy = NULL;
       char* wcptr = NULL;
