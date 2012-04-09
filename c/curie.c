@@ -184,6 +184,92 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       }
    }
 
+   /* remove any dot-segments that remain in the URL for URLs w/ schemes */
+   if(strstr(rval, "://") != NULL && strstr(rval, "./") != NULL)
+   {
+      char* src = rval;
+      char* sptr = rval;
+      char* orig = strdup(rval);
+      char* dest = strdup(rval);
+      char* dptr = dest;
+      char* token = NULL;
+      char* tptr = NULL;
+      char* schemeptr = dest;
+      char* hostptr = dest;
+      int add_slash = 0;
+
+      /* find the end of the scheme and host portion */
+      schemeptr = strstr(dest, "://");
+      if(schemeptr != NULL)
+      {
+         schemeptr += 3;
+         hostptr = strchr(schemeptr, '/') + 1;
+         if(hostptr == NULL)
+         {
+            hostptr = dest;
+         }
+      }
+
+      /* set the starting offset before the copy */
+      dptr = hostptr;
+      sptr += hostptr - dest;
+
+      /* process each segment of the URL */
+      token = strtok_r(sptr, "/", &tptr);
+      do
+      {
+         printf("DEST (before): %s\n", dest);
+         printf("DEBUG: Processing URL part '%s'\n", token);
+
+         if(strcmp(token, "..") == 0)
+         {
+            /* search the string backwards for the last slash */
+            char* lastslash = dptr - 1;
+            int scount = 0;
+            while(lastslash >= (hostptr-1) && scount < 1)
+            {
+               lastslash--;
+               if(*lastslash == '/')
+               {
+                  scount++;
+               }
+            }
+
+            /* go back one directory level */
+            if(lastslash >= (hostptr-1))
+            {
+               dptr = lastslash + 1;
+               *dptr = '\0';
+            }
+            add_slash = 0;
+         }
+         else if(strcmp(token, ".") == 0)
+         {
+            add_slash = 0;
+         }
+         else
+         {
+            /* if there was a previous run, append forward slash to the path */
+            if(add_slash == 1)
+            {
+               *dptr = '/';
+               dptr += 1;
+            }
+
+            /* append the path part to the destination URL */
+            dptr = strcpy(dptr, token);
+            dptr += strlen(token);
+            add_slash = 1;
+         }
+
+         printf("DEST (after): %s\n", dest);
+      } while((token = strtok_r(NULL, "/", &tptr)) != NULL);
+
+      free(orig);
+      free(rval);
+      rval = dest;
+   }
+
    return rval;
 }
 
