@@ -198,6 +198,11 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       char* hostptr = dest;
       int add_slash = 0;
 
+      /*
+       * FIXME: Implement query parameter detection
+       * FIXME: Implement trailing '.' and '..'
+       */
+
       /* find the end of the scheme and host portion */
       schemeptr = strstr(dest, "://");
       if(schemeptr != NULL)
