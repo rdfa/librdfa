@@ -80,6 +80,7 @@ static curie_t rdfa_get_curie_type(const char* uri)
 char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
+   char* path_start = NULL;
    size_t base_length = strlen(context->base);
    
    if(strlen(uri) < 1)
@@ -184,94 +185,148 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       }
    }
 
-   /* remove any dot-segments that remain in the URL for URLs w/ schemes */
-   if(strstr(rval, "://") != NULL && strstr(rval, "./") != NULL)
+   /* Find the start of a scheme-based URL path */
+   path_start = (char*)strstr(rval, "://");
+   if(path_start != NULL)
    {
-      char* src = rval;
-      char* sptr = rval;
-      char* orig = strdup(rval);
-      char* dest = strdup(rval);
-      char* dptr = dest;
-      char* token = NULL;
-      char* tptr = NULL;
-      char* schemeptr = dest;
-      char* hostptr = dest;
-      int add_slash = 0;
-
-      /*
-       * FIXME: Implement query parameter detection
-       * FIXME: Implement trailing '.' and '..'
-       */
-
-      /* find the end of the scheme and host portion */
-      schemeptr = strstr(dest, "://");
-      if(schemeptr != NULL)
+      if(strstr(path_start, "/.") != NULL)
       {
-         schemeptr += 3;
-         hostptr = strchr(schemeptr, '/') + 1;
-         if(hostptr == NULL)
-         {
-            hostptr = dest;
-         }
+         path_start += 3;
+         path_start = strstr(path_start, "/");
       }
-
-      /* set the starting offset before the copy */
-      dptr = hostptr;
-      sptr += hostptr - dest;
-
-      /* process each segment of the URL */
-      token = strtok_r(sptr, "/", &tptr);
-      do
+      else
       {
-         printf("DEST (before): %s\n", dest);
-         printf("DEBUG: Processing URL part '%s'\n", token);
+         path_start = NULL;
+      }
+   }
 
-         if(strcmp(token, "..") == 0)
+   /* remove any dot-segments that remain in the URL for URLs w/ schemes */
+   if(path_start != NULL)
+   {
+      int rlen = strlen(rval);
+      char* src = (char*)malloc(rlen + 4);
+      char* sptr = src + (path_start - rval);
+      char* dest = (char*)malloc(rlen);
+      char* dptr = dest + (path_start - rval);
+      char* dfence = dptr;
+
+      memset(src, 0, rlen + 4);
+      strcpy(src, rval);
+      strncpy(dest, rval, (path_start - rval));
+
+      /* Process the path portion of the IRI */
+      while(sptr[0] != '?' && sptr[0] != '\0')
+      {
+         if(sptr[0] == '.' && sptr[1] == '.' && sptr[2] == '/')
          {
-            /* search the string backwards for the last slash */
-            char* lastslash = dptr - 1;
-            int scount = 0;
-            while(lastslash >= (hostptr-1) && scount < 1)
+            /* A.  If the input buffer begins with a prefix of "../",
+             * then remove that prefix from the input buffer; otherwise,
+             */
+            sptr += 3;
+         }
+         else if(sptr[0] == '.' && sptr[1] == '/')
+         {
+            /* A.  If the input buffer begins with a prefix of "./",
+             * then remove that prefix from the input buffer; otherwise,
+             */
+            sptr += 2;
+         }
+         else if(sptr[0] == '/' && sptr[1] == '.' && sptr[2] == '/')
+         {
+            /* B.  if the input buffer begins with a prefix of "/./",
+             * then replace that prefix with "/" in the input buffer;
+             * otherwise,
+             */
+            sptr += 2;
+         }
+         else if(sptr[0] == '/' && sptr[1] == '.' && sptr[2] == '\0')
+         {
+            /* B.  if the input buffer begins with a prefix of "/.",
+             * where "." is a complete path segment, then replace that
+             * prefix with "/" in the input buffer; otherwise,
+             */
+            sptr += 1;
+            *sptr = '/';
+         }
+         else if(sptr[0] == '/' && sptr[1] == '.' && sptr[2] == '.' &&
+            ((sptr[3] == '/') || (sptr[3] == '\0')))
+         {
+            /* C.  if the input buffer begins with a prefix of "/../",
+             * then replace that prefix with "/" in the input buffer and
+             * remove the last segment and its preceding "/" (if any) from
+             * the output buffer; otherwise,
+             */
+            if(sptr[3] == '/')
             {
-               lastslash--;
-               if(*lastslash == '/')
+               sptr += 3;
+            }
+            else if(sptr[3] == '\0')
+            {
+               sptr += 2;
+               *sptr = '/';
+            }
+
+            /* remove the last segment and the preceding '/' */
+            if(dptr > dfence)
+            {
+               dptr--;
+               if(dptr[0] == '/')
                {
-                  scount++;
+                  dptr--;
                }
             }
-
-            /* go back one directory level */
-            if(lastslash >= (hostptr-1))
+            while(dptr >= dfence && dptr[0] != '/')
             {
-               dptr = lastslash + 1;
-               *dptr = '\0';
+               dptr--;
             }
-            add_slash = 0;
+            if(dptr >= dfence)
+            {
+               dptr[0] = '\0';
+            }
+            else
+            {
+               dptr = dfence;
+               dptr[0] = '\0';
+            }
          }
-         else if(strcmp(token, ".") == 0)
+         else if(sptr[0] == '.' && sptr[1] == '\0')
          {
-            add_slash = 0;
+            /* D. if the input buffer consists only of ".", then remove
+             * that from the input buffer; otherwise,
+             */
+            sptr++;
+
+         }
+         else if(sptr[0] == '.' && sptr[1] == '.' && sptr[1] == '\0')
+         {
+            /* D. if the input buffer consists only of "..", then remove
+             * that from the input buffer; otherwise,
+             */
+            sptr += 2;
          }
          else
          {
-            /* if there was a previous run, append forward slash to the path */
-            if(add_slash == 1)
+            /* Copy the path segment */
+            do
             {
-               *dptr = '/';
-               dptr += 1;
-            }
-
-            /* append the path part to the destination URL */
-            dptr = strcpy(dptr, token);
-            dptr += strlen(token);
-            add_slash = 1;
+               *dptr++ = *sptr++;
+               *dptr = '\0';
+            } while(sptr[0] != '/' && sptr[0] != '?' && sptr[0] != '\0');
          }
+      }
 
-         printf("DEST (after): %s\n", dest);
-      } while((token = strtok_r(NULL, "/", &tptr)) != NULL);
+      /* Copy the remaining query parameters */
+      if(sptr[0] == '?')
+      {
+         strcpy(dptr, sptr);
+      }
+      else
+      {
+         dptr[0] = '\0';
+      }
 
-      free(orig);
       free(rval);
+      free(src);
       rval = dest;
    }
 
