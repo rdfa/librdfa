@@ -222,13 +222,17 @@ void rdfa_complete_list_triples(rdfacontext* context)
              *   full IRI of the local list mapping associated with this list
              * object
              *   first item of the 'bnode' array */
+            char* subject = strdup(key);
+            char* tmp = strstr(subject, " ");
+            tmp[0] = '\0';
             triple = (rdftriple*)list->items[0]->data;
             triple->subject =
-               rdfa_replace_string(triple->subject, context->new_subject);
+               rdfa_replace_string(triple->subject, subject);
             triple->predicate =
                rdfa_replace_string(triple->predicate, predicate);
             context->default_graph_triple_callback(
                triple, context->callback_data);
+            free(subject);
          }
          /* clear the entry from the mapping */
          *kptr = rdfa_replace_string(*kptr, RDFA_MAPPING_DELETED_KEY);

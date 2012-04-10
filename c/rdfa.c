@@ -212,7 +212,7 @@ static void start_element(void *parser_context, const char* name,
       int i;
 
       /* dump all arguments sent to this callback */
-      fprintf(stdout, "SAX.startElementNs(%s", (char *) name);
+      fprintf(stdout, "DEBUG: SAX.startElementNs(%s", (char *) name);
       if (prefix == NULL)
           fprintf(stdout, ", NULL");
       else

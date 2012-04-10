@@ -365,7 +365,7 @@ char* rdfa_resolve_curie(
       {
          rval = strdup(term_iri);
       }
-      else if(strstr(":", uri) == NULL)
+      else if(strstr(uri, ":") == NULL)
       {
          /* Generate the processor warning if this is a missing term */
          char msg[1024];
@@ -458,7 +458,8 @@ char* rdfa_resolve_curie(
                rdfa_get_mapping(context->uri_mappings, prefix);
 
             /* Generate the processor warning if the prefix was not found */
-            if(expanded_prefix == NULL && strstr(":", uri) != NULL)
+            if(expanded_prefix == NULL && strstr(uri, ":") != NULL &&
+               strstr(uri, "://") == NULL)
             {
                char msg[1024];
                snprintf(msg, 1024, "The '%s' prefix was not found. "
