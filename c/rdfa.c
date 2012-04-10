@@ -1173,78 +1173,17 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
 #ifndef LIBRDFA_IN_RAPTOR
 static void rdfa_report_error(void* parser_context, char* msg, ...)
 {
+   char error[1024];
    va_list args;
+   rdfacontext* context = (rdfacontext*)parser_context;
+
+   /* format the error message */
    va_start(args, msg);
-   fprintf(stdout, "libxml2 ERROR: ");
-   vfprintf(stdout, msg, args);
+   vsprintf(error, msg, args);
    va_end(args);
 
-   /*xmlParserCtxtPtr parser = (xmlParserCtxtPtr)parser_context;*/
-   /*rdfacontext* context = (rdfacontext*)parser->userData;*/
-
-#if 0
-   snprintf(buffer, 2<<12, "XML parsing error: %s at line %d, column %d.",
-      XML_ErrorString(XML_GetErrorCode(context->parser)),
-      (int)XML_GetCurrentLineNumber(context->parser),
-      (int)XML_GetCurrentColumnNumber(context->parser));
-
-   if(context->processor_graph_triple_callback != NULL)
-   {
-      char* error_subject = rdfa_create_bnode(context);
-      char* pointer_subject = rdfa_create_bnode(context);
-
-      /* generate the RDFa Processing Graph error type triple */
-      rdftriple* triple = rdfa_create_triple(
-         error_subject, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-         "http://www.w3.org/ns/rdfa_processing_graph#Error",
-         RDF_TYPE_IRI, NULL, NULL);
-      context->processor_graph_triple_callback(triple, context->callback_data);
-
-      /* generate the error description */
-      triple = rdfa_create_triple(
-         error_subject, "http://purl.org/dc/terms/description", buffer,
-         RDF_TYPE_PLAIN_LITERAL, NULL, "en");
-      context->processor_graph_triple_callback(triple, context->callback_data);
-
-      /* generate the context triple for the error */
-      triple = rdfa_create_triple(
-         error_subject, "http://www.w3.org/ns/rdfa_processing_graph#context",
-         pointer_subject, RDF_TYPE_IRI, NULL, NULL);
-      context->processor_graph_triple_callback(triple, context->callback_data);
-
-      /* generate the type for the context triple */
-      triple = rdfa_create_triple(
-         pointer_subject, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-         "http://www.w3.org/2009/pointers#LineCharPointer",
-         RDF_TYPE_IRI, NULL, NULL);
-      context->processor_graph_triple_callback(triple, context->callback_data);
-
-      /* generate the line number */
-      snprintf(buffer, 2<<12, "%d",
-         (int)XML_GetCurrentLineNumber(context->parser));
-      triple = rdfa_create_triple(
-         pointer_subject, "http://www.w3.org/2009/pointers#lineNumber",
-         buffer, RDF_TYPE_TYPED_LITERAL,
-         "http://www.w3.org/2001/XMLSchema#positiveInteger", NULL);
-      context->processor_graph_triple_callback(triple, context->callback_data);
-
-      /* generate the column number */
-      snprintf(buffer, 2<<12, "%d",
-         (int)XML_GetCurrentColumnNumber(context->parser));
-      triple = rdfa_create_triple(
-         pointer_subject, "http://www.w3.org/2009/pointers#charNumber",
-         buffer, RDF_TYPE_TYPED_LITERAL,
-         "http://www.w3.org/2001/XMLSchema#positiveInteger", NULL);
-      context->processor_graph_triple_callback(triple, context->callback_data);
-
-      free(error_subject);
-      free(pointer_subject);
-   }
-   else
-   {
-      printf("librdfa processor error: %s\n", buffer);
-   }
-#endif /* 0 */
+   /* Generate the processor error */
+   rdfa_processor_triples(context, RDFA_PROCESSOR_ERROR, error);
 }
 #endif
 

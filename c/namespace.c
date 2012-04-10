@@ -68,11 +68,33 @@ void rdfa_update_uri_mappings(
          "because it conflicts with the prefix for blank node identifiers. "
          "The occurrence of this prefix declaration is being ignored.");
    }
-   else
+   else if(attr[0] == ':' || attr[0] == '_' ||
+      (attr[0] >= 'A' && attr[0] <= 'Z') ||
+      (attr[0] >= 'a' && attr[0] <= 'z') ||
+      (attr[0] >= 0xc0 && attr[0] <= 0xd6) ||
+      (attr[0] >= 0xd8 && attr[0] <= 0xf6) || attr[0] >= 0xf8)
    {
       rdfa_generate_namespace_triple(context, attr, value);
       rdfa_update_mapping(context->uri_mappings, attr, value,
          (update_mapping_value_fp)rdfa_replace_string);
+   }
+   else
+   {
+      /* allowable characters for CURIEs:
+       * ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] |
+       * [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] |
+       * [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD]
+       * | [#x10000-#xEFFFF]
+       */
+
+      /* Generate the processor warning if this is an invalid prefix */
+      char msg[1024];
+      snprintf(msg, 1024, "The declaration of the '%s' prefix is invalid "
+         "because it starts with an invalid character. Please see "
+         "http://www.w3.org/TR/REC-xml/#NT-NameStartChar for a "
+         "full explanation of valid first characters for declaring "
+         "prefixes.", attr);
+      rdfa_processor_triples(context, RDFA_PROCESSOR_WARNING, msg);
    }
 
    /* print the current mapping */

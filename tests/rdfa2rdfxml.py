@@ -55,9 +55,12 @@ def defaultTriple(rdf, subject, predicate, obj, objectType, dataType,
 # @param dataType the dataType for the object in the triple.
 # @param language the language for the object in the triple.
 def processorTriple(rdf, subject, predicate, obj, objectType, dataType,
-                  language):
-    rdf['processor_triples'].append(
-        (subject, predicate, obj, objectType, dataType, language))
+                    language):
+    if(subject == "@prefix"):
+        rdf['namespaces'][predicate] = obj
+    else:
+        rdf['processor_triples'].append(
+            (subject, predicate, obj, objectType, dataType, language))
 
 ##
 # Called whenever the processing buffer for the C-side needs to be re-filled.
@@ -138,8 +141,11 @@ def getRdfXml(rdf, graph):
 
         # Add the triple to the graph
         g.add((s, p, o))
-    
-    rdfxml = g.serialize(format="nt")
+
+    if(len(triples) > 0):
+       rdfxml = g.serialize(format="nt")
+    else:
+       rdfxml = ""
 
     return rdfxml
 

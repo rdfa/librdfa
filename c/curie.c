@@ -365,6 +365,15 @@ char* rdfa_resolve_curie(
       {
          rval = strdup(term_iri);
       }
+      else if(strstr(":", uri) == NULL)
+      {
+         /* Generate the processor warning if this is a missing term */
+         char msg[1024];
+         snprintf(msg, 1024, "The use of the '%s' term was unrecognized "
+            "by the RDFa processor because it is not a valid term "
+            "for the current Host Language.", uri);
+         rdfa_processor_triples(context, RDFA_PROCESSOR_WARNING, msg);
+      }
    }
 
    /* if we are processing a safe CURIE OR
@@ -431,12 +440,6 @@ char* rdfa_resolve_curie(
              * use the blank node prefix */
             expanded_prefix = "_";
          }
-#if 0
-         else if(strcmp(prefix, "rdf") == 0)
-         {
-            expanded_prefix = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-         }
-#endif
          else
          {
             /* if the prefix was defined, get it from the set of URI mappings. */
@@ -453,6 +456,16 @@ char* rdfa_resolve_curie(
 #else
             expanded_prefix =
                rdfa_get_mapping(context->uri_mappings, prefix);
+
+            /* Generate the processor warning if the prefix was not found */
+            if(expanded_prefix == NULL && strstr(":", uri) != NULL)
+            {
+               char msg[1024];
+               snprintf(msg, 1024, "The '%s' prefix was not found. "
+                  "You may want to check that it is declared before it is "
+                  "used, or that it is a valid prefix string.", prefix);
+               rdfa_processor_triples(context, RDFA_PROCESSOR_WARNING, msg);
+            }
 #endif
          }
       }
