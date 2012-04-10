@@ -1174,6 +1174,7 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
 static void rdfa_report_error(void* parser_context, char* msg, ...)
 {
    char error[1024];
+   char* eptr;
    va_list args;
    rdfacontext* context = (rdfacontext*)parser_context;
 
@@ -1181,6 +1182,17 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
    va_start(args, msg);
    vsprintf(error, msg, args);
    va_end(args);
+
+   /* Remove any newlines from the libxml2 error */
+   eptr = &error;
+   while(*eptr != NULL)
+   {
+      if(*eptr == '\n')
+      {
+         *eptr = '.';
+      }
+      eptr++;
+   }
 
    /* Generate the processor error */
    rdfa_processor_triples(context, RDFA_PROCESSOR_ERROR, error);
