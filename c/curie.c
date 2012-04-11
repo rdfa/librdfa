@@ -93,9 +93,10 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       /* if a IRI is given, don't concatenate */
       rval = rdfa_replace_string(rval, uri);
    }
-   else if(uri[0] == '#')
+   else if(uri[0] == '#' || uri[0] == '?')
    {
-      /* if a fragment ID is given, concatenate it with the base URI */
+      /* if a fragment ID or start of a query parameter is given,
+       * concatenate it with the base URI */
       rval = rdfa_join_string(context->base, uri);
    }
    else if(uri[0] == '/')
