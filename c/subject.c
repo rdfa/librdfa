@@ -107,7 +107,10 @@ void rdfa_establish_new_1_0_subject(
       /* * if @type_of is present, obtained according to the
        * section on CURIE and URI Processing, then [new subject] is
        * set to be a newly created [bnode]; */
-      context->new_subject = rdfa_create_bnode(context);
+      char* bnode = rdfa_create_bnode(context);
+      context->new_subject = rdfa_replace_string(context->new_subject,
+         context->parent_object);
+      free(bnode);
    }
    else if(context->parent_object != NULL)
    {
@@ -226,8 +229,10 @@ void rdfa_establish_new_1_1_subject(
                /* otherwise, the value of typed resource is set to a newly
                 * created bnode.
                 */
+               char* bnode = rdfa_create_bnode(context);
                context->typed_resource = rdfa_replace_string(
-                  context->new_subject, rdfa_create_bnode(context));
+                  context->new_subject, bnode);
+               free(bnode);
             }
 
             /* The value of the current object resource is then set to the value
@@ -297,8 +302,10 @@ void rdfa_establish_new_1_1_subject(
             /* otherwise, if @typeof is present, then new subject is set
              * to be a newly created bnode;
              */
+            char* bnode = rdfa_create_bnode(context);
             context->new_subject = rdfa_replace_string(context->new_subject,
-               rdfa_create_bnode(context));
+               bnode);
+            free(bnode);
          }
          else if(context->parent_object != NULL)
          {
@@ -373,7 +380,9 @@ void rdfa_establish_new_1_0_subject_with_relrev(
       /* * if @type_of is present, obtained according to the
        * section on CURIE and URI Processing, then [new subject] is
        * set to be a newly created [bnode]; */
-      context->new_subject = rdfa_create_bnode(context);
+      char* bnode = rdfa_create_bnode(context);
+      context->new_subject = rdfa_replace_string(context->new_subject, bnode);
+      free(bnode);
    }
    else if(context->parent_object != NULL)
    {

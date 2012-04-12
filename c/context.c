@@ -588,6 +588,7 @@ void rdfa_free_context_stack(rdfacontext* context)
 void rdfa_free_context(rdfacontext* context)
 {
    free(context->base);
+   free(context->default_vocabulary);
    free(context->parent_subject);
    free(context->parent_object);
 
@@ -597,6 +598,10 @@ void rdfa_free_context(rdfacontext* context)
 
    rdfa_free_mapping(context->term_mappings, (free_mapping_value_fp)free);
    rdfa_free_list(context->incomplete_triples);
+   rdfa_free_mapping(context->list_mappings,
+      (free_mapping_value_fp)rdfa_free_list);
+   rdfa_free_mapping(context->local_list_mappings,
+      (free_mapping_value_fp)rdfa_free_list);
    free(context->language);
    free(context->underscore_colon_bnode_name);
    free(context->new_subject);

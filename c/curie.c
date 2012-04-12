@@ -366,7 +366,7 @@ char* rdfa_resolve_curie(
       {
          rval = strdup(term_iri);
       }
-      else if(strstr(uri, ":") == NULL)
+      else if(context->default_vocabulary == NULL && strstr(uri, ":") == NULL)
       {
          /* Generate the processor warning if this is a missing term */
          char msg[1024];

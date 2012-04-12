@@ -1130,6 +1130,8 @@ static void end_element(void* parser_context, const char* name,
       if(parent_context != NULL)
       {
          /* copy the current mapping to the parent mapping */
+         rdfa_free_mapping(parent_context->local_list_mappings,
+            (free_mapping_value_fp)rdfa_free_list);
          parent_context->local_list_mappings = rdfa_copy_mapping(
             context->local_list_mappings,
             (copy_mapping_value_fp)rdfa_replace_list);
