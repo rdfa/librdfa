@@ -205,13 +205,13 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
    if(path_start != NULL)
    {
       int rlen = strlen(rval);
-      char* src = (char*)malloc(rlen + 4);
+      char* src = (char*)malloc(rlen + 5);
       char* sptr = src + (path_start - rval);
       char* dest = (char*)malloc(rlen);
       char* dptr = dest + (path_start - rval);
       char* dfence = dptr;
 
-      memset(src, 0, rlen + 4);
+      memset(src, 0, rlen + 5);
       strcpy(src, rval);
       strncpy(dest, rval, (path_start - rval));
 

@@ -523,16 +523,10 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
                rval->parent_object, parent_context->parent_subject);
       }
 
-      /* copy the incomplete triples */
-      if(rval->incomplete_triples != NULL)
-      {
-         rdfa_free_list(rval->incomplete_triples);
-      }
-
       /* o the [ list of incomplete triples ] is set to the [ local list
        *   of incomplete triples ]; */
-      rval->incomplete_triples =
-         rdfa_copy_list(parent_context->local_incomplete_triples);
+      rval->incomplete_triples = rdfa_replace_list(
+         rval->incomplete_triples, parent_context->local_incomplete_triples);
    }
    else
    {
@@ -542,14 +536,13 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
          rval->parent_object, parent_context->parent_object);
 
       /* copy the incomplete triples */
-      rdfa_free_list(rval->incomplete_triples);
-      rval->incomplete_triples =
-         rdfa_copy_list(parent_context->incomplete_triples);
+      rval->incomplete_triples = rdfa_replace_list(
+         rval->incomplete_triples, parent_context->incomplete_triples);
 
       /* copy the local list of incomplete triples */
-      rdfa_free_list(rval->local_incomplete_triples);
-      rval->local_incomplete_triples =
-         rdfa_copy_list(parent_context->local_incomplete_triples);
+      rval->local_incomplete_triples = rdfa_replace_list(
+         rval->local_incomplete_triples,
+         parent_context->local_incomplete_triples);
    }
 
 #ifdef LIBRDFA_IN_RAPTOR

@@ -1142,6 +1142,8 @@ static void end_element(void* parser_context, const char* name,
             rdfa_print_mapping(context->local_list_mappings,
                (print_mapping_value_fp)rdfa_print_triple_list);
          }
+         rdfa_free_mapping(context->local_list_mappings,
+                     (free_mapping_value_fp)rdfa_free_list);
          context->local_list_mappings = NULL;
       }
    }

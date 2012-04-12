@@ -126,7 +126,7 @@ rdfalist* rdfa_replace_list(rdfalist* old_list, rdfalist* new_list)
    if(new_list != NULL)
    {
       /* free the memory associated with the old list */
-      free(old_list);
+      rdfa_free_list(old_list);
 
       /* copy the new list */
       rval = rdfa_copy_list(new_list);
@@ -141,14 +141,12 @@ rdfalist* rdfa_copy_list(rdfalist* list)
 
    if(list != NULL)
    {
-      rval = (rdfalist*)malloc(sizeof(rdfalist));
+      rval = rdfa_create_list(list->max_items);
       unsigned int i;
 
       /* copy the base list variables over */
-      rval->max_items = list->max_items;
       rval->num_items = list->num_items;
       rval->user_data = list->user_data;
-      rval->items = (rdfalistitem**)malloc(sizeof(void*) * rval->max_items);
 
       /* copy the data of every list member along with all of the flags
        * for each list member. */
@@ -163,8 +161,7 @@ rdfalist* rdfa_copy_list(rdfalist* list)
             /* copy specific data type */
             if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
             {
-               rval->items[i]->data = (char*)rdfa_replace_string(
-                  NULL, (const char*)list->items[i]->data);
+               rval->items[i]->data = strdup((char*)list->items[i]->data);
             }
             else if(list->items[i]->flags & RDFALIST_FLAG_TRIPLE)
             {
@@ -240,7 +237,19 @@ void rdfa_free_list(rdfalist* list)
       unsigned int i;
       for(i = 0; i < list->num_items; i++)
       {
-         free(list->items[i]->data);
+         if(list->items[i]->flags & RDFALIST_FLAG_TEXT)
+         {
+            free(list->items[i]->data);
+         }
+         else if(list->items[i]->flags & RDFALIST_FLAG_TRIPLE)
+         {
+            rdftriple* t = (rdftriple*)list->items[i]->data;
+            rdfa_free_triple(t);
+         }
+         else
+         {
+            printf("UNKNOWN LIST ITEM TYPE!!!\n");
+         }
          free(list->items[i]);
       }
 
@@ -324,7 +333,7 @@ void rdfa_create_list_mapping(
    rdftriple* triple;
 
    // generate the real list mapping key
-   realkey = rdfa_replace_string(realkey, subject);
+   realkey = strdup(subject);
    realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
    realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));
    value = rdfa_get_mapping(mapping, realkey);
@@ -339,10 +348,9 @@ void rdfa_create_list_mapping(
 
       /* add the first item in the list as the bnode for the list */
       list_bnode = rdfa_create_bnode(context);
-      triple = rdfa_create_triple(list_bnode,
-         list_bnode, list_bnode, RDF_TYPE_IRI, NULL, NULL);
-      rdfa_append_to_list_mapping(
-         context->local_list_mappings, subject, key, (void*)triple);
+      triple = rdfa_create_triple(
+         list_bnode, list_bnode, list_bnode, RDF_TYPE_IRI, NULL, NULL);
+      rdfa_append_to_list_mapping(mapping, subject, key, (void*)triple);
       free(list_bnode);
    }
 
@@ -498,7 +506,6 @@ void rdfa_print_string(const char* str)
 {
    printf("%s", str);
 }
-
 
 void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value)
 {

@@ -114,7 +114,7 @@ extern "C"
 
 /* maximum list lengths */
 #define MAX_LOCAL_LIST_MAPPINGS 32
-#define MAX_LIST_MAPPINGS 32
+#define MAX_LIST_MAPPINGS 48
 #define MAX_LIST_ITEMS 16
 #define MAX_TERM_MAPPINGS 64
 #define MAX_URI_MAPPINGS 128
