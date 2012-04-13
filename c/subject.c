@@ -231,7 +231,7 @@ void rdfa_establish_new_1_1_subject(
                 */
                char* bnode = rdfa_create_bnode(context);
                context->typed_resource = rdfa_replace_string(
-                  context->new_subject, bnode);
+                  context->typed_resource, bnode);
                free(bnode);
             }
 
@@ -514,8 +514,10 @@ void rdfa_establish_new_1_1_subject_with_relrev(
       /* otherwise, if @typeof is present and @about is not, use a
        * newly created bnode.
        */
+      char* bnode = rdfa_create_bnode(context);
       context->current_object_resource = rdfa_replace_string(
-         context->current_object_resource, rdfa_create_bnode(context));
+         context->current_object_resource, bnode);
+      free(bnode);
    }
 
    if(type_of != NULL && about == NULL)

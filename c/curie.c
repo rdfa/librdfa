@@ -207,8 +207,8 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
       int rlen = strlen(rval);
       char* src = (char*)malloc(rlen + 5);
       char* sptr = src + (path_start - rval);
-      char* dest = (char*)malloc(rlen);
-      char* dptr = dest + (path_start - rval);
+      char* dest = (char*)malloc(rlen) + 1;
+      char* dptr = dest + (path_start - rval) + 1;
       char* dfence = dptr;
 
       memset(src, 0, rlen + 5);

@@ -311,7 +311,6 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
          /* add the predicate to the list mapping */
          rdfa_append_to_list_mapping(context->local_list_mappings,
             context->parent_subject, predicate, (void*)triple);
-         rdfa_free_triple(incomplete_triple);
       }
       else if(incomplete_triple->flags & RDFALIST_FLAG_DIR_FORWARD)
       {
@@ -328,7 +327,6 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
                (const char*)incomplete_triple->data, context->new_subject,
                RDF_TYPE_IRI, NULL, NULL);
          context->default_graph_triple_callback(triple, context->callback_data);
-         free(incomplete_triple);
       }
       else
       {
@@ -345,8 +343,9 @@ void rdfa_complete_incomplete_triples(rdfacontext* context)
                (const char*)incomplete_triple->data, context->parent_subject,
                RDF_TYPE_IRI, NULL, NULL);
          context->default_graph_triple_callback(triple, context->callback_data);
-         free(incomplete_triple);
       }
+      free(incomplete_triple->data);
+      free(incomplete_triple);
    }
    context->incomplete_triples->num_items = 0;
 }

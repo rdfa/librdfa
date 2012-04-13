@@ -246,10 +246,7 @@ void rdfa_free_list(rdfalist* list)
             rdftriple* t = (rdftriple*)list->items[i]->data;
             rdfa_free_triple(t);
          }
-         else
-         {
-            printf("UNKNOWN LIST ITEM TYPE!!!\n");
-         }
+
          free(list->items[i]);
       }
 

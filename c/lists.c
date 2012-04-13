@@ -68,7 +68,6 @@ void rdfa_save_incomplete_list_triples(
       const char* curie = (const char*)rel->items[i]->data;
       char* resolved_curie = rdfa_resolve_relrev_curie(context, curie);
       rdfalist* list;
-      rdftriple* triple;
 
       /* ensure the list mapping exists */
       rdfa_create_list_mapping(
@@ -76,9 +75,6 @@ void rdfa_save_incomplete_list_triples(
          context->new_subject, resolved_curie);
 
       /* get the list name */
-      list = (rdfalist*)rdfa_get_list_mapping(
-         context->local_list_mappings, context->new_subject, resolved_curie);
-      triple = list->items[0]->data;
       rdfa_add_item(
          context->local_incomplete_triples, resolved_curie,
          (liflag_t)(RDFALIST_FLAG_DIR_NONE | RDFALIST_FLAG_TEXT));
@@ -143,21 +139,16 @@ void rdfa_complete_list_triples(rdfacontext* context)
          if(list->num_items == 1)
          {
             /* the list is empty, generate an empty list triple */
-            triple = (rdftriple*)list->items[0]->data;
-            triple->subject =
-               rdfa_replace_string(triple->subject, context->new_subject);
-            triple->predicate =
-               rdfa_replace_string(triple->predicate, predicate);
-            triple->object =
-               rdfa_replace_string(triple->object,
-                  "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil");
-            triple->object_type = RDF_TYPE_IRI;
-
             triple = rdfa_create_triple(context->new_subject, predicate,
                "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil",
                RDF_TYPE_IRI, NULL, NULL);
             context->default_graph_triple_callback(
                triple, context->callback_data);
+
+            /* Free the list triple */
+            triple = (rdftriple*)list->items[0]->data;
+            rdfa_free_triple(triple);
+            free(list->items[0]);
          }
          else
          {
@@ -211,6 +202,9 @@ void rdfa_complete_list_triples(rdfacontext* context)
                   next, RDF_TYPE_IRI, NULL, NULL);
                context->default_graph_triple_callback(
                               triple, context->callback_data);
+
+               /* Free the triple and bnode, setting 'next' appropriately */
+               free(list->items[i]);
                free(bnode);
                bnode = next;
             }
