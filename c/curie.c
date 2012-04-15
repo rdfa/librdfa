@@ -204,16 +204,17 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
    /* remove any dot-segments that remain in the URL for URLs w/ schemes */
    if(path_start != NULL)
    {
-      int rlen = strlen(rval);
-      char* src = (char*)malloc(rlen + 5);
-      char* sptr = src + (path_start - rval);
-      char* dest = (char*)malloc(rlen) + 1;
-      char* dptr = dest + (path_start - rval) + 1;
+      int rlen = strlen(rval) + 1;
+      int hlen = path_start - rval;
+      char* src = (char*)malloc(rlen + 4);
+      char* sptr = src + hlen;
+      char* dest = (char*)malloc(rlen + 1);
+      char* dptr = dest + hlen;
       char* dfence = dptr;
 
-      memset(src, 0, rlen + 5);
+      memset(src, 0, rlen + 4);
       strcpy(src, rval);
-      strncpy(dest, rval, (path_start - rval));
+      strncpy(dest, rval, hlen);
 
       /* Process the path portion of the IRI */
       while(sptr[0] != '?' && sptr[0] != '\0')
