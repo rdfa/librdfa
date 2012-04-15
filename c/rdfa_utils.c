@@ -323,25 +323,29 @@ void rdfa_create_list_mapping(
    rdfacontext* context, void** mapping, const char* subject, const char* key)
 {
    char* realkey = NULL;
-   int str_size = strlen(subject);
-   const void* value = NULL;
-   rdfalist* value2;
+   int str_size;
+   rdfalist* value = NULL;
    char* list_bnode;
    rdftriple* triple;
 
-   // generate the real list mapping key
-   realkey = strdup(subject);
-   realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
-   realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));
-   value = rdfa_get_mapping(mapping, realkey);
+   /* Attempt to find the list mapping */
+   value = (rdfalist*)rdfa_get_list_mapping(mapping, subject, key);
 
    if(value == NULL)
    {
       /* create the mapping */
-      value2 = rdfa_create_list(MAX_LIST_ITEMS);
-      value2->user_data = context->depth;
-      rdfa_update_mapping(mapping, realkey, value2,
+      value = rdfa_create_list(MAX_LIST_ITEMS);
+      value->user_data = context->depth;
+
+      /* build the real key to use when updating the mapping */
+      str_size = strlen(subject);
+      realkey = strdup(subject);
+      realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
+      realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));
+      rdfa_update_mapping(mapping, realkey, value,
          (update_mapping_value_fp)rdfa_replace_list);
+      free(realkey);
+      rdfa_free_list(value);
 
       /* add the first item in the list as the bnode for the list */
       list_bnode = rdfa_create_bnode(context);
@@ -350,8 +354,6 @@ void rdfa_create_list_mapping(
       rdfa_append_to_list_mapping(mapping, subject, key, (void*)triple);
       free(list_bnode);
    }
-
-   free(realkey);
 }
 
 void rdfa_append_to_list_mapping(
@@ -452,7 +454,7 @@ const void* rdfa_get_list_mapping(
    int str_size = strlen(subject);
 
    // generate the real list mapping key and retrieve it from the mapping
-   realkey = rdfa_replace_string(realkey, subject);
+   realkey = strdup(subject);
    realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
    realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));
    rval = (void*)rdfa_get_mapping(mapping, realkey);
