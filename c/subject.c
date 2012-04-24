@@ -108,8 +108,7 @@ void rdfa_establish_new_1_0_subject(
        * section on CURIE and URI Processing, then [new subject] is
        * set to be a newly created [bnode]; */
       char* bnode = rdfa_create_bnode(context);
-      context->new_subject = rdfa_replace_string(context->new_subject,
-         context->parent_object);
+      context->new_subject = rdfa_replace_string(context->new_subject, bnode);
       free(bnode);
    }
    else if(context->parent_object != NULL)
