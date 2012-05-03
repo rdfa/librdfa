@@ -394,9 +394,10 @@ void rdfa_complete_type_triples(
    for(i = 0; i < type_of->num_items; i++)
    {
       rdfalistitem* iri = *iptr;
+      rdftriple* triple;
       type = (const char*)iri->data;
 
-      rdftriple* triple = rdfa_create_triple(subject,
+      triple = rdfa_create_triple(subject,
          "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", type, RDF_TYPE_IRI,
          NULL, NULL);
 

@@ -27,6 +27,7 @@ AC_CONFIG_MACRO_DIR([setup])
 
 AM_INIT_AUTOMAKE([1.11.1 foreign])
 AM_MAINTAINER_MODE
+AM_SILENT_RULES([yes])
 
 LIBRDFA_SO_VERSION="`echo $VERSION | tr . :`"
 AC_SUBST([LIBRDFA_SO_VERSION])
@@ -34,7 +35,7 @@ AC_SUBST([LIBRDFA_SO_VERSION])
 AC_ARG_ENABLE([debug],
               [AS_HELP_STRING([--enable-debug],
                               [enable debug mode (no optimization) [default=yes ]])],
-              [enable_debug=$enableval], [enable_debug=yes])
+              [enable_debug_build=$enableval], [enable_debug_build=yes])
 
 AC_ARG_ENABLE([libxml2],
               [AS_HELP_STRING([--enable-libxml2],
@@ -119,8 +120,8 @@ AC_CHECK_FUNCS([strtok_r])
 AM_CONDITIONAL([NEED_STRTOK_R], [test "$ac_cv_func_strtok_r" = "no"])
 
 # Set debug flags if specified
-if test "_$enable_debug" = "_yes"; then
-   CFLAGS="$CFLAGS -O0 -g"
+if test "_$enable_debug_build" = "_yes"; then
+   CFLAGS="$CFLAGS -O0 -g3"
 fi
 
 # Check extra-strict compiler flags for GCC
@@ -128,7 +129,7 @@ if test "_$enable_strict_build" = "_yes"; then
    if test "$GCC" != "yes"; then
       AC_MSG_ERROR([strict build is only supported for GCC])
    fi
-   CFLAGS="-ansi -pedantic -fno-common -Wall -Wextra -Waggregate-return -Wcast-align -Wcast-qual -Wdeclaration-after-statement -Wdisabled-optimization -Wformat=2 -Winit-self -Winvalid-pch -Wlogical-op -Wmissing-declarations -Wnested-externs -Wold-style-definition -Wpointer-arith -Wstrict-prototypes -Wundef -Werror -Wno-error=cast-qual -Wno-error=overlength-strings -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable $CFLAGS"
+   CFLAGS="-ansi -pedantic -fno-common -Wall -Wextra -Waggregate-return -Wcast-align -Wcast-qual -Wdeclaration-after-statement -Wdisabled-optimization -Wformat=2 -Winit-self -Winvalid-pch -Wlogical-op -Wmissing-declarations -Wnested-externs -Wold-style-definition -Wpointer-arith -Wstrict-prototypes -Wundef -Wno-unused-parameter -Werror -Wno-error=cast-qual -Wno-error=overlength-strings -Wno-error=unused-parameter -Wno-error=unused-result -Wno-error=unused-variable $CFLAGS"
 fi
 
 # Generating files

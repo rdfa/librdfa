@@ -29,7 +29,7 @@
 #define MAX_ITERATIONS 20000
 int g_iteration = 0;
 rdfacontext* g_context = NULL;
-unsigned long long g_bytes_processed = 0;
+size_t g_bytes_processed = 0;
 
 static void process_triple(rdftriple* triple, void* callback_data)
 {
@@ -105,8 +105,8 @@ int main(int argc, char** argv)
    etime = clock();
 
    delta = etime - stime;
-   printf("Processed %1.2f triples per second from %lli bytes of data.\n",
-          (MAX_ITERATIONS / (delta / CLOCKS_PER_SEC)), g_bytes_processed);
+   printf("Processed %1.2f triples per second from %lu bytes of data.\n",
+          (MAX_ITERATIONS / (delta / CLOCKS_PER_SEC)), (unsigned long)g_bytes_processed);
 
    return 0;
 }

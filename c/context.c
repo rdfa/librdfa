@@ -186,8 +186,12 @@ void rdfa_init_context(rdfacontext* context)
    /*context->callback_data = NULL;*/
 }
 
-rdfa_setup_initial_context(rdfacontext* context)
+void rdfa_setup_initial_context(rdfacontext* context)
 {
+   char* key = NULL;
+   void* value = NULL;
+   void** mptr = context->uri_mappings;
+
    /* Setup the base RDFa 1.1 prefix and term mappings */
    if(context->rdfa_version == RDFA_VERSION_1_1)
    {
@@ -381,9 +385,6 @@ rdfa_setup_initial_context(rdfacontext* context)
    }
 
    /* Generate namespace triples for all values in the uri_mapping */
-   char* key = NULL;
-   char* value = NULL;
-   void** mptr = context->uri_mappings;
    while(*mptr != NULL)
    {
       rdfa_next_mapping(mptr++, &key, &value);

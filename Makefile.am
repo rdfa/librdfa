@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I setup
 
-SUBDIRS = c python tests
+SUBDIRS = c python tests docs
 
 pkgconfigdir = $(libdir)/pkgconfig
 
@@ -13,7 +13,7 @@ EXTRA_DIST = \
 	LICENSE-apache-2.0 \
 	LICENSE.gpl-2.0 \
 	LICENSE.lgpl-2.1 \
-	installers/debian/changelog.in \
+	installers/debian/changelog \
 	installers/debian/compat \
 	installers/debian/control \
 	installers/debian/copyright \

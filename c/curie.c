@@ -30,6 +30,7 @@
 #include <string.h>
 #include <strings.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "rdfa_utils.h"
 #include "rdfa.h"
 #include "strtok_r.h"
@@ -581,7 +582,7 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
          *ptr = tolower(*ptr);
       }
 
-      rval = rdfa_get_mapping(context->term_mappings, term);
+      rval = (char*)rdfa_get_mapping(context->term_mappings, term);
       if(rval != NULL)
       {
          rval = strdup(rval);
@@ -591,7 +592,7 @@ char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
    else
    {
       /* Search the term mappings for a match */
-      rval = rdfa_get_mapping(context->term_mappings, resource);
+      rval = (char*)rdfa_get_mapping(context->term_mappings, resource);
       if(rval != NULL)
       {
          rval = strdup(rval);

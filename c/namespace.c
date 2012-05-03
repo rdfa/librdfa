@@ -71,8 +71,8 @@ void rdfa_update_uri_mappings(
    else if(attr[0] == ':' || attr[0] == '_' ||
       (attr[0] >= 'A' && attr[0] <= 'Z') ||
       (attr[0] >= 'a' && attr[0] <= 'z') ||
-      (attr[0] >= 0xc0 && attr[0] <= 0xd6) ||
-      (attr[0] >= 0xd8 && attr[0] <= 0xf6) || attr[0] >= 0xf8)
+      ((unsigned char)attr[0] >= 0xc0 && (unsigned char)attr[0] <= 0xd6) ||
+      ((unsigned char)attr[0] >= 0xd8 && (unsigned char)attr[0] <= 0xf6) || (unsigned char)attr[0] >= 0xf8)
    {
       rdfa_generate_namespace_triple(context, attr, value);
       rdfa_update_mapping(context->uri_mappings, attr, value,

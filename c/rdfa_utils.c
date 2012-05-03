@@ -141,8 +141,8 @@ rdfalist* rdfa_copy_list(rdfalist* list)
 
    if(list != NULL)
    {
-      rval = rdfa_create_list(list->max_items);
       unsigned int i;
+      rval = rdfa_create_list(list->max_items);
 
       /* copy the base list variables over */
       rval->num_items = list->num_items;
@@ -323,7 +323,7 @@ void rdfa_create_list_mapping(
    rdfacontext* context, void** mapping, const char* subject, const char* key)
 {
    char* realkey = NULL;
-   int str_size;
+   size_t str_size;
    rdfalist* value = NULL;
    char* list_bnode;
    rdftriple* triple;
@@ -451,9 +451,9 @@ const void* rdfa_get_list_mapping(
 {
    void* rval;
    char* realkey = NULL;
-   int str_size = strlen(subject);
+   size_t str_size = strlen(subject);
 
-   // generate the real list mapping key and retrieve it from the mapping
+   /* generate the real list mapping key and retrieve it from the mapping */
    realkey = strdup(subject);
    realkey = rdfa_n_append_string(realkey, &str_size, " ", 1);
    realkey = rdfa_n_append_string(realkey, &str_size, key, strlen(key));

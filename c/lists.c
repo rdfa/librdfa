@@ -22,9 +22,9 @@
  *
  * @author Manu Sporny
  */
-#include "stdlib.h"
-#include "string.h"
-#include "stdio.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
@@ -94,7 +94,6 @@ void rdfa_complete_list_triples(rdfacontext* context)
    /* For each IRI in the local list mapping, if the equivalent list does
     * not exist in the evaluation context, indicating that the list was
     * originally instantiated on the current element, use the list as follows: */
-   rdfacontext* parent_context = NULL;
    int i;
    rdfalist* list;
    rdftriple* triple;
@@ -111,12 +110,6 @@ void rdfa_complete_list_triples(rdfacontext* context)
          (print_mapping_value_fp)rdfa_print_triple_list);
    }
 
-   if(context->context_stack != NULL)
-   {
-      parent_context = (rdfacontext*)context->context_stack->items[
-         context->context_stack->num_items - 1]->data;
-   }
-
    while(*mptr != NULL)
    {
       kptr = mptr;
@@ -130,7 +123,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
             context->depth, list_depth, key);
       }
 
-      if((context->depth < list_depth) &&
+      if((context->depth < (int)list_depth) &&
          (rdfa_get_list_mapping(
             context->list_mappings, context->new_subject, key) == NULL) &&
          (strcmp(key, RDFA_MAPPING_DELETED_KEY) != 0))
@@ -153,6 +146,8 @@ void rdfa_complete_list_triples(rdfacontext* context)
          else
          {
             char* bnode = NULL;
+            char* subject;
+            char* tmp;
             triple = (rdftriple*)list->items[0]->data;
             bnode = rdfa_replace_string(bnode, triple->subject);
             for(i = 1; i < (int)list->num_items; i++)
@@ -216,8 +211,8 @@ void rdfa_complete_list_triples(rdfacontext* context)
              *   full IRI of the local list mapping associated with this list
              * object
              *   first item of the 'bnode' array */
-            char* subject = strdup(key);
-            char* tmp = strstr(subject, " ");
+            subject = strdup(key);
+            tmp = strstr(subject, " ");
             tmp[0] = '\0';
             triple = (rdftriple*)list->items[0]->data;
             triple->subject =

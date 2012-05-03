@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <libxml/SAX2.h>
 #include "rdfa_utils.h"
@@ -1188,8 +1189,8 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
    va_end(args);
 
    /* Remove any newlines from the libxml2 error */
-   eptr = &error;
-   while(*eptr != NULL)
+   eptr = error;
+   while(*eptr != '\0')
    {
       if(*eptr == '\n')
       {
