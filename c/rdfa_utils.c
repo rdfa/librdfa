@@ -114,7 +114,7 @@ rdfalist* rdfa_create_list(size_t size)
 
    rval->max_items = size;
    rval->num_items = 0;
-   rval->items = (rdfalistitem**)malloc(sizeof(rdfalistitem) * rval->max_items);
+   rval->items = (rdfalistitem**)malloc(sizeof(rdfalistitem*) * rval->max_items);
 
    return rval;
 }
