@@ -480,7 +480,7 @@ static void start_element(void *parser_context, const char* name,
                else
                {
                   char* resolved_uri;
-		  rdftriple* triple;
+                  rdftriple* triple;
 
                   /* If @vocab is present and contains a value, the local
                    * default vocabulary is updated according to the
@@ -947,7 +947,8 @@ static void character_data(
    else
    {
       context->plain_literal = rdfa_n_append_string(
-         context->plain_literal, &context->plain_literal_size, buffer, len);
+         context->plain_literal,
+         &context->plain_literal_size, buffer, len);
    }
 
    /* append the text to the current context's XML literal */
@@ -1082,7 +1083,8 @@ static void end_element(void* parser_context, const char* name,
       {
          parent_context->xml_literal =
             rdfa_n_append_string(
-               parent_context->xml_literal, &parent_context->xml_literal_size,
+               parent_context->xml_literal,
+               &parent_context->xml_literal_size,
                context->xml_literal, context->xml_literal_size);
       }
 
@@ -1094,7 +1096,8 @@ static void end_element(void* parser_context, const char* name,
             parent_context->plain_literal =
                rdfa_replace_string(
                   parent_context->plain_literal, context->plain_literal);
-            parent_context->plain_literal_size = context->plain_literal_size;
+            parent_context->plain_literal_size =
+               context->plain_literal_size;
          }
          else
          {

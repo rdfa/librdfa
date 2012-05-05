@@ -43,7 +43,6 @@ char* rdfa_join_string(const char* prefix, const char* suffix)
    memcpy(rval, prefix, prefix_size);
    memcpy(rval+prefix_size, suffix, suffix_size + 1);
 
-
    return rval;
 }
 
@@ -114,7 +113,8 @@ rdfalist* rdfa_create_list(size_t size)
 
    rval->max_items = size;
    rval->num_items = 0;
-   rval->items = (rdfalistitem**)malloc(sizeof(rdfalistitem*) * rval->max_items);
+   rval->items = (rdfalistitem**)malloc(
+      sizeof(rdfalistitem*) * rval->max_items);
 
    return rval;
 }
@@ -297,7 +297,7 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
    {
       list->max_items = 1 + (list->max_items * 2);
       list->items = (rdfalistitem**)realloc(
-         list->items, sizeof(rdfalistitem) * list->max_items);
+         list->items, sizeof(rdfalistitem*) * list->max_items);
    }
 
    list->items[list->num_items] = item;
@@ -320,7 +320,8 @@ void** rdfa_create_mapping(size_t elements)
 }
 
 void rdfa_create_list_mapping(
-   rdfacontext* context, void** mapping, const char* subject, const char* key)
+   rdfacontext* context, void** mapping,
+   const char* subject, const char* key)
 {
    char* realkey = NULL;
    size_t str_size;

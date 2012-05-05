@@ -1,5 +1,5 @@
 /**
- * Copyright 2008-2011 Digital Bazaar, Inc.
+ * Copyright 2008-2012 Digital Bazaar, Inc.
  *
  * This file is part of librdfa.
  *
@@ -36,36 +36,15 @@ rdfacontext* rdfa_create_context(const char* base)
    if(base_length > 0)
    {
       char* cleaned_base;
+
+      /* malloc and init whole context to NULL */
       rval = (rdfacontext*)malloc(sizeof(rdfacontext));
-      rval->base = NULL;
-      rval->depth = 0;
+      memset(rval, 0, sizeof(rdfacontext));
+
+      /* clean and initialize base */
       cleaned_base = rdfa_iri_get_base(base);
       rval->base = rdfa_replace_string(rval->base, cleaned_base);
       free(cleaned_base);
-
-      /* no callbacks set yet */
-      rval->default_graph_triple_callback = NULL;
-      rval->buffer_filler_callback = NULL;
-      rval->processor_graph_triple_callback = NULL;
-      rval->callback_data = NULL;
-
-      /* parse state */
-      rval->wb_allocated = 0;
-      rval->working_buffer = NULL;
-      rval->wb_position = 0;
-#ifdef LIBRDFA_IN_RAPTOR
-      rval->base_uri = NULL;
-      rval->sax2 = NULL;
-      rval->namespace_handler = NULL;
-      rval->namespace_handler_user_data = NULL;
-#else
-      rval->uri_mappings = NULL;
-      rval->parser = NULL;
-#endif
-      rval->done = 0;
-      rval->context_stack = NULL;
-      rval->wb_preread = 0;
-      rval->preread = 0;
    }
    else
    {
@@ -161,29 +140,6 @@ void rdfa_init_context(rdfacontext* context)
    /* * the [current language] value is set to the [language] value
     *   from the [evaluation context].
     *   NOTE: This step is done in rdfa_create_new_element_context() */
-
-   /* The next set of variables are initialized to make the C compiler
-    * and valgrind happy - they are not a part of the RDFa spec. */
-   context->bnode_count = 0;
-   context->underscore_colon_bnode_name = NULL;
-   context->xml_literal_namespaces_defined = 0;
-   context->xml_literal_xml_lang_defined = 0;
-
-   context->about = NULL;
-   context->typed_resource = NULL;
-   context->resource = NULL;
-   context->href = NULL;
-   context->src = NULL;
-   context->content = NULL;
-   context->datatype = NULL;
-   context->property = NULL;
-   context->plain_literal = NULL;
-   context->plain_literal_size = 0;
-   context->xml_literal = NULL;
-   context->xml_literal_size = 0;
-   /* FIXME: completing incomplete triples always happens now, change
-    *        all of the code to reflect that. */
-   /*context->callback_data = NULL;*/
 }
 
 void rdfa_setup_initial_context(rdfacontext* context)

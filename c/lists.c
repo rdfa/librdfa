@@ -137,11 +137,6 @@ void rdfa_complete_list_triples(rdfacontext* context)
                RDF_TYPE_IRI, NULL, NULL);
             context->default_graph_triple_callback(
                triple, context->callback_data);
-
-            /* Free the list triple */
-            triple = (rdftriple*)list->items[0]->data;
-            rdfa_free_triple(triple);
-            free(list->items[0]);
          }
          else
          {
@@ -171,7 +166,12 @@ void rdfa_complete_list_triples(rdfacontext* context)
                   rdfa_replace_string(triple->predicate,
                      "http://www.w3.org/1999/02/22-rdf-syntax-ns#first");
                context->default_graph_triple_callback(
-                              triple, context->callback_data);
+                  triple, context->callback_data);
+
+               /* Free the list triple */
+               rdfa_free_triple(triple);
+               free(list->items[i]);
+               list->items[i] = NULL;
 
                /* For each item in the 'bnode' array the following triple is
                 * generated:
@@ -196,10 +196,9 @@ void rdfa_complete_list_triples(rdfacontext* context)
                   "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
                   next, RDF_TYPE_IRI, NULL, NULL);
                context->default_graph_triple_callback(
-                              triple, context->callback_data);
+                  triple, context->callback_data);
 
-               /* Free the triple and bnode, setting 'next' appropriately */
-               free(list->items[i]);
+               /* Free the bnode, setting 'next' appropriately */
                free(bnode);
                bnode = next;
             }
@@ -223,9 +222,16 @@ void rdfa_complete_list_triples(rdfacontext* context)
                triple, context->callback_data);
             free(subject);
          }
+
+         /* Free the first list triple and empty the list */
+         triple = (rdftriple*)list->items[0]->data;
+         rdfa_free_triple(triple);
+         free(list->items[0]);
+         list->items[0] = NULL;
+         list->num_items = 0;
+
          /* clear the entry from the mapping */
          *kptr = rdfa_replace_string(*kptr, RDFA_MAPPING_DELETED_KEY);
-         list->num_items = 0;
       }
    }
 }
