@@ -129,8 +129,12 @@ void rdfa_complete_list_triples(rdfacontext* context)
          (strcmp(key, RDFA_MAPPING_DELETED_KEY) != 0))
       {
          char* predicate = strstr(key, " ") + 1;
+         triple = (rdftriple*)list->items[0]->data;
          if(list->num_items == 1)
          {
+            /* Free unused list triple */
+            rdfa_free_triple(triple);
+
             /* the list is empty, generate an empty list triple */
             triple = rdfa_create_triple(context->new_subject, predicate,
                "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil",
@@ -143,7 +147,6 @@ void rdfa_complete_list_triples(rdfacontext* context)
             char* bnode = NULL;
             char* subject;
             char* tmp;
-            triple = (rdftriple*)list->items[0]->data;
             bnode = rdfa_replace_string(bnode, triple->subject);
             for(i = 1; i < (int)list->num_items; i++)
             {
