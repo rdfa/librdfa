@@ -1227,6 +1227,8 @@ int rdfa_parse_start(rdfacontext* context)
    context->sax2 = raptor_new_sax2(context->world, context->locator,
                                    context->context_stack);
 #else
+   /* init libxml2 */
+   xmlInitParser();
 #endif
 
    /* set up the context stack */
