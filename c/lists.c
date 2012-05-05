@@ -168,8 +168,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
                context->default_graph_triple_callback(
                   triple, context->callback_data);
 
-               /* Free the list triple */
-               rdfa_free_triple(triple);
+               /* Free the list item */
                free(list->items[i]);
                list->items[i] = NULL;
 
@@ -223,9 +222,8 @@ void rdfa_complete_list_triples(rdfacontext* context)
             free(subject);
          }
 
-         /* Free the first list triple and empty the list */
+         /* Free the first list item and empty the list */
          triple = (rdftriple*)list->items[0]->data;
-         rdfa_free_triple(triple);
          free(list->items[0]);
          list->items[0] = NULL;
          list->num_items = 0;
