@@ -174,21 +174,6 @@ static size_t rdfa_init_base(
    return bytes_read;
 }
 
-#ifdef LIBRDFA_IN_RAPTOR
-static int
-raptor_nspace_compare(const void *a, const void *b)
-{
-  raptor_namespace* ns_a=*(raptor_namespace**)a;
-  raptor_namespace* ns_b=*(raptor_namespace**)b;
-  if(!ns_a->prefix)
-    return 1;
-  else if(!ns_b->prefix)
-    return -1;
-  else
-    return strcmp((const char*)ns_b->prefix, (const char*)ns_a->prefix);
-}
-#endif
-
 /**
  * Handles the start_element call
  */
@@ -662,9 +647,7 @@ static void start_element(void *parser_context, const char* name,
                   CURIE_PARSE_INSTANCEOF_DATATYPE);
             }
          }
-#ifdef LIBRDFA_IN_RAPTOR
-         /* Raptor handles xml:lang itself */
-#else
+#ifndef LIBRDFA_IN_RAPTOR
          else if((attrns == NULL && strcmp(attr, "lang") == 0) ||
             (attrns != NULL && strcmp(attrns, "xml") == 0 &&
                strcmp(attr, "lang") == 0))
@@ -934,11 +917,7 @@ static void start_element(void *parser_context, const char* name,
    rdfa_free_list(type_of);
    rdfa_free_list(rel);
    rdfa_free_list(rev);
-#ifdef LIBRDFA_IN_RAPTOR
-   /* This is a SHARED pointer in raptor */
-#else
    free(xml_lang);
-#endif
    free(content);
    free(resource);
    free(href);
@@ -1199,9 +1178,7 @@ void rdfa_set_buffer_filler(rdfacontext* context, buffer_filler_fp bf)
    context->buffer_filler_callback = bf;
 }
 
-#ifdef LIBRDFA_IN_RAPTOR
-/* Raptor reports its errors */
-#else
+#ifndef LIBRDFA_IN_RAPTOR
 static void rdfa_report_error(void* parser_context, char* msg, ...)
 {
    char error[1024];
@@ -1230,97 +1207,6 @@ static void rdfa_report_error(void* parser_context, char* msg, ...)
 }
 #endif
 
-#ifdef LIBRDFA_IN_RAPTOR
-
-static void raptor_rdfa_start_element(void *user_data,
-                                      raptor_xml_element *xml_element)
-{
-  raptor_qname* qname = raptor_xml_element_get_name(xml_element);
-  int attr_count = raptor_xml_element_get_attributes_count(xml_element);
-  raptor_qname** attrs = raptor_xml_element_get_attributes(xml_element);
-  unsigned char* localname = raptor_qname_to_counted_name(qname, NULL);
-  const raptor_namespace* qname_ns = raptor_qname_get_namespace(qname);
-  int nb_namespaces = 0;
-  const char** namespaces = NULL;
-  int nb_attributes = 0;
-  int nb_defaulted = 0;
-  char** attr = NULL;
-  int i;
-
-  if(attr_count > 0) {
-    attr=(char**)malloc(sizeof(char*) * (1+(attr_count*2)));
-    for(i=0; i<attr_count; i++) {
-      attr[2*i]=(char*)raptor_qname_to_counted_name(attrs[i], NULL);
-      attr[1+(2*i)]=(char*)raptor_qname_get_value(attrs[i]);
-    }
-    attr[2*i]=NULL;
-  }
-
-/*
- * @ctx:  the user data (XML parser context)
- * @localname:  the local name of the element
- * @prefix:  the element namespace prefix if available
- * @URI:  the element namespace name if available
- * @nb_namespaces:  number of namespace definitions on that node
- * @namespaces:  pointer to the array of prefix/URI pairs namespace definitions
- * @nb_attributes:  the number of attributes on that node
- * @nb_defaulted:  the number of defaulted attributes. The defaulted
- *                  ones are at the end of the array
- * @attributes:  pointer to the array of (localname/prefix/URI/value/end)
- *               attribute values.
- */
-  start_element(user_data, (const char*)localname,
-                (const char*)raptor_namespace_get_prefix(qname_ns),
-                (const char*)raptor_uri_as_string(qname_ns->uri),
-                nb_namespaces,
-                (const char**)namespaces,
-                nb_attributes,
-                nb_defaulted,
-                (const char**)attr);
-  raptor_free_memory(localname);
-  if(attr) {
-    for(i=0; i<attr_count; i++)
-      raptor_free_memory(attr[2*i]);
-    free(attr);
-  }
-}
-
-static void raptor_rdfa_end_element(void *user_data,
-                                    raptor_xml_element* xml_element)
-{
-  raptor_qname* qname = raptor_xml_element_get_name(xml_element);
-  unsigned char* localname = raptor_qname_to_counted_name(qname, NULL);
-  const raptor_namespace* qname_ns = raptor_qname_get_namespace(qname);
-
-  if(qname_ns)
-    end_element(user_data, (const char*)localname,
-                (const char*)qname_ns->prefix,
-                (const xmlChar*)raptor_uri_as_string(qname_ns->uri));
-  else
-    end_element(user_data, (const char*)localname, NULL, NULL);
-
-  raptor_free_memory(localname);
-}
-
-static void raptor_rdfa_character_data(void *user_data,
-                                       raptor_xml_element* xml_element,
-                                       const unsigned char *s, int len)
-{
-  character_data(user_data, (const xmlChar *)s, len);
-}
-
-static void raptor_rdfa_namespace_handler(void *user_data,
-                                          raptor_namespace* nspace)
-{
-  rdfacontext* context = (rdfacontext*)user_data;
-
-  if(context->namespace_handler)
-    (*context->namespace_handler)(context->namespace_handler_user_data,
-                                  nspace);
-}
-
-#endif
-
 int rdfa_parse_start(rdfacontext* context)
 {
    /* create the buffers and expat parser */
@@ -1339,7 +1225,7 @@ int rdfa_parse_start(rdfacontext* context)
 
 #ifdef LIBRDFA_IN_RAPTOR
    context->sax2 = raptor_new_sax2(context->world, context->locator,
-                                   context);
+                                   context->context_stack);
 #else
    /* init libxml2 */
    xmlInitParser();
@@ -1360,8 +1246,7 @@ int rdfa_parse_start(rdfacontext* context)
    rdfa_init_context(context);
 
 #ifdef LIBRDFA_IN_RAPTOR
-   context->base_uri = raptor_new_uri(context->sax2->world,
-                                      (const unsigned char*)context->base);
+   context->base_uri=raptor_new_uri(context->sax2->world, (const unsigned char*)context->base);
    raptor_sax2_parse_start(context->sax2, context->base_uri);
 #endif
 
@@ -1370,11 +1255,8 @@ int rdfa_parse_start(rdfacontext* context)
 
 int rdfa_parse_chunk(rdfacontext* context, char* data, size_t wblen, int done)
 {
-#ifdef LIBRDFA_IN_RAPTOR
-#else
    xmlSAXHandler handler;
    xmlParserCtxtPtr parser;
-#endif
 
    /* it is an error to call this before rdfa_parse_start() */
    if(context->done)
