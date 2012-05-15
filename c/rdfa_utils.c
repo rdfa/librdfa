@@ -304,11 +304,10 @@ void rdfa_add_item(rdfalist* list, void* data, liflag_t flags)
    ++list->num_items;
 }
 
-#ifndef LIBRDFA_IN_RAPTOR
 void** rdfa_create_mapping(size_t elements)
 {
    size_t mapping_size = sizeof(void*) * MAX_URI_MAPPINGS * 2;
-   void** mapping = malloc(mapping_size);
+   void** mapping = (void**)malloc(mapping_size);
 
    /* only initialize the mapping if it is not null. */
    if(mapping != NULL)
@@ -367,19 +366,15 @@ void rdfa_append_to_list_mapping(
 void** rdfa_copy_mapping(
    void** mapping, copy_mapping_value_fp copy_mapping_value)
 {
-   size_t mapping_size = sizeof(void*) * MAX_URI_MAPPINGS * 2;
-   void** rval = malloc(mapping_size);
+   void** rval = (void**)calloc(MAX_URI_MAPPINGS * 2, sizeof(void*));
    void** mptr = mapping;
    void** rptr = rval;
-
-   /* initialize the mapping */
-   memset(rval, 0, mapping_size);
 
    /* copy each element of the old mapping to the new mapping. */
    while(*mptr != NULL)
    {
       /* copy the key */
-      *rptr = rdfa_replace_string(*rptr, *mptr);
+      *rptr = rdfa_replace_string((char*)*rptr, (const char*)*mptr);
       rptr++;
       mptr++;
 
@@ -418,7 +413,7 @@ void rdfa_update_mapping(void** mapping, const char* key, const void* value,
     * found, create a new key-value pair. */
    if(!found)
    {
-      *mptr = rdfa_replace_string(*mptr, key);
+     *mptr = rdfa_replace_string((char*)*mptr, key);
       mptr++;
       *mptr = update_mapping_value(*mptr, value);
    }
@@ -427,7 +422,7 @@ void rdfa_update_mapping(void** mapping, const char* key, const void* value,
 const void* rdfa_get_mapping(void** mapping, const char* key)
 {
    const void* rval = NULL;
-   void** mptr = mapping;
+   char** mptr = (char**)mapping;
 
    /* search the current mapping to see if the key exists in the mapping. */
    while(*mptr != NULL)
@@ -471,7 +466,7 @@ void rdfa_next_mapping(void** mapping, char** key, void** value)
 
    if(*mapping != NULL)
    {
-      *key = *mapping++;
+      *key = *(char**)mapping++;
       *value = *mapping++;
    }
 }
@@ -525,4 +520,4 @@ void rdfa_free_mapping(void** mapping, free_mapping_value_fp free_value)
       free(mapping);
    }
 }
-#endif
+
