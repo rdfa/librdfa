@@ -205,8 +205,8 @@ char* rdfa_resolve_uri(rdfacontext* context, const char* uri)
    /* remove any dot-segments that remain in the URL for URLs w/ schemes */
    if(path_start != NULL)
    {
-      int rlen = strlen(rval) + 1;
-      int hlen = path_start - rval;
+      size_t rlen = strlen(rval) + 1;
+      size_t hlen = path_start - rval;
       char* src = (char*)malloc(rlen + 4);
       char* sptr = src + hlen;
       char* dest = (char*)malloc(rlen + 1);
@@ -363,7 +363,7 @@ char* rdfa_resolve_curie(
    if(ctype == CURIE_TYPE_IRI_OR_UNSAFE && mode == CURIE_PARSE_PROPERTY)
    {
       const char* term_iri;
-      term_iri = rdfa_get_mapping(context->term_mappings, uri);
+      term_iri = (const char*)rdfa_get_mapping(context->term_mappings, uri);
       if(term_iri != NULL)
       {
          rval = strdup(term_iri);
@@ -554,7 +554,6 @@ char* rdfa_resolve_curie(
 char* rdfa_resolve_relrev_curie(rdfacontext* context, const char* uri)
 {
    char* rval = NULL;
-   int i = 0;
    const char* resource = uri;
 
    /* check to make sure the URI doesn't have an empty prefix */
