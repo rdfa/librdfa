@@ -67,7 +67,6 @@ void rdfa_save_incomplete_list_triples(
    {
       const char* curie = (const char*)rel->items[i]->data;
       char* resolved_curie = rdfa_resolve_relrev_curie(context, curie);
-      rdfalist* list;
 
       /* ensure the list mapping exists */
       rdfa_create_list_mapping(
@@ -191,7 +190,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
                }
                else
                {
-                  next = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
+                  next = (char*)"http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
                }
 
                triple = rdfa_create_triple(bnode,
@@ -232,7 +231,7 @@ void rdfa_complete_list_triples(rdfacontext* context)
          list->num_items = 0;
 
          /* clear the entry from the mapping */
-         *kptr = rdfa_replace_string(*kptr, RDFA_MAPPING_DELETED_KEY);
+         *kptr = rdfa_replace_string((char*)*kptr, RDFA_MAPPING_DELETED_KEY);
       }
    }
 }
