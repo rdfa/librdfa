@@ -353,7 +353,7 @@ static void start_element(void *parser_context, const char* name,
                context->xml_literal, &context->xml_literal_size, "=\"", 2);
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size,
-               umap_value, strlen((char*)umap_value));
+               (const char*)umap_value, strlen((char*)umap_value));
             context->xml_literal = rdfa_n_append_string(
                context->xml_literal, &context->xml_literal_size, "\"", 1);
          }
@@ -390,8 +390,8 @@ static void start_element(void *parser_context, const char* name,
          if(ns != NULL)
          {
             /* convert the namespace string to lowercase */
-            int i;
-            int ns_length = strlen(ns);
+            unsigned int i;
+            size_t ns_length = strlen(ns);
             lcns = (char*)malloc(ns_length + 1);
             for(i = 0; i <= ns_length; i++)
             {
@@ -419,7 +419,7 @@ static void start_element(void *parser_context, const char* name,
       {
          const char* attr;
          char* value;
-         unsigned int value_length = 0;
+         size_t value_length = 0;
 
          attr = attributes[ci];
          value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
@@ -456,7 +456,7 @@ static void start_element(void *parser_context, const char* name,
          {
             const char* attr;
             char* value;
-            unsigned int value_length = 0;
+            size_t value_length = 0;
 
             attr = attributes[ci];
             value_length = attributes[ci + 4] - attributes[ci + 3] + 1;
@@ -503,7 +503,7 @@ static void start_element(void *parser_context, const char* name,
             {
                /* Mappings are defined via @prefix. */
                char* working_string = NULL;
-               char* prefix = NULL;
+               char* atprefix = NULL;
                char* iri = NULL;
                char* saveptr = NULL;
 
@@ -511,8 +511,8 @@ static void start_element(void *parser_context, const char* name,
 
                /* Values in this attribute are evaluated from beginning to
                 * end (e.g., left to right in typical documents). */
-               prefix = strtok_r(working_string, ":", &saveptr);
-               while(prefix != NULL)
+               atprefix = strtok_r(working_string, ":", &saveptr);
+               while(atprefix != NULL)
                {
                   /* find the prefix and IRI mappings while skipping whitespace */
                   while((*saveptr == ' ' || *saveptr == '\n' ||
@@ -530,10 +530,10 @@ static void start_element(void *parser_context, const char* name,
                   }
 
                   /* update the prefix mappings */
-                  rdfa_update_uri_mappings(context, prefix, iri);
+                  rdfa_update_uri_mappings(context, atprefix, iri);
 
                   /* get the next prefix to process */
-                  prefix = strtok_r(NULL, ":", &saveptr);
+                  atprefix = strtok_r(NULL, ":", &saveptr);
                }
 
                free(working_string);
@@ -553,7 +553,7 @@ static void start_element(void *parser_context, const char* name,
          char* value;
          char* attrns;
          char* literal_text;
-         unsigned int value_length = 0;
+         size_t value_length = 0;
 
          attr = attributes[ci];
          attrns = (char*)attributes[ci + 1];
@@ -662,9 +662,9 @@ static void start_element(void *parser_context, const char* name,
 
 #ifdef LIBRDFA_IN_RAPTOR
    if(context->sax2) {
-      xml_lang = (const char*)raptor_sax2_inscope_xml_language(context->sax2);
+      xml_lang = (char*)raptor_sax2_inscope_xml_language(context->sax2);
       if(!xml_lang)
-        xml_lang = "";
+        xml_lang = (char*)"";
    }
 #endif
 
