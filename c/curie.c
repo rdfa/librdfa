@@ -371,11 +371,17 @@ char* rdfa_resolve_curie(
       else if(context->default_vocabulary == NULL && strstr(uri, ":") == NULL)
       {
          /* Generate the processor warning if this is a missing term */
+#define FORMAT_1 "The use of the '%s' term was unrecognized by the RDFa processor because it is not a valid term for the current Host Language."
+
+#ifdef LIBRDFA_IN_RAPTOR
+         raptor_parser_warning((raptor_parser*)context->callback_data, 
+                               FORMAT_1, uri);
+#else
          char msg[1024];
-         snprintf(msg, 1024, "The use of the '%s' term was unrecognized "
-            "by the RDFa processor because it is not a valid term "
-            "for the current Host Language.", uri);
+         snprintf(msg, 1024, FORMAT_1, uri);
+
          rdfa_processor_triples(context, RDFA_PROCESSOR_WARNING, msg);
+#endif
       }
    }
 
@@ -447,14 +453,18 @@ char* rdfa_resolve_curie(
          {
             /* if the prefix was defined, get it from the set of URI mappings. */
 #ifdef LIBRDFA_IN_RAPTOR
-            raptor_namespace *nspace;
-            raptor_uri* ns_uri;
-            nspace = raptor_namespaces_find_namespace(&context->sax2->namespaces,
-                                                      (const unsigned char*)prefix, (int)strlen(prefix));
-            if(nspace) {
-               ns_uri = raptor_namespace_get_uri(nspace);
-               if(ns_uri)
-                  expanded_prefix = (const char*)raptor_uri_as_string(ns_uri);
+            if(strcmp(prefix, "xml"))
+            {
+               raptor_namespace *nspace;
+               raptor_uri* ns_uri;
+               nspace = raptor_namespaces_find_namespace(&context->sax2->namespaces,
+                                                         (const unsigned char*)prefix,
+                                                         (int)strlen(prefix));
+               if(nspace) {
+                  ns_uri = raptor_namespace_get_uri(nspace);
+                  if(ns_uri)
+                     expanded_prefix = (const char*)raptor_uri_as_string(ns_uri);
+               }
             }
 #else
             expanded_prefix =
@@ -464,11 +474,16 @@ char* rdfa_resolve_curie(
             if(expanded_prefix == NULL && strstr(uri, ":") != NULL &&
                strstr(uri, "://") == NULL)
             {
-               char msg[1024];
-               snprintf(msg, 1024, "The '%s' prefix was not found. "
-                  "You may want to check that it is declared before it is "
-                  "used, or that it is a valid prefix string.", prefix);
+#define FORMAT_2 "The '%s' prefix was not found. You may want to check that it is declared before it is used, or that it is a valid prefix string."
+#ifdef LIBRDFA_IN_RAPTOR
+              raptor_parser_warning((raptor_parser*)context->callback_data, 
+                                    FORMAT_2, prefix);
+#else
+              char msg[1024];
+              snprintf(msg, 1024, FORMAT_2, prefix);
+
                rdfa_processor_triples(context, RDFA_PROCESSOR_WARNING, msg);
+#endif
             }
 #endif
          }
