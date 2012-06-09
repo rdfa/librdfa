@@ -26,6 +26,7 @@
  */
 #include <string.h>
 #include "rdfa_utils.h"
+#include "rdfa.h"
 
 rdfacontext* rdfa_create_context(const char* base)
 {
@@ -76,7 +77,8 @@ void rdfa_init_context(rdfacontext* context)
    /* the [parent object] is set to null; */
    context->parent_object = NULL;
 
-#ifndef LIBRDFA_IN_RAPTOR
+#ifdef LIBRDFA_IN_RAPTOR
+#else
    /* the [list of URI mappings] is cleared; */
    context->uri_mappings = rdfa_create_mapping(MAX_URI_MAPPINGS);
 #endif
@@ -142,100 +144,89 @@ void rdfa_init_context(rdfacontext* context)
     *   NOTE: This step is done in rdfa_create_new_element_context() */
 }
 
+#ifdef LIBRDFA_IN_RAPTOR
+#define DECLARE_URI_MAPPING(context, prefix, value)                     \
+do {                                                                    \
+    raptor_namespace_stack* nstack = &context->sax2->namespaces;        \
+    raptor_namespace* ns = raptor_new_namespace(nstack,                 \
+      (const unsigned char *)prefix, (const unsigned char*)value, 0);   \
+    raptor_namespace_stack_start_namespace(nstack, ns, 0);              \
+    } while(0)
+#else
+#define DECLARE_URI_MAPPING(context, prefix, value)                     \
+  rdfa_update_mapping(context->uri_mappings, prefix, value,             \
+                      (update_mapping_value_fp)rdfa_replace_string)
+#endif
+
 void rdfa_setup_initial_context(rdfacontext* context)
 {
+#ifdef LIBRDFA_IN_RAPTOR
+#else
    char* key = NULL;
    void* value = NULL;
    void** mptr = context->uri_mappings;
+#endif
 
    /* Setup the base RDFa 1.1 prefix and term mappings */
    if(context->rdfa_version == RDFA_VERSION_1_1)
    {
       /* Setup the base RDFa 1.1 prefix mappings */
-      rdfa_update_mapping(context->uri_mappings,
-         "grddl", "http://www.w3.org/2003/g/data-view#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "ma", "http://www.w3.org/ns/ma-ont#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "owl", "http://www.w3.org/2002/07/owl#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "rdfa", "http://www.w3.org/ns/rdfa#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "rdfs", "http://www.w3.org/2000/01/rdf-schema#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "rif", "http://www.w3.org/2007/rif#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "skos", "http://www.w3.org/2004/02/skos/core#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "skosxl", "http://www.w3.org/2008/05/skos-xl#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "wdr", "http://www.w3.org/2007/05/powder#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "void", "http://rdfs.org/ns/void#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "wdrs", "http://www.w3.org/2007/05/powder-s#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "xhv", "http://www.w3.org/1999/xhtml/vocab#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "xml", "http://www.w3.org/XML/1998/namespace",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "xsd", "http://www.w3.org/2001/XMLSchema#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "cc", "http://creativecommons.org/ns#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "ctag", "http://commontag.org/ns#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "dc", "http://purl.org/dc/terms/",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "dcterms", "http://purl.org/dc/terms/",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "foaf", "http://xmlns.com/foaf/0.1/",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "gr", "http://purl.org/goodrelations/v1#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "ical", "http://www.w3.org/2002/12/cal/icaltzd#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "og", "http://ogp.me/ns#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "rev", "http://purl.org/stuff/rev#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "sioc", "http://rdfs.org/sioc/ns#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "v", "http://rdf.data-vocabulary.org/#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "vcard", "http://www.w3.org/2006/vcard/ns#",
-         (update_mapping_value_fp)rdfa_replace_string);
-      rdfa_update_mapping(context->uri_mappings,
-         "schema", "http://schema.org/",
-         (update_mapping_value_fp)rdfa_replace_string);
+      DECLARE_URI_MAPPING(context,
+         "grddl", "http://www.w3.org/2003/g/data-view#");
+      DECLARE_URI_MAPPING(context,
+         "ma", "http://www.w3.org/ns/ma-ont#");
+      DECLARE_URI_MAPPING(context,
+         "owl", "http://www.w3.org/2002/07/owl#");
+      DECLARE_URI_MAPPING(context,
+         "rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+      DECLARE_URI_MAPPING(context,
+         "rdfa", "http://www.w3.org/ns/rdfa#");
+      DECLARE_URI_MAPPING(context,
+         "rdfs", "http://www.w3.org/2000/01/rdf-schema#");
+      DECLARE_URI_MAPPING(context,
+         "rif", "http://www.w3.org/2007/rif#");
+      DECLARE_URI_MAPPING(context,
+         "skos", "http://www.w3.org/2004/02/skos/core#");
+      DECLARE_URI_MAPPING(context,
+         "skosxl", "http://www.w3.org/2008/05/skos-xl#");
+      DECLARE_URI_MAPPING(context,
+         "wdr", "http://www.w3.org/2007/05/powder#");
+      DECLARE_URI_MAPPING(context,
+         "void", "http://rdfs.org/ns/void#");
+      DECLARE_URI_MAPPING(context,
+         "wdrs", "http://www.w3.org/2007/05/powder-s#");
+      DECLARE_URI_MAPPING(context,
+         "xhv", "http://www.w3.org/1999/xhtml/vocab#");
+      DECLARE_URI_MAPPING(context,
+         "xml", "http://www.w3.org/XML/1998/namespace");
+      DECLARE_URI_MAPPING(context,
+         "xsd", "http://www.w3.org/2001/XMLSchema#");
+      DECLARE_URI_MAPPING(context,
+         "cc", "http://creativecommons.org/ns#");
+      DECLARE_URI_MAPPING(context,
+         "ctag", "http://commontag.org/ns#");
+      DECLARE_URI_MAPPING(context,
+         "dc", "http://purl.org/dc/terms/");
+      DECLARE_URI_MAPPING(context,
+         "dcterms", "http://purl.org/dc/terms/");
+      DECLARE_URI_MAPPING(context,
+         "foaf", "http://xmlns.com/foaf/0.1/");
+      DECLARE_URI_MAPPING(context,
+         "gr", "http://purl.org/goodrelations/v1#");
+      DECLARE_URI_MAPPING(context,
+         "ical", "http://www.w3.org/2002/12/cal/icaltzd#");
+      DECLARE_URI_MAPPING(context,
+         "og", "http://ogp.me/ns#");
+      DECLARE_URI_MAPPING(context,
+         "rev", "http://purl.org/stuff/rev#");
+      DECLARE_URI_MAPPING(context,
+         "sioc", "http://rdfs.org/sioc/ns#");
+      DECLARE_URI_MAPPING(context,
+         "v", "http://rdf.data-vocabulary.org/#");
+      DECLARE_URI_MAPPING(context,
+         "vcard", "http://www.w3.org/2006/vcard/ns#");
+      DECLARE_URI_MAPPING(context,
+         "schema", "http://schema.org/");
 
       /* Setup the base RDFa 1.1 term mappings */
       rdfa_update_mapping(context->term_mappings,
@@ -340,6 +331,9 @@ void rdfa_setup_initial_context(rdfacontext* context)
       /* No term or prefix mappings as of 2012-04-04 */
    }
 
+#ifdef LIBRDFA_IN_RAPTOR
+   /* Raptor does this elsewhere */
+#else
    /* Generate namespace triples for all values in the uri_mapping */
    while(*mptr != NULL)
    {
@@ -347,6 +341,7 @@ void rdfa_setup_initial_context(rdfacontext* context)
       mptr++;
       rdfa_generate_namespace_triple(context, key, value);
    }
+#endif
 }
 
 /**
@@ -373,14 +368,21 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->depth = parent_context->depth + 1;
 
    /* copy the URI mappings */
-#ifndef LIBRDFA_IN_RAPTOR
+#ifdef LIBRDFA_IN_RAPTOR
+   /* Raptor does this automatically for URIs */
+#else
    rdfa_free_mapping(rval->uri_mappings, (free_mapping_value_fp)free);
+#endif
    rdfa_free_mapping(rval->term_mappings, (free_mapping_value_fp)free);
    rdfa_free_mapping(rval->list_mappings, (free_mapping_value_fp)rdfa_free_list);
    rdfa_free_mapping(rval->local_list_mappings, (free_mapping_value_fp)rdfa_free_list);
+#ifdef LIBRDFA_IN_RAPTOR
+   /* Raptor does this automatically for URIs */
+#else
    rval->uri_mappings =
       rdfa_copy_mapping((void**)parent_context->uri_mappings,
          (copy_mapping_value_fp)rdfa_replace_string);
+#endif
    rval->term_mappings =
       rdfa_copy_mapping((void**)parent_context->term_mappings,
          (copy_mapping_value_fp)rdfa_replace_string);
@@ -390,7 +392,6 @@ rdfacontext* rdfa_create_new_element_context(rdfalist* context_stack)
    rval->local_list_mappings =
       rdfa_copy_mapping((void**)parent_context->local_list_mappings,
          (copy_mapping_value_fp)rdfa_replace_list);
-#endif
 
    /* inherit the parent context's host language and RDFa processor mode */
    rval->host_language = parent_context->host_language;
@@ -542,7 +543,8 @@ void rdfa_free_context(rdfacontext* context)
    free(context->parent_subject);
    free(context->parent_object);
 
-#ifndef LIBRDFA_IN_RAPTOR
+#ifdef LIBRDFA_IN_RAPTOR
+#else
    rdfa_free_mapping(context->uri_mappings, (free_mapping_value_fp)free);
 #endif
 
