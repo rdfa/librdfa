@@ -30,7 +30,6 @@
 #include "rdfa_utils.h"
 #include "rdfa.h"
 
-#ifndef LIBRDFA_IN_RAPTOR
 /**
  * Attempts to update the uri mappings in the given context using the
  * given attribute/value pair.
@@ -41,6 +40,11 @@
 void rdfa_update_uri_mappings(
    rdfacontext* context, const char* attr, const char* value)
 {
+#ifdef LIBRDFA_IN_RAPTOR
+  raptor_namespace_stack* nstack;
+  nstack = &context->sax2->namespaces;
+#endif
+
    /* * the [current element] is parsed for [URI mappings] and these
     * are added to the [list of URI mappings]. Note that a [URI
     * mapping] will simply overwrite any current mapping in the list
@@ -56,17 +60,30 @@ void rdfa_update_uri_mappings(
 
    if(attr == NULL)
    {
+#ifdef LIBRDFA_IN_RAPTOR
+      raptor_namespaces_start_namespace_full(nstack,
+                                             NULL,
+                                             (const unsigned char*)value,
+                                             0);
+#else
       rdfa_update_mapping(
          context->uri_mappings, XMLNS_DEFAULT_MAPPING, value,
          (update_mapping_value_fp)rdfa_replace_string);
+#endif
    }
    else if(strcmp(attr, "_") == 0)
    {
+#define FORMAT_1 "The underscore character must not be declared as a prefix " \
+         "because it conflicts with the prefix for blank node identifiers. " \
+         "The occurrence of this prefix declaration is being ignored."
+#ifdef LIBRDFA_IN_RAPTOR
+      raptor_parser_warning((raptor_parser*)context->callback_data, 
+                            FORMAT_1);
+#else
       rdfa_processor_triples(context,
          RDFA_PROCESSOR_WARNING,
-         "The underscore character must not be declared as a prefix "
-         "because it conflicts with the prefix for blank node identifiers. "
-         "The occurrence of this prefix declaration is being ignored.");
+         FORMAT_1);
+#endif
    }
    else if(attr[0] == ':' || attr[0] == '_' ||
       (attr[0] >= 'A' && attr[0] <= 'Z') ||
@@ -74,9 +91,16 @@ void rdfa_update_uri_mappings(
       ((unsigned char)attr[0] >= 0xc0 && (unsigned char)attr[0] <= 0xd6) ||
       ((unsigned char)attr[0] >= 0xd8 && (unsigned char)attr[0] <= 0xf6) || (unsigned char)attr[0] >= 0xf8)
    {
+#ifdef LIBRDFA_IN_RAPTOR
+     raptor_namespaces_start_namespace_full(nstack,
+                                            (const unsigned char*)attr,
+                                            (const unsigned char*)value,
+                                            0);
+#else
       rdfa_generate_namespace_triple(context, attr, value);
       rdfa_update_mapping(context->uri_mappings, attr, value,
          (update_mapping_value_fp)rdfa_replace_string);
+#endif
    }
    else
    {
@@ -88,15 +112,23 @@ void rdfa_update_uri_mappings(
        */
 
       /* Generate the processor warning if this is an invalid prefix */
+#define FORMAT_2 "The declaration of the '%s' prefix is invalid " \
+         "because it starts with an invalid character. Please see " \
+         "http://www.w3.org/TR/REC-xml/#NT-NameStartChar for a " \
+         "full explanation of valid first characters for declaring " \
+         "prefixes."
+#ifdef LIBRDFA_IN_RAPTOR
+      raptor_parser_warning((raptor_parser*)context->callback_data, 
+                            FORMAT_2, attr);
+#else
       char msg[1024];
-      snprintf(msg, 1024, "The declaration of the '%s' prefix is invalid "
-         "because it starts with an invalid character. Please see "
-         "http://www.w3.org/TR/REC-xml/#NT-NameStartChar for a "
-         "full explanation of valid first characters for declaring "
-         "prefixes.", attr);
+      snprintf(msg, 1024, FORMAT_1, attr);
       rdfa_processor_triples(context, RDFA_PROCESSOR_WARNING, msg);
+#endif
    }
 
+#ifdef LIBRDFA_IN_RAPTOR
+#else
    /* print the current mapping */
    if(DEBUG)
    {
@@ -104,5 +136,5 @@ void rdfa_update_uri_mappings(
       rdfa_print_mapping(context->uri_mappings,
          (print_mapping_value_fp)rdfa_print_string);
    }
-}
 #endif
+}
