@@ -549,8 +549,12 @@ static void start_element(void *parser_context, const char* name,
                      saveptr++;
                   }
                   iri = strtok_r(NULL, RDFA_WHITESPACE, &saveptr);
+
+                  /* update the prefix mappings */
+                  rdfa_update_uri_mappings(context, atprefix, iri);
+
                   if(!saveptr)
-                    break;
+                      break;
 
                   while((*saveptr == ' ' || *saveptr == '\n' ||
                      *saveptr == '\r' || *saveptr == '\t' || *saveptr == '\f' ||
@@ -558,20 +562,6 @@ static void start_element(void *parser_context, const char* name,
                   {
                      saveptr++;
                   }
-
-                  /* update the prefix mappings */
-#ifdef LIBRDFA_IN_RAPTOR
-                  if(1) {
-                     raptor_namespace_stack* nstack;
-                     nstack = &context->sax2->namespaces;
-                     raptor_namespaces_start_namespace_full(nstack,
-                         (const unsigned char*)atprefix,
-                         (const unsigned char*)iri,
-                          0);
-                  }
-#else
-                  rdfa_update_uri_mappings(context, atprefix, iri);
-#endif
 
                   /* get the next prefix to process */
                   atprefix = strtok_r(NULL, ":", &saveptr);
@@ -689,7 +679,11 @@ static void start_element(void *parser_context, const char* name,
             }
          }
 #ifdef LIBRDFA_IN_RAPTOR
-         /* Raptor handles xml:lang itself */
+         /* Raptor handles xml:lang itself but not 'lang' */
+         else if((attrns == NULL && strcmp(attr, "lang") == 0))
+         {
+           xml_lang = value; /* shared pointer */
+         }
 #else
          else if((attrns == NULL && strcmp(attr, "lang") == 0) ||
             (attrns != NULL && strcmp(attrns, "xml") == 0 &&
@@ -704,7 +698,7 @@ static void start_element(void *parser_context, const char* name,
    }
 
 #ifdef LIBRDFA_IN_RAPTOR
-   if(context->sax2) {
+   if(context->sax2 && !xml_lang) {
       xml_lang = (char*)raptor_sax2_inscope_xml_language(context->sax2);
       if(!xml_lang)
         xml_lang = (char*)"";
