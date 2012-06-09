@@ -91,7 +91,7 @@
 #ifdef WIN32
 #include <win32_raptor_config.h>
 #endif
-#include "raptor.h"
+#include "raptor2.h"
 #include "raptor_internal.h"
 #endif /* LIBRDFA_IN_RAPTOR */
 
@@ -265,6 +265,7 @@ typedef struct rdfacontext
    raptor_sax2* sax2;
    raptor_namespace_handler namespace_handler;
    void* namespace_handler_user_data;
+   int raptor_rdfa_version; /* 10 or 11 or otherwise default */
 #else
    xmlParserCtxtPtr parser;
 #endif
