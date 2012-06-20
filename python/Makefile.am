@@ -14,7 +14,6 @@ _rdfa_la_SOURCES = \
 	SwigRdfaParser.cpp
 
 BUILT_SOURCES = SwigRdfaParser.cpp
-CLEANFILES = $(BUILT_SOURCES)
 
 _rdfa_la_LIBADD = $(top_builddir)/c/librdfa.la
 
@@ -24,6 +23,8 @@ AM_CPPFLAGS = \
 	$(LIBXML2_CFLAGS)
 
 AM_LDFLAGS = -avoid-version -export-dynamic -module
+
+EXTRA_DIST = rdfa.i
 
 SwigRdfaParser.cpp: $(srcdir)/rdfa.i
 	$(SWIG) $(AX_SWIG_PYTHON_OPT) -o $@ $(srcdir)/rdfa.i
