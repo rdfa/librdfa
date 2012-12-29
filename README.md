@@ -8,6 +8,33 @@ HTML4+RDFa and HTML5+RDFa for both RDFa 1.0 and RDFa 1.1.
 Building and Running librdfa
 ----------------------------
 
+Make sure that you have the following software installed on your system
+before attempting to build librdfa:
+
+    autoconf
+    automake
+    gcc
+    make
+    pkg-config
+    libtool
+    libxml2-dev
+
+Make sure you have the following packages installed if you're attempting
+to build the Python RDFa libraries:
+
+    g++
+    python-dev 
+    swig
+
+Make sure you have the following packages installed if you are attempting
+to build the Debian/Ubuntu packages:
+
+    dpkg-buildpackage
+    dpkg-dev
+    python-all-dev 
+    dh-buildinfo 
+    debhelper
+
 Change into the librdfa source directory and run the following:
 
     ./autogen.sh
@@ -15,8 +42,8 @@ Change into the librdfa source directory and run the following:
     make
     ./tests/speed 
 
-If everything goes well, the speed test should show you being able to
-process roughly 5k triples/sec.
+If everything goes well, the speed test should be able to crank through
+documents at 32 MB/sec and generate roughly 6.5k triples/sec.
 
 Optionally, you can build the Python bindings with the following:
 
