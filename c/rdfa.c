@@ -142,17 +142,20 @@ static size_t rdfa_init_base(
    if(head_end != NULL)
    {
       char* base_start = strstr(*working_buffer, "<base ");
-      if(base_start == NULL)
+      char* href_start = NULL;
+      if(base_start == NULL) {
          base_start = strstr(*working_buffer, "<BASE ");
-
-      if(base_start != NULL)
+         if(base_start != NULL)
+           href_start = strstr(base_start, "href=");
+      }
+      
+      if(href_start != NULL)
       {
-         char* href_start = strstr(base_start, "href=");
          char sep = href_start[5];
          char* uri_start = href_start + 6;
          char* uri_end = strchr(uri_start, sep);
 
-         if((uri_start != NULL) && (uri_end != NULL))
+         if(uri_end != NULL)
          {
             if(*uri_start != sep)
             {
@@ -241,8 +244,8 @@ static void start_element(void *parser_context, const char* name,
 
    rdfa_push_item(context_stack, context, RDFALIST_FLAG_CONTEXT);
 
-   if(DEBUG)
-   {
+#if defined(DEBUG) && DEBUG > 0
+   if(1) {
       int i;
 
       /* dump all arguments sent to this callback */
@@ -283,6 +286,7 @@ static void start_element(void *parser_context, const char* name,
       }
       fprintf(stdout, ")\n");
    }
+#endif
 
    /* start the XML Literal text */
    if(context->xml_literal == NULL)
@@ -760,8 +764,7 @@ static void start_element(void *parser_context, const char* name,
    rdfa_update_language(context, xml_lang);
 
    /***************** FOR DEBUGGING PURPOSES ONLY ******************/
-   if(DEBUG)
-   {
+#if defined(DEBUG) && DEBUG > 0
       printf("DEBUG: depth = %u\n", context->depth);
       if(about != NULL)
       {
@@ -815,7 +818,7 @@ static void start_element(void *parser_context, const char* name,
       {
          printf("DEBUG: @xml:lang = %s\n", xml_lang);
       }
-   }
+#endif
 
    /* TODO: This isn't part of the processing model, it needs to be
     * included and is a correction for the last item in step #4. */
@@ -866,10 +869,9 @@ static void start_element(void *parser_context, const char* name,
 
    if(context->new_subject != NULL)
    {
-      if(DEBUG)
-      {
-         printf("DEBUG: new_subject = %s\n", context->new_subject);
-      }
+#if defined(DEBUG) && DEBUG > 0
+     printf("DEBUG: new_subject = %s\n", context->new_subject);
+#endif
 
       /* RDFa 1.0: 6. If in any of the previous steps a [new subject] was set
        * to a non-null value, it is now used to provide a subject for
@@ -1023,13 +1025,12 @@ static void end_element(void* parser_context, const char* name,
    /* append the text to the current context's XML literal */
    char* buffer = (char*)malloc(strlen(name) + 4);
 
-   if(DEBUG)
-   {
-      printf("DEBUG: </%s>\n", name);
-      printf("context->local_list_mappings (start of end_element): ");
-      rdfa_print_mapping(context->local_list_mappings,
+#if defined(DEBUG) && DEBUG > 0
+   printf("DEBUG: </%s>\n", name);
+   printf("context->local_list_mappings (start of end_element): ");
+   rdfa_print_mapping(context->local_list_mappings,
          (print_mapping_value_fp)rdfa_print_triple_list);
-   }
+#endif
 
    sprintf(buffer, "</%s>", name);
    if(context->xml_literal == NULL)
@@ -1108,54 +1109,56 @@ static void end_element(void* parser_context, const char* name,
 
    /*printf(context->plain_literal);*/
 
-   /* append the XML literal and plain text literals to the parent
-    * literals */
-   if(context->xml_literal != NULL)
-   {
-      if(parent_context->xml_literal == NULL)
-      {
-         parent_context->xml_literal =
-            rdfa_replace_string(
-               parent_context->xml_literal, context->xml_literal);
-         parent_context->xml_literal_size = context->xml_literal_size;
-      }
-      else
-      {
-         parent_context->xml_literal =
-            rdfa_n_append_string(
-               parent_context->xml_literal,
-               &parent_context->xml_literal_size,
-               context->xml_literal, context->xml_literal_size);
-      }
+   if(parent_context != NULL) {
+       /* append the XML literal and plain text literals to the parent
+        * literals */
+       if(context->xml_literal != NULL)
+       {
+          if(parent_context->xml_literal == NULL)
+          {
+             parent_context->xml_literal =
+                rdfa_replace_string(
+                   parent_context->xml_literal, context->xml_literal);
+             parent_context->xml_literal_size = context->xml_literal_size;
+          }
+          else
+          {
+             parent_context->xml_literal =
+                rdfa_n_append_string(
+                   parent_context->xml_literal,
+                   &parent_context->xml_literal_size,
+                   context->xml_literal, context->xml_literal_size);
+          }
 
-      /* if there is an XML literal, there is probably a plain literal */
-      if(context->plain_literal != NULL)
-      {
-         if(parent_context->plain_literal == NULL)
-         {
-            parent_context->plain_literal =
-               rdfa_replace_string(
-                  parent_context->plain_literal, context->plain_literal);
-            parent_context->plain_literal_size =
-               context->plain_literal_size;
-         }
-         else
-         {
-            parent_context->plain_literal =
-               rdfa_n_append_string(
-                  parent_context->plain_literal,
-                  &parent_context->plain_literal_size,
-                  context->plain_literal,
-                  context->plain_literal_size);
-         }
-      }
+          /* if there is an XML literal, there is probably a plain literal */
+          if(context->plain_literal != NULL)
+          {
+             if(parent_context->plain_literal == NULL)
+             {
+                parent_context->plain_literal =
+                   rdfa_replace_string(
+                      parent_context->plain_literal, context->plain_literal);
+                parent_context->plain_literal_size =
+                   context->plain_literal_size;
+             }
+             else
+             {
+                parent_context->plain_literal =
+                   rdfa_n_append_string(
+                      parent_context->plain_literal,
+                      &parent_context->plain_literal_size,
+                      context->plain_literal,
+                      context->plain_literal_size);
+             }
+          }
+       }
+
+       /* preserve the bnode count by copying it to the parent_context */
+       parent_context->bnode_count = context->bnode_count;
+       parent_context->underscore_colon_bnode_name = \
+          rdfa_replace_string(parent_context->underscore_colon_bnode_name,
+                              context->underscore_colon_bnode_name);
    }
-
-   /* preserve the bnode count by copying it to the parent_context */
-   parent_context->bnode_count = context->bnode_count;
-   parent_context->underscore_colon_bnode_name = \
-      rdfa_replace_string(parent_context->underscore_colon_bnode_name,
-                          context->underscore_colon_bnode_name);
 
    /* 10. If the [ skip element ] flag is 'false', and [ new subject ]
     * was set to a non-null value, then any [ incomplete triple ]s
@@ -1167,7 +1170,7 @@ static void end_element(void* parser_context, const char* name,
 
    /* 14. Once all the child elements have been traversed, list triples are
     * generated, if necessary. */
-   if(context->rdfa_version == RDFA_VERSION_1_1)
+   if(context->rdfa_version == RDFA_VERSION_1_1 && (context->new_subject != NULL))
    {
       rdfa_complete_list_triples(context);
 
@@ -1180,12 +1183,11 @@ static void end_element(void* parser_context, const char* name,
             (void**)context->local_list_mappings,
             (copy_mapping_value_fp)rdfa_replace_list);
 
-         if(DEBUG)
-         {
-            printf("parent_context->local_list_mappings (after copy): ");
-            rdfa_print_mapping(context->local_list_mappings,
+#if defined(DEBUG) && DEBUG > 0
+         printf("parent_context->local_list_mappings (after copy): ");
+         rdfa_print_mapping(context->local_list_mappings,
                (print_mapping_value_fp)rdfa_print_triple_list);
-         }
+#endif
          rdfa_free_mapping(context->local_list_mappings,
             (free_mapping_value_fp)rdfa_free_list);
          context->local_list_mappings = NULL;
@@ -1195,10 +1197,9 @@ static void end_element(void* parser_context, const char* name,
    /* free the context */
    rdfa_free_context(context);
 
-   if(DEBUG)
-   {
-      printf("-------------------------------------------------------------\n");
-   }
+#if defined(DEBUG) && DEBUG > 0
+   printf("-------------------------------------------------------------\n");
+#endif
 }
 
 void rdfa_set_default_graph_triple_handler(

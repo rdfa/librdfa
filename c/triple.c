@@ -564,7 +564,7 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
       current_object_literal = context->content;
       type = RDF_TYPE_PLAIN_LITERAL;
    }
-   else if(strchr(context->xml_literal, '<') == NULL)
+   else if(context->xml_literal && strchr(context->xml_literal, '<') == NULL)
    {
       current_object_literal = context->plain_literal;
       type = RDF_TYPE_PLAIN_LITERAL;
@@ -593,7 +593,8 @@ void rdfa_complete_object_literal_triples(rdfacontext* context)
     * serializing to text, all nodes that are descendants of the
     * [current element], i.e., not including the element itself, and
     * giving it a datatype of rdf:XMLLiteral. */
-   if((current_object_literal == NULL) &&
+   if((context->xml_literal != NULL) &&
+      (current_object_literal == NULL) &&
       (strchr(context->xml_literal, '<') != NULL) &&
       ((context->datatype == NULL) ||
        (strcmp(context->datatype,
@@ -834,7 +835,7 @@ void rdfa_complete_current_property_value_triples(rdfacontext* context)
           * object
           *   current property value */
          rdfalistitem* curie = *pptr;
-         rdftriple* triple = triple = rdfa_create_triple(context->new_subject,
+         rdftriple* triple = rdfa_create_triple(context->new_subject,
             (const char*)curie->data, current_property_value, type,
             context->datatype, context->language);
 
