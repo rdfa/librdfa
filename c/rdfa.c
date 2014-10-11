@@ -143,11 +143,10 @@ static size_t rdfa_init_base(
    {
       char* base_start = strstr(*working_buffer, "<base ");
       char* href_start = NULL;
-      if(base_start == NULL) {
+      if(base_start == NULL)
          base_start = strstr(*working_buffer, "<BASE ");
-         if(base_start != NULL)
-           href_start = strstr(base_start, "href=");
-      }
+      if(base_start != NULL)
+        href_start = strstr(base_start, "href=");
       
       if(href_start != NULL)
       {
@@ -314,7 +313,7 @@ static void start_element(void *parser_context, const char* name,
 #else
       void** umap = context->uri_mappings;
 #endif
-      char* umap_key = NULL;
+      const char* umap_key = NULL;
       void* umap_value = NULL;
 
       /* if the namespaces are not defined, then neither is the xml:lang */
@@ -338,9 +337,9 @@ static void start_element(void *parser_context, const char* name,
 #ifdef LIBRDFA_IN_RAPTOR
          ns=ns_list[--ns_size];
 
-         umap_key = (char*)raptor_namespace_get_prefix(ns);
+         umap_key = (const char*)raptor_namespace_get_prefix(ns);
          if(!umap_key)
-           umap_key=(char*)XMLNS_DEFAULT_MAPPING;
+           umap_key=(const char*)XMLNS_DEFAULT_MAPPING;
          umap_value = (char*)raptor_uri_as_string(raptor_namespace_get_uri(ns));
 #else
          rdfa_next_mapping(umap++, &umap_key, &umap_value);
